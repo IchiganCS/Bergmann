@@ -34,26 +34,13 @@ public class Shader : IDisposable {
     /// Compiles a shader found in the Shaders folder
     /// </summary>
     /// <param name="fileName"></param>
-    public void Compile(string fileName) {
-        GL.ShaderSource(Handle, ReadSourceCode(fileName));
+    public void Compile(string sourceCode) {
+        GL.ShaderSource(Handle, sourceCode);
         GlLogger.WriteGLError();
         GL.CompileShader(Handle);
         GlLogger.WriteGLError();
 
         IsCompiled = true;
-    }
-
-    /// <summary>
-    /// Reads the text from a file in the Shaders folder
-    /// </summary>
-    /// <param name="fileName">The pure and unchanged name of the file.</param>
-    /// <param name="filePath">The path of to this source file - this shan't be explicitly given, the compiler fills this</param>
-    /// <returns></returns>
-    private string ReadSourceCode(string fileName, [CallerFilePath] string? filePath = null) {
-        if (filePath is null)
-            return string.Empty;
-
-        return File.ReadAllText(Path.Combine(filePath.Remove(filePath.Length - nameof(Shader).Length - 3), "Shaders/" + fileName));
     }
 
     public void Dispose() {

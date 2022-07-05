@@ -4,6 +4,7 @@ using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using Shared;
 
 namespace Bergmann.Client.Graphics;
 
@@ -26,8 +27,8 @@ public class Window : GameWindow {
 
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
-        VertexShader.Compile("VertexShader.gl");
-        Fragment.Compile("FragmentShader.gl");
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "VertexShader.gl"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "FragmentShader.gl"));
 
         Program = new();
         Program.AddShader(VertexShader);

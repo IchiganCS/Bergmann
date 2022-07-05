@@ -1,3 +1,4 @@
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 
 namespace Bergmann.Client.Graphics.OpenGL;
@@ -54,8 +55,10 @@ public class Program : IDisposable {
     /// </summary>
     /// <param name="shader">Has to be a ready to use, already compiled shader</param>
     public void AddShader(Shader shader) {
-        if (IsCompiled || !shader.IsCompiled || AttachedShaders.Any(x => x.Type == shader.Type))
+        if (IsCompiled || !shader.IsCompiled || AttachedShaders.Any(x => x.Type == shader.Type)) {
+            Logger.Warn("Shader could not be attached");
             return;
+        }
 
         GL.AttachShader(Handle, shader.Handle);
         GlLogger.WriteGLError();
@@ -66,6 +69,11 @@ public class Program : IDisposable {
     /// Compiles the program and therefore locks all alterations
     /// </summary>
     public void Compile() {
+        if (IsCompiled) {
+            Logger.Warn("Tried to recompile a program");
+            return;
+        }
+
         GL.LinkProgram(Handle);
         GlLogger.WriteGLError();
         IsCompiled = true;
