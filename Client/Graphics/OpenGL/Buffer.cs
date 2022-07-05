@@ -1,0 +1,58 @@
+using System.Runtime.InteropServices;
+using OpenTK.Graphics.OpenGL;
+
+namespace Bergmann.Client.Graphics.OpenGL;
+
+/// <summary>
+/// Represents any buffer object
+/// </summary>
+public class Buffer : IDisposable {
+    /// <summary>
+    /// The handle to the OpenGL buffer object
+    /// </summary>
+    public int Handle { get; set; }
+
+    /// <summary>
+    /// Indicates whether the buffer holds data. The buffer can only be written once.
+    /// </summary>
+    private bool Filled { get; set; }
+
+    /// <summary>
+    /// The target (=type) of the buffer. It can't be changed after
+    /// </summary>
+    public BufferTarget Target { get; private set; }
+
+    /// <summary>
+    /// Constructs a new buffer with the specified target
+    /// </summary>
+    /// <param name="target">The target can't be changed later</param>
+    public Buffer(BufferTarget target) {
+        Target = target;
+        Handle = GL.GenBuffer();
+        Filled = false;
+    }
+
+    /// <summary>
+    /// Fills the buffer with the appropriate data. Can only be execute once.
+    /// </summary>
+    public void Fill<T>(T[] items) where T : struct, IBufferData {
+        GL.BindBuffer(Target, Handle);
+        GlLogger.WriteGLError();
+        GL.BufferData(Target, items.Length * Marshal.SizeOf<T>(), items, BufferUsageHint.StaticDraw);
+        GlLogger.WriteGLError();
+        Filled = true;
+    }
+
+    /// <summary>
+    /// Binds the buffer and subsequents calls are made on this buffer.
+    /// </summary>
+    public void Bind() {
+        GL.BindBuffer(Target, Handle);
+    }
+
+    public void Dispose() {
+        GL.DeleteBuffer(Handle);
+        Handle = 0;
+    }
+
+}
