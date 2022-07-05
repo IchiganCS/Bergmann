@@ -7,7 +7,7 @@ namespace Bergmann.Client.Graphics.OpenGL;
 /// <summary>
 /// Represents a vertex for OpenGL
 /// </summary>
-public struct Vertex : IBufferData {
+public struct Vertex {
     public Vector3 Position;
 
     /// <summary>

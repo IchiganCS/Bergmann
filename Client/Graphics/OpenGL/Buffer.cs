@@ -33,9 +33,9 @@ public class Buffer : IDisposable {
     }
 
     /// <summary>
-    /// Fills the buffer with the appropriate data. Can only be execute once.
+    /// Fills the buffer with the appropriate data. Can only be execute once. T has to be a struct.
     /// </summary>
-    public void Fill<T>(T[] items) where T : struct, IBufferData {
+    public void Fill<T>(T[] items) where T : struct {
         GL.BindBuffer(Target, Handle);
         GlLogger.WriteGLError();
         GL.BufferData(Target, items.Length * Marshal.SizeOf<T>(), items, BufferUsageHint.StaticDraw);
