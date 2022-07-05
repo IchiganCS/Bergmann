@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 
 namespace Bergmann.Client.Graphics.OpenGL;
@@ -39,6 +40,7 @@ public class Shader : IDisposable {
         GlLogger.WriteGLError();
         GL.CompileShader(Handle);
         GlLogger.WriteGLError();
+        Logger.Info(GL.GetShaderInfoLog(Handle));
 
         IsCompiled = true;
     }
