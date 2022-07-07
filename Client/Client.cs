@@ -16,7 +16,10 @@ public class Client {
 
         nwSet.APIVersion = Version.Parse("3.3");
 
+        
+
         using Window win = new(gwSet, nwSet);
+        win.SynchronizationContext = SynchronizationContext.Current!;
         win.Run();
     }
 }
