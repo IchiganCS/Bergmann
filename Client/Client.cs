@@ -19,7 +19,6 @@ public class Client {
         
 
         using Window win = new(gwSet, nwSet);
-        win.SynchronizationContext = SynchronizationContext.Current!;
         win.Run();
     }
 }

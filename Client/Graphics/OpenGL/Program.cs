@@ -1,5 +1,6 @@
 using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
@@ -81,6 +82,42 @@ public class Program : IDisposable {
         AttachedShaders.ForEach(x => GL.DetachShader(Handle, x.Handle));
         GlLogger.WriteGLError();
     }
+
+    /// <summary>
+    /// Provides a unified way to pass arguments as a uniform variable. This is slower than setting it by hand.
+    /// </summary>
+    /// <param name="name">The name used in the shader for the variable</param>
+    /// <param name="item">The item of type T</param>
+    /// <typeparam name="T">Though every type supported by GL.Uniform<...> is theoretically possible, only some are implemented</typeparam>
+    public void SetUniform<T>(string name, T item) {
+        if (!IsCompiled) {
+            Logger.Warn("Tried to set a uniform for a non compiled program");
+            return;
+        }
+        if (Active?.Handle != this.Handle) {
+            Logger.Warn("Cannot bind uniform for non-active program");
+            return;
+        }
+
+        int pos = GL.GetUniformLocation(Handle, name);
+
+        if (item is Matrix4 matrix4)
+            GL.UniformMatrix4(pos, false, ref matrix4);
+
+        else
+            Logger.Warn($"couldn't bind uniform {name} for type {typeof(T).ToString()}");
+    }
+    /// <summary>
+    /// Wraps all necessary calls for <see cref="SetUniform"/> needed to fill an array of uniforms. See that function for more detail.
+    /// </summary>
+    /// <param name="name">The name without any brackets.</param>
+    public void SetUniforms<T>(string name, T[] items) {
+        for (int i = 0; i < items.Length; i++)
+            SetUniform($"{name}[{i}]", items[i]);
+    }
+
+
+
 
     public void Dispose() {
         GL.DeleteProgram(Handle);

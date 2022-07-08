@@ -11,13 +11,14 @@ using Shared;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
+    
+    #pragma warning disable CS8618
     public Window(GameWindowSettings gameWindowSettings,
                   NativeWindowSettings nativeWindowSettings) :
         base(gameWindowSettings, nativeWindowSettings) {
             
     }
-
-    public SynchronizationContext SynchronizationContext { get; set; }
+    #pragma warning restore CS8618
 
     private Program Program { get; set; }
     private void MakeProgram() {
@@ -26,7 +27,7 @@ public class Window : GameWindow {
 
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
-        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "VertexShader.gl"));
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.vert"));
         Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "FragmentShader.gl"));
 
         Program = new();
@@ -35,6 +36,19 @@ public class Window : GameWindow {
         Program.Compile();
 
         Program.Active = Program;
+        
+        Matrix4[] models = new Matrix4[6] {
+            //many of these transformations could be achieved more easily in some other ways
+            //but it matters which side is pointing in which direction
+            Matrix4.Identity, //front
+            Matrix4.CreateRotationX(MathF.PI / 2), //bottom
+            Matrix4.CreateRotationX(MathF.PI / 2) * Matrix4.CreateTranslation(0, 1, 0), //top
+            Matrix4.CreateTranslation(-1, 0, -1) * Matrix4.CreateRotationY(MathF.PI), //back
+            Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(MathF.PI / 2), //right
+            Matrix4.CreateTranslation(0, 0, -1) * Matrix4.CreateRotationY(-MathF.PI / 2) //left
+        };
+
+        Program.SetUniforms("models", models);
     }
 
     private Shader VertexShader { get; set; }
@@ -140,55 +154,23 @@ public class Window : GameWindow {
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-        int model = GL.GetUniformLocation(Program.Handle, "model");
-        int view = GL.GetUniformLocation(Program.Handle, "view");
-        int projection = GL.GetUniformLocation(Program.Handle, "projection");
+        
 
         Matrix4 modelMat = Matrix4.Identity;
-        GL.UniformMatrix4(model, false, ref modelMat);
+        Program.SetUniform("model", modelMat);
 
         Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));
-        GL.UniformMatrix4(view, false, ref viewMat);
+        Program.SetUniform("view", viewMat);
 
         
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 100f);
-        GL.UniformMatrix4(projection, false, ref projMat);
+        Program.SetUniform("projection", projMat);
 
         Vertices.Bind();
         Indices.Bind();
 
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
 
-        modelMat = Matrix4.CreateRotationX(MathF.PI / 2);
-        GL.UniformMatrix4(model, false, ref modelMat);
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
-        
-
-        modelMat = Matrix4.CreateRotationX(MathF.PI / 2) * Matrix4.CreateTranslation(0, 1, 0);
-        GL.UniformMatrix4(model, false, ref modelMat);
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
-
-        modelMat = Matrix4.CreateTranslation(0, 0, 1);
-        GL.UniformMatrix4(model, false, ref modelMat);
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
-        
-        modelMat = Matrix4.CreateRotationY(-MathF.PI / 2);
-        GL.UniformMatrix4(model, false, ref modelMat);
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
-        
-
-        modelMat = Matrix4.CreateTranslation(0, 0, -1) * Matrix4.CreateRotationY(-MathF.PI / 2);
-        GL.UniformMatrix4(model, false, ref modelMat);
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
-
-        //Task.Run(() => SynchronizationContext.Post((s) => 
-        //   GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0), null));
+        GL.DrawElementsInstanced(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero, 6);
 
         Context.SwapBuffers();
     }
