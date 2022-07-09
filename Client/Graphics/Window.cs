@@ -11,14 +11,13 @@ using Shared;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-    
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     public Window(GameWindowSettings gameWindowSettings,
                   NativeWindowSettings nativeWindowSettings) :
         base(gameWindowSettings, nativeWindowSettings) {
             
     }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
     private Program Program { get; set; }
     private void MakeProgram() {
@@ -28,7 +27,7 @@ public class Window : GameWindow {
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
         VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "FragmentShader.gl"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "FragmentShader.frag"));
 
         Program = new();
         Program.AddShader(VertexShader);
@@ -49,6 +48,24 @@ public class Window : GameWindow {
         };
 
         Program.SetUniforms("models", models);
+
+        Vector3[] positions = new Vector3[16 * 16 * 16];
+        for (int i = 0; i < 16; i++)
+            for (int j = 0; j < 16; j++)
+                for (int k = 0; k < 16; k++)
+                    positions[i * 16 * 16 + j * 16 + k] = new(i, j, k);
+
+        BlockPositions = new OpenGL.Buffer(BufferTarget.UniformBuffer);
+        BlockPositions.Fill(positions);
+
+        int bbPoint = 1;
+        int loc = GL.GetUniformBlockIndex(Program.Handle, "blockPositions");
+        GlLogger.WriteGLError();
+        GL.UniformBlockBinding(Program.Handle, loc, bbPoint);
+        GlLogger.WriteGLError();
+        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, bbPoint, BlockPositions.Handle);
+        GlLogger.WriteGLError();
+
     }
 
     private Shader VertexShader { get; set; }
@@ -138,6 +155,8 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyDown(Keys.LeftControl))
             delta -= (float)args.Time * new Vector3(0, 0.8f, 0f);
 
+        delta *= 4;
+
         Eulers += MouseState.Delta / 330f * new Vector2(-0.7f, 0.9f);
 
         while (Math.Abs(Eulers.X) > 3.142)
@@ -150,7 +169,11 @@ public class Window : GameWindow {
         delta = Rotation * delta;
         Camera += delta;
         Camera += new Vector3(0, y, 0);
+
+        
     }
+
+    private OpenGL.Buffer BlockPositions;
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -168,9 +191,11 @@ public class Window : GameWindow {
 
         Vertices.Bind();
         Indices.Bind();
+        BlockPositions.Bind();
 
-
-        GL.DrawElementsInstanced(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero, 6);
+        //each instance draws a side
+        GL.DrawElementsInstanced(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero, 4096 * 6);
+        GlLogger.WriteGLError();
 
         Context.SwapBuffers();
     }

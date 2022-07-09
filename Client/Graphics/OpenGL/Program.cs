@@ -104,8 +104,11 @@ public class Program : IDisposable {
         if (item is Matrix4 matrix4)
             GL.UniformMatrix4(pos, false, ref matrix4);
 
+        else if (item is Vector3 vector3)
+            GL.Uniform3(pos, ref vector3);
+
         else
-            Logger.Warn($"couldn't bind uniform {name} for type {typeof(T).ToString()}");
+            Logger.Warn($"Couldn't bind uniform {name} for type {typeof(T).ToString()}. Unsupported type?");
     }
     /// <summary>
     /// Wraps all necessary calls for <see cref="SetUniform"/> needed to fill an array of uniforms. See that function for more detail.
