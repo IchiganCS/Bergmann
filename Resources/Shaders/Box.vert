@@ -1,35 +1,18 @@
 #version 330 core
 
-//This has to be with an origin same as the world center
-in vec3 position;
+//already in world space!
+layout(location=0) in vec3 inPosition;
+layout(location=3) in vec2 inTexCoord;
 
-uniform mat4 model;
+uniform mat4 proj;
 uniform mat4 view;
-uniform mat4 projection;
 
-//transform matrices to apply to the front to get all other sides
-uniform mat4 models[6];
-
-//a new origin for a block
-uniform blockPositions {
-    vec3 blocks[4096];
-};
-
-out vec3 pos;
+out vec3 position;
 out vec2 texCoord;
 
 void main() {
+    position = inPosition;
+    texCoord = inTexCoord;
 
-    int posIdx = gl_InstanceID / 6;
-    int modelIdx = gl_InstanceID % 6;
-
-    texCoord = position.xy;
-
-    vec4 currentSide = models[modelIdx] * vec4(position, 1.0);
-    vec4 reoriginedSide = currentSide + vec4(blocks[posIdx], 0.0);
-    vec4 transformedSide = model * reoriginedSide;
-    
-
-    pos = transformedSide.xyz;
-    gl_Position = projection * view * transformedSide;
+    gl_Position = (proj * view) * vec4(inPosition, 1.0);
 }

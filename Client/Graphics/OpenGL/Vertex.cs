@@ -10,6 +10,8 @@ namespace Bergmann.Client.Graphics.OpenGL;
 public struct Vertex {
     public Vector3 Position;
 
+    public Vector2 TexCoord;
+
     /// <summary>
     /// The handle to a VAO object applicable to all instances of this class.
     /// </summary>
@@ -19,27 +21,26 @@ public struct Vertex {
     /// Initializes the Handle
     /// </summary>
     private static void InitVAO() {
-        if (Handle != 0)
-            return;
-
         Handle = GL.GenVertexArray();
-        GlLogger.WriteGLError();
         GL.BindVertexArray(Handle);
-        int size = Marshal.SizeOf<Vertex>();
-
-        GlLogger.WriteGLError();
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Position)));
-        GlLogger.WriteGLError();
-        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(0);        
+        GL.EnableVertexAttribArray(3);
+        
         GlLogger.WriteGLError();
     }
 
     /// <summary>
-    /// Binds the VAO specific to this class
+    /// Binds the VAO specific to this class using the currently bound array buffer
     /// </summary>
     public static void UseVAO() {
-        InitVAO();
+        if (Handle == 0)            
+            InitVAO();
+
         GL.BindVertexArray(Handle);
+
+        int size = Marshal.SizeOf<Vertex>();
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Position)));
+        GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
         GlLogger.WriteGLError();
     }
 

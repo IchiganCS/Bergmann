@@ -100,6 +100,10 @@ public class Program : IDisposable {
         }
 
         int pos = GL.GetUniformLocation(Handle, name);
+        if (pos < 0) {
+            Logger.Warn("Cannot find location for " + name);
+            return;
+        }
 
         if (item is Matrix4 matrix4)
             GL.UniformMatrix4(pos, false, ref matrix4);

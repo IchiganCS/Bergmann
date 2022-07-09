@@ -63,6 +63,7 @@ public class Buffer : IDisposable {
     /// </summary>
     public void Bind() {
         GL.BindBuffer(Target, Handle);
+        GlLogger.WriteGLError();
     }
 
     public void Dispose() {

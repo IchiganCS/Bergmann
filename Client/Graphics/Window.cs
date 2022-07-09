@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.OpenGL.Renderers;
 using Bergmann.Shared;
+using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -27,7 +29,7 @@ public class Window : GameWindow {
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
         VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "FragmentShader.frag"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.frag"));
 
         Program = new();
         Program.AddShader(VertexShader);
@@ -35,50 +37,25 @@ public class Window : GameWindow {
         Program.Compile();
 
         Program.Active = Program;
-        
-        Matrix4[] models = new Matrix4[6] {
-            //many of these transformations could be achieved more easily in some other ways
-            //but it matters which side is pointing in which direction
-            Matrix4.Identity, //front
-            Matrix4.CreateRotationX(MathF.PI / 2), //bottom
-            Matrix4.CreateRotationX(MathF.PI / 2) * Matrix4.CreateTranslation(0, 1, 0), //top
-            Matrix4.CreateTranslation(-1, 0, -1) * Matrix4.CreateRotationY(MathF.PI), //back
-            Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(MathF.PI / 2), //right
-            Matrix4.CreateTranslation(0, 0, -1) * Matrix4.CreateRotationY(-MathF.PI / 2) //left
-        };
-
-        Program.SetUniforms("models", models);
-
-        Vector3[] positions = new Vector3[16 * 16 * 16];
-        for (int i = 0; i < 16; i++)
-            for (int j = 0; j < 16; j++)
-                for (int k = 0; k < 16; k++)
-                    positions[i * 16 * 16 + j * 16 + k] = new(i, j, k);
-
-        BlockPositions = new OpenGL.Buffer(BufferTarget.UniformBuffer);
-        BlockPositions.Fill(positions);
-
-        int bbPoint = 1;
-        int loc = GL.GetUniformBlockIndex(Program.Handle, "blockPositions");
-        GlLogger.WriteGLError();
-        GL.UniformBlockBinding(Program.Handle, loc, bbPoint);
-        GlLogger.WriteGLError();
-        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, bbPoint, BlockPositions.Handle);
-        GlLogger.WriteGLError();
-
     }
 
     private Shader VertexShader { get; set; }
     private Shader Fragment { get; set; }
-    private OpenGL.Buffer Vertices { get; set; }
-    private OpenGL.Buffer Indices { get; set; }
 
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
+    private Chunk Chunk { get; set; }
+    private ChunkRenderer ChunkRenderer { get; set; }
+    private Chunk Chunk2 { get; set; }
+    private ChunkRenderer ChunkRenderer2 { get; set; }
+
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
         Quaternion.FromEulerAngles(Eulers.Y, 0, 0);
+
+    private OpenGL.Buffer Vertices { get; set; }
+    private OpenGL.Buffer Indices { get; set; }
 
     protected override void OnLoad() {
         VSync = VSyncMode.On;
@@ -92,21 +69,24 @@ public class Window : GameWindow {
 
         Vertices = new(BufferTarget.ArrayBuffer);
         Vertices.Fill(new Vertex[] {
-            new(){Position = new(1f, 0f, 0.0f)},
-            new(){Position = new(1f, 1f, 0.0f)},
-            new(){Position = new(0, 1f, 0.0f)},
-            new(){Position = new(0, 0f, 0.0f)}
+            new() {Position = new(0, 1, 0), TexCoord = new(0, 1)},
+            new() {Position = new(1, 0, 0), TexCoord = new(1, 0)},
+            new() {Position = new(1, 1, 0), TexCoord = new(1, 1)},
+            new() {Position = new(0, 0, 0), TexCoord = new(0, 0)},
         });
-
+        Vertex.UseVAO();
         Indices = new(BufferTarget.ElementArrayBuffer);
-        Indices.Fill(new int[] {
+        Indices.Fill(new uint[] {
             0, 1, 2,
             0, 2, 3
         });
 
-        Vertices.Bind();
-        GlLogger.WriteGLError();
-        Vertex.UseVAO();
+        Chunk = new();
+        Chunk.Offset = new(0, 0, 0);
+        Chunk2 = new();
+        Chunk2.Offset = new(16, 0, 0);
+        ChunkRenderer = new(Chunk);
+        ChunkRenderer2 = new(Chunk2);
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(0, 0);
@@ -116,8 +96,6 @@ public class Window : GameWindow {
         Program.Dispose();
         VertexShader.Dispose();
         Fragment.Dispose();
-        Vertices.Dispose();
-        Indices.Dispose();
         Vertex.CloseVAO();
     }
 
@@ -147,9 +125,9 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyDown(Keys.S))
             delta -= (float)args.Time * new Vector3(0, 0, 0.8f);
         if (KeyboardState.IsKeyDown(Keys.D))
-            delta -= (float)args.Time * new Vector3(0.8f, 0, 0f);
-        if (KeyboardState.IsKeyDown(Keys.A))
             delta += (float)args.Time * new Vector3(0.8f, 0, 0f);
+        if (KeyboardState.IsKeyDown(Keys.A))
+            delta -= (float)args.Time * new Vector3(0.8f, 0, 0f);
         if (KeyboardState.IsKeyDown(Keys.Space))
             delta += (float)args.Time * new Vector3(0, 0.8f, 0f);
         if (KeyboardState.IsKeyDown(Keys.LeftControl))
@@ -157,7 +135,7 @@ public class Window : GameWindow {
 
         delta *= 4;
 
-        Eulers += MouseState.Delta / 330f * new Vector2(-0.7f, 0.9f);
+        Eulers += MouseState.Delta / 330f * new Vector2(0.7f, 0.9f);
 
         while (Math.Abs(Eulers.X) > 3.142)
             Eulers += new Vector2(-MathF.CopySign(2 * MathF.PI, Eulers.X), 0);
@@ -173,29 +151,19 @@ public class Window : GameWindow {
         
     }
 
-    private OpenGL.Buffer BlockPositions;
-
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
 
-        Matrix4 modelMat = Matrix4.Identity;
-        Program.SetUniform("model", modelMat);
-
-        Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));
-        Program.SetUniform("view", viewMat);
-
-        
+        Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 100f);
-        Program.SetUniform("projection", projMat);
-
-        Vertices.Bind();
-        Indices.Bind();
-        BlockPositions.Bind();
-
-        //each instance draws a side
-        GL.DrawElementsInstanced(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, IntPtr.Zero, 4096 * 6);
+        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x
+        Program.SetUniform("proj", projMat);
+        Program.SetUniform("view", viewMat);
         GlLogger.WriteGLError();
+
+        ChunkRenderer.Render();
+        ChunkRenderer2.Render();
 
         Context.SwapBuffers();
     }
