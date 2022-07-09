@@ -45,10 +45,8 @@ public class Window : GameWindow {
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
-    private Chunk Chunk { get; set; }
-    private ChunkRenderer ChunkRenderer { get; set; }
-    private Chunk Chunk2 { get; set; }
-    private ChunkRenderer ChunkRenderer2 { get; set; }
+    private Chunk[,] Chunks { get; set; }
+    private ChunkRenderer[,] ChunkRenderers { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -67,6 +65,12 @@ public class Window : GameWindow {
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
 
+        //note that face culling doesn't save runs on the vertex shader 
+        //but only on the fragment shader - which still is quite nice to be honest.
+        GL.Enable(EnableCap.CullFace);
+        GL.CullFace(CullFaceMode.Back);
+        GL.FrontFace(FrontFaceDirection.Ccw);
+
         Vertices = new(BufferTarget.ArrayBuffer);
         Vertices.Fill(new Vertex[] {
             new() {Position = new(0, 1, 0), TexCoord = new(0, 1)},
@@ -81,12 +85,16 @@ public class Window : GameWindow {
             0, 2, 3
         });
 
-        Chunk = new();
-        Chunk.Offset = new(0, 0, 0);
-        Chunk2 = new();
-        Chunk2.Offset = new(16, 0, 0);
-        ChunkRenderer = new(Chunk);
-        ChunkRenderer2 = new(Chunk2);
+
+        Chunks = new Chunk[16, 16];
+        ChunkRenderers = new ChunkRenderer[16, 16];
+        for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 16; j++) {
+                Chunks[i, j] = new();
+                Chunks[i, j].Offset = new Vector3i(i, 0, j) * 16;
+                ChunkRenderers[i, j] = new(Chunks[i, j]);
+            }
+        }
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(0, 0);
@@ -156,14 +164,17 @@ public class Window : GameWindow {
         
 
         Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
-        Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 100f);
-        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x
-        Program.SetUniform("proj", projMat);
-        Program.SetUniform("view", viewMat);
+        Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
+        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
+        Program.SetUniform("pvm", viewMat * projMat);
         GlLogger.WriteGLError();
 
-        ChunkRenderer.Render();
-        ChunkRenderer2.Render();
+        //for (int i = 0; i < 16; i++) {
+        //    for (int j = 0; j < 16; j++) {
+        //        ChunkRenderers[i, j].Render();
+        //    }
+        //}
+        ChunkRenderers[0, 0].Render();
 
         Context.SwapBuffers();
     }

@@ -18,7 +18,7 @@ public class Block {
     // /// </summary>
     private static readonly Matrix4[] Transformations = new Matrix4[6] {
         Matrix4.Identity, //front
-        Matrix4.CreateRotationX(MathF.PI / 2), //bottom
+        Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(MathF.PI) * Matrix4.CreateRotationX(MathF.PI / 2), //bottom
         Matrix4.CreateRotationX(MathF.PI / 2) * Matrix4.CreateTranslation(0, 1, 0), //top
         Matrix4.CreateTranslation(-1, 0, -1) * Matrix4.CreateRotationY(MathF.PI), //back
         Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(-MathF.PI / 2) * Matrix4.CreateTranslation(1, 0, 1), //right

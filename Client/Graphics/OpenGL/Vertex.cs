@@ -24,7 +24,7 @@ public struct Vertex {
         Handle = GL.GenVertexArray();
         GL.BindVertexArray(Handle);
         GL.EnableVertexAttribArray(0);        
-        GL.EnableVertexAttribArray(3);
+        GL.EnableVertexAttribArray(1);
         
         GlLogger.WriteGLError();
     }
@@ -40,7 +40,7 @@ public struct Vertex {
 
         int size = Marshal.SizeOf<Vertex>();
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Position)));
-        GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
         GlLogger.WriteGLError();
     }
 
