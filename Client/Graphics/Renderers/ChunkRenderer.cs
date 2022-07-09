@@ -93,9 +93,9 @@ public class ChunkRenderer : IDisposable {
 
     public void Render() {
 
-        IndexBuffer.Bind();
         VertexBuffer.Bind();
         Vertex.UseVAO();
+        IndexBuffer.Bind();
         GlLogger.WriteGLError();
 
         GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);

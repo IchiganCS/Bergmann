@@ -45,15 +45,12 @@ public class Window : GameWindow {
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
-    private Chunk[,] Chunks { get; set; }
-    private ChunkRenderer[,] ChunkRenderers { get; set; }
+    private WorldRenderer WorldRenderer { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
         Quaternion.FromEulerAngles(Eulers.Y, 0, 0);
 
-    private OpenGL.Buffer Vertices { get; set; }
-    private OpenGL.Buffer Indices { get; set; }
 
     protected override void OnLoad() {
         VSync = VSyncMode.On;
@@ -71,30 +68,10 @@ public class Window : GameWindow {
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
 
-        Vertices = new(BufferTarget.ArrayBuffer);
-        Vertices.Fill(new Vertex[] {
-            new() {Position = new(0, 1, 0), TexCoord = new(0, 1)},
-            new() {Position = new(1, 0, 0), TexCoord = new(1, 0)},
-            new() {Position = new(1, 1, 0), TexCoord = new(1, 1)},
-            new() {Position = new(0, 0, 0), TexCoord = new(0, 0)},
-        });
-        Vertex.UseVAO();
-        Indices = new(BufferTarget.ElementArrayBuffer);
-        Indices.Fill(new uint[] {
-            0, 1, 2,
-            0, 2, 3
-        });
 
-
-        Chunks = new Chunk[16, 16];
-        ChunkRenderers = new ChunkRenderer[16, 16];
-        for (int i = 0; i < 16; i++) {
-            for (int j = 0; j < 16; j++) {
-                Chunks[i, j] = new();
-                Chunks[i, j].Offset = new Vector3i(i, 0, j) * 16;
-                ChunkRenderers[i, j] = new(Chunks[i, j]);
-            }
-        }
+        World world = new World();
+        WorldRenderer = new(world);
+        world.InitChunks();
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(0, 0);
@@ -169,12 +146,7 @@ public class Window : GameWindow {
         Program.SetUniform("pvm", viewMat * projMat);
         GlLogger.WriteGLError();
 
-        //for (int i = 0; i < 16; i++) {
-        //    for (int j = 0; j < 16; j++) {
-        //        ChunkRenderers[i, j].Render();
-        //    }
-        //}
-        ChunkRenderers[0, 0].Render();
+        WorldRenderer.Render();
 
         Context.SwapBuffers();
     }
