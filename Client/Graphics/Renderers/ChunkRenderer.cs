@@ -16,6 +16,7 @@ public class ChunkRenderer : IDisposable {
     /// </summary>
     private Dictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
+#pragma warning disable CS8618
     public ChunkRenderer(Chunk chunk) {
         Chunk = chunk;
 
@@ -24,6 +25,7 @@ public class ChunkRenderer : IDisposable {
         BuildCache();
         SendToGpu();
     }
+#pragma warning restore CS8618
 
     private void BuildCache() {
 
