@@ -15,11 +15,13 @@ public class WorldRenderer : IDisposable {
     }
 
     private void NewChunkRenderer(Chunk newChunk) {
+        ChunkRenderer n = new(newChunk);
+
         if (ChunkRenderers.ContainsKey(newChunk.Key)) {
             ChunkRenderers[newChunk.Key].Dispose();
-            ChunkRenderers[newChunk.Key] = new(newChunk);
+            ChunkRenderers[newChunk.Key] = n;
         } else {
-            ChunkRenderers.Add(newChunk.Key, new(newChunk));
+            ChunkRenderers.Add(newChunk.Key, n);
         }
     }
 

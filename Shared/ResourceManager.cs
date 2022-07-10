@@ -2,8 +2,8 @@ namespace Shared;
 
 public static class ResourceManager {
 
-    public enum ResourceType {
-        Shaders, Images
+    public enum Type {
+        Shaders, Images, Textures
     }
 
     private static string? _Root;
@@ -18,10 +18,10 @@ public static class ResourceManager {
         }
     }
 
-    public static string FullPath(ResourceType type, string name) {
+    public static string FullPath(Type type, string name) {
         return Path.Combine(Root, type.ToString(), name);
     }
-    public static string ReadFile(ResourceType type, string name) {
+    public static string ReadFile(Type type, string name) {
         return File.ReadAllText(FullPath(type, name));
     }
 }

@@ -28,8 +28,8 @@ public class Window : GameWindow {
 
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
-        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.ResourceType.Shaders, "Box.frag"));
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.vert"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));
 
         Program = new();
         Program.AddShader(VertexShader);

@@ -40,5 +40,5 @@ public class World {
     /// <summary>
     /// This event is called after loading a chunk. All arguments are initialized and the list is already updated.
     /// </summary>
-    public event ChunkLoadingDelegate OnChunkLoading;
+    public event ChunkLoadingDelegate OnChunkLoading = default!;
 }

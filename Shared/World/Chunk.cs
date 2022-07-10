@@ -73,5 +73,5 @@ public class Chunk {
     /// <summary>
     /// Called whenever any block changes states or the blocks itself change
     /// </summary>
-    public event UpdateDelegate OnUpdate;
+    public event UpdateDelegate OnUpdate = default!;
 }
