@@ -50,6 +50,7 @@ public class Window : GameWindow {
     private Texture2D Dirt { get; set; }
 
     private WorldRenderer WorldRenderer { get; set; }
+    private World World { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -73,9 +74,9 @@ public class Window : GameWindow {
         GL.FrontFace(FrontFaceDirection.Ccw);
 
 
-        World world = new World();
-        WorldRenderer = new(world);
-        world.InitChunks();
+        World = new World();
+        WorldRenderer = new(World);
+        World.InitChunks();
 
         using Image<Rgba32> dirtSide = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "dirt_side.jpg")).CloneAs<Rgba32>();
 
@@ -96,6 +97,14 @@ public class Window : GameWindow {
     protected override void OnUpdateFrame(FrameEventArgs args) {
         if (MouseState.IsButtonDown(MouseButton.Left))
             CursorState = CursorState.Grabbed;
+
+        if (MouseState.IsButtonPressed(MouseButton.Right)) {
+            //destroy block
+            var (pos, face) = World.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
+            if (hit) {
+                World.SetBlockAt(pos, 0);
+            }
+        }
 
         if (!IsFocused || CursorState != CursorState.Grabbed)
             return;
@@ -141,8 +150,6 @@ public class Window : GameWindow {
         delta = Rotation * delta;
         Camera += delta;
         Camera += new Vector3(0, y, 0);
-
-        
     }
 
     protected override void OnRenderFrame(FrameEventArgs args) {

@@ -2,7 +2,8 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
 
-public class Block {
+public struct Block {
+    #region Statics
     public enum Face {
         Front, Bottom, Top, Back, Right, Left
     }
@@ -12,6 +13,78 @@ public class Block {
     public static readonly Vector3i[] FaceToVector = new Vector3i[6] {
         -Vector3i.UnitZ, -Vector3i.UnitY, Vector3i.UnitY, Vector3i.UnitZ, Vector3i.UnitX, -Vector3i.UnitX
     };
+
+    /// <summary>
+    /// Gets the face of the block where position lies in the block and is hit from <see cref="incomingDirection"/>.
+    /// Position is treated to be in the base block at (0, 0, 0).
+    /// </summary>
+    /// <param name="position">A position in the block</param>
+    /// <param name="incomingDirection">The direction from which a ray is cast.</param>
+    /// <param name="hitPoint">The projected position through which incoming direction passes on the block: 
+    /// It is as such guaranteed that at least one coordinate is either 1 or 0 
+    /// to be on the side of the block.</param>
+    /// <returns></returns>
+    public static Face GetFaceFromHit(Vector3 position, Vector3 incomingDirection, out Vector3 hitPoint) {
+        //calculate how long it would take for each face to be hit.
+        //for that, determine how much space we need to travel in a direction
+        //then divide that space through the velocity
+        //the smallest time will be hit
+        float spaceX, spaceY, spaceZ;
+        float timeX, timeY, timeZ;
+        if (incomingDirection.X < 0)
+            spaceX = 1 - position.X;
+        else
+            spaceX = position.X;
+
+        timeX = spaceX / Math.Abs(incomingDirection.X);
+
+        if (incomingDirection.Y < 0)
+            spaceY = 1 - position.Y;
+        else
+            spaceY = position.Y;
+
+        timeY = spaceY / Math.Abs(incomingDirection.Y);
+
+        if (incomingDirection.Z < 0)
+            spaceZ = 1 - position.Z;
+        else
+            spaceZ = position.Z;
+
+        timeZ = spaceZ / Math.Abs(incomingDirection.Z);
+
+        if (timeX < timeY) {
+            if (timeX < timeZ) {
+                hitPoint = position + (-incomingDirection * timeX);
+                if (incomingDirection.X > 0)
+                    return Face.Left;
+                else
+                    return Face.Right;
+            }
+            else {
+                hitPoint = position + (-incomingDirection * timeZ);
+                if (incomingDirection.Z > 0)
+                    return Face.Front;
+                else
+                    return Face.Back;
+            }
+        }
+        else {
+            if (timeY < timeZ) {
+                hitPoint = position + (-incomingDirection * timeY);
+                if (incomingDirection.Y > 0)
+                    return Face.Bottom;
+                else
+                    return Face.Top;
+            }
+            else {
+                hitPoint = position + (-incomingDirection * timeZ);
+                if (incomingDirection.Z > 0)
+                    return Face.Front;
+                else
+                    return Face.Back;
+            }
+        }
+    }
 
     /// <summary>
     /// Apply the transformation to <see cref="FrontPositions"/> given by <see cref="Face"/> to get the transformed side.
@@ -83,5 +156,15 @@ public class Block {
         },
     };
 
+    #endregion Statics
 
+    public int Type { get; set; }
+    public Block(int type) {
+        Type = type;
+    }
+
+    public static implicit operator int(Block block)
+        => block.Type;
+    public static implicit operator Block(int type)
+        => new(type);
 }

@@ -1,4 +1,5 @@
 
+using Bergmann.Shared;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -92,7 +93,6 @@ public class ChunkRenderer : IDisposable {
 
 
     public void Render() {
-
         VertexBuffer.Bind();
         Vertex.UseVAO();
         IndexBuffer.Bind();
@@ -102,7 +102,7 @@ public class ChunkRenderer : IDisposable {
     }
 
     private void UpdateBuffers(List<Vector3i> positions) {
-        //TODO
+        BuildCache(); //TODO
 
         SendToGpu();
     }

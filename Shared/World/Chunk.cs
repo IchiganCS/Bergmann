@@ -19,13 +19,19 @@ public class Chunk {
     public Vector3i Offset { get; set; }
 
     /// <summary>
-    /// Returns a number unique to this chunk. Can be used as a key in a dictionary for example.
+    /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example.
     /// </summary>
-    public int Key {
-        get {
-            var (x, y, z) = Offset / 16;
-            return x * CHUNK_SIZE * CHUNK_SIZE + y * CHUNK_SIZE + z;
-        }
+    public int Key
+        => CalculateKey(Offset);
+
+    /// <summary>
+    /// Calculates the key for a chunk given a position in that chunk.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <returns></returns>
+    public static int CalculateKey(Vector3i position) {
+        var (x, y, z) = position / 16; //rounded down
+        return x * CHUNK_SIZE * CHUNK_SIZE + y * CHUNK_SIZE + z;
     }
 
     public Chunk() {
@@ -63,6 +69,37 @@ public class Chunk {
             return false; //TODO
             
         return Blocks[x, y, z] != 0;
+    }
+
+
+    public Block GetBlockWorld(Vector3i position)
+        => GetBlockLocal(position - Offset);
+
+    public Block GetBlockLocal(Vector3i position) {
+
+        var (x, y, z) = position;
+
+        if (x < 0 || x > CHUNK_SIZE - 1 ||
+            y < 0 || y > CHUNK_SIZE - 1 ||
+            z < 0 || z > CHUNK_SIZE - 1)
+            return 0; //TODO
+
+        return Blocks[x, y, z];
+    }
+
+    public void SetBlockWorld(Vector3i position, Block block)
+        => SetBlockLocal(position - Offset, block);
+
+    public void SetBlockLocal(Vector3i position, Block block) {
+        var (x, y, z) = position;
+
+        if (x < 0 || x > CHUNK_SIZE - 1 ||
+            y < 0 || y > CHUNK_SIZE - 1 ||
+            z < 0 || z > CHUNK_SIZE - 1)
+            return;
+
+        Blocks[x, y, z] = block;
+        OnUpdate?.Invoke(new(){position});
     }
 
     /// <summary>
