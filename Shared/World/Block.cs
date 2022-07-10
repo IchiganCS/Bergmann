@@ -2,6 +2,11 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
 
+/// <summary>
+/// Block is effectively an integer stored in <see cref="Block.Type"/>. Implicit conversions exist.
+/// All information for type can be statically retrieved by methods, e.g. texture coordinates and so on.
+/// This struct also defines a lot of static methods/members for working geometrically with blocks
+/// </summary>
 public struct Block {
     #region Statics
     public enum Face {

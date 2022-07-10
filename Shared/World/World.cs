@@ -7,8 +7,7 @@ public class World {
     public static int ColumnHeight { get; private set; } = 2;
 
     /// <summary>
-    /// Holds Distance * Distance elements. To get a chunk at offset (n, ..., m), access n * Distance + m.
-    /// The elements of the list are a vertical list (bottom to top) of a chunk column.
+    /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>
     /// </summary>
     public Dictionary<int, Chunk> Chunks { get; set; }
 
@@ -98,7 +97,7 @@ public class World {
                 hasHit = false;
                 return (new(0, 0, 0), Block.Face.Front);
             }
-            
+
             position = hit + flooredPosition + directionDelta;
         }
         

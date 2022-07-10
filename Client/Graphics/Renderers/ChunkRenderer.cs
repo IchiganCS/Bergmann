@@ -28,6 +28,10 @@ public class ChunkRenderer : IDisposable {
     }
 #pragma warning restore CS8618
 
+    /// <summary>
+    /// Looks up each block and each face and loads the Cache. This is a very costly operation and should 
+    /// preferabbly only executed once.
+    /// </summary>
     private void BuildCache() {
 
         Cache = new();
@@ -65,6 +69,10 @@ public class ChunkRenderer : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Assembles the contiguous arrays from the Cache and writes it to buffers. 
+    /// This is "quite" a costly operation.
+    /// </summary>
     private void SendToGpu() {
         if (VertexBuffer is not null)
             VertexBuffer.Dispose();
@@ -91,7 +99,9 @@ public class ChunkRenderer : IDisposable {
         IndexBuffer.Fill(indices.ToArray());
     }
 
-
+    /// <summary>
+    /// Binds all buffers automatically and renders this chunk. The texture atlas needs to be bound though.
+    /// </summary>
     public void Render() {
         VertexBuffer.Bind();
         Vertex.UseVAO();
@@ -101,6 +111,11 @@ public class ChunkRenderer : IDisposable {
         GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
     }
 
+    /// <summary>
+    /// Updates the cache, since rebuilding is expensive. This is an optimization though, theoretically
+    /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
+    /// </summary>
+    /// <param name="positions"></param>
     private void UpdateBuffers(List<Vector3i> positions) {
         BuildCache(); //TODO
 

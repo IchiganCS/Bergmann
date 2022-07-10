@@ -2,7 +2,16 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
 
+/// <summary>
+/// This Chunk holds a three dimensional integer array (<see cref="int"/> = <see cref="Block"/>) of height, width and depth of <see cref="Chunk.CHUNK_SIZE"/>.
+/// Chunks exist because handling single blocks is hard to do and inefficient in some ways (rendering for example). However, since this disables single access to blocks,
+/// chunks can only be updated overall. They can of course try to retain the advantage of updating only single blocks. 
+/// Effectively, chunks are a constant manager for a number of blocks. 
+/// </summary>
 public class Chunk {
+    /// <summary>
+    /// It might be wise to *not* change this value. Since it's used for storing in files :)
+    /// </summary>
     public const int CHUNK_SIZE = 16;
 
     /// <summary>
@@ -19,7 +28,8 @@ public class Chunk {
     public Vector3i Offset { get; set; }
 
     /// <summary>
-    /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example.
+    /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
+    /// The key is calculated using <see cref="CalculateKey"/>.
     /// </summary>
     public int Key
         => CalculateKey(Offset);
@@ -27,8 +37,8 @@ public class Chunk {
     /// <summary>
     /// Calculates the key for a chunk given a position in that chunk.
     /// </summary>
-    /// <param name="position"></param>
-    /// <returns></returns>
+    /// <param name="position">Any block position; the returned key is the key to the chunk which holds position</param>
+    /// <returns>The key to the chunk</returns>
     public static int CalculateKey(Vector3i position) {
         var (x, y, z) = position / 16; //rounded down
         return x * CHUNK_SIZE * CHUNK_SIZE + y * CHUNK_SIZE + z;
@@ -42,6 +52,11 @@ public class Chunk {
                     Blocks[i, j, k] = 1;
     }
 
+    /// <summary>
+    /// Gets a list of every block in the chunk. Since this is a three dimensional pass, this 
+    /// can be quite expensive.
+    /// </summary>
+    /// <returns>A list filled in no particular order</returns>
     public List<Vector3i> EveryBlock() {
         List<Vector3i> ls = new();
         for (int i = 0; i < Blocks.GetLength(0); i++)
@@ -71,10 +86,18 @@ public class Chunk {
         return Blocks[x, y, z] != 0;
     }
 
-
+    /// <summary>
+    /// The world wrapper for <see cref="GetBlockLocal"/>. Read its documentation, but replace chunk space by world space, 
+    /// e.g. the position is understood to be a world space position.
+    /// </summary>
     public Block GetBlockWorld(Vector3i position)
         => GetBlockLocal(position - Offset);
 
+    /// <summary>
+    /// Gets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater than 16 don't make sense
+    /// </summary>
+    /// <param name="position">A vector in chunk space</param>
+    /// <returns>The block at position</returns>
     public Block GetBlockLocal(Vector3i position) {
 
         var (x, y, z) = position;
@@ -87,9 +110,18 @@ public class Chunk {
         return Blocks[x, y, z];
     }
 
+    /// <summary>
+    /// The world wrapper for <see cref="SetBlockLocal"/>. Read its documentation, but replace chunk space by world space, 
+    /// e.g. the position is understood to be a world space position.
+    /// </summary>
     public void SetBlockWorld(Vector3i position, Block block)
         => SetBlockLocal(position - Offset, block);
 
+    /// <summary>
+    /// Sets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater than 16 don't make sense
+    /// </summary>
+    /// <param name="position">A vector in chunk space</param>
+    /// <param name="block">The block to be placed into the chunk</param>
     public void SetBlockLocal(Vector3i position, Block block) {
         var (x, y, z) = position;
 
