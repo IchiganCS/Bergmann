@@ -5,36 +5,32 @@ namespace Bergmann.Client.Graphics.OpenGL.Renderers;
 public class WorldRenderer : IDisposable {
     private World World { get; set; }
 
-    /// <summary>
-    /// Holds a chunk renderer for each Chunk in the world. The place is (x * World.Distance + z) * y
-    /// Can be replaced when the world loads a new chunk. Care for disposing.
-    /// </summary>
-    private ChunkRenderer[] ChunkRenderers { get; set; }
+    private Dictionary<int, ChunkRenderer> ChunkRenderers{ get; set; }
 
     public WorldRenderer(World world) {
         World = world;
-        ChunkRenderers = new ChunkRenderer[World.Distance * World.Distance * World.ColumnHeight];
+        ChunkRenderers = new();
 
         World.OnChunkLoading += NewChunkRenderer;
     }
 
-    private void NewChunkRenderer(Chunk newChunk, int x, int y, int z) {
-        int pos = (x * World.Distance + z) * y;
-
-        if (ChunkRenderers[pos] is not null)
-            ChunkRenderers[pos]!.Dispose();
-
-        ChunkRenderers[pos] = new(newChunk);
+    private void NewChunkRenderer(Chunk newChunk) {
+        if (ChunkRenderers.ContainsKey(newChunk.Key)) {
+            ChunkRenderers[newChunk.Key].Dispose();
+            ChunkRenderers[newChunk.Key] = new(newChunk);
+        } else {
+            ChunkRenderers.Add(newChunk.Key, new(newChunk));
+        }
     }
 
     public void Render() {
-        foreach (ChunkRenderer cr in ChunkRenderers)
+        foreach (ChunkRenderer cr in ChunkRenderers.Values)
             cr?.Render();
     }
 
 
     public void Dispose() {
-        foreach (ChunkRenderer cr in ChunkRenderers)
+        foreach (ChunkRenderer cr in ChunkRenderers.Values)
             cr.Dispose();
     }
 }

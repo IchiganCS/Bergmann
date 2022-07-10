@@ -5,8 +5,28 @@ namespace Bergmann.Shared.World;
 public class Chunk {
     public const int CHUNK_SIZE = 16;
 
+    /// <summary>
+    /// The blocks this chunk holds. It is always size (CHUNK_SIZE), size, size in its dimensions.
+    /// </summary>
+    /// <value></value>
     public int[,,] Blocks { get; set; }
+
+    /// <summary>
+    /// Since Blocks has coordinates relative to this chunk's origin, we need a way to transform it
+    /// to world space.
+    /// </summary>
+    /// <value></value>
     public Vector3i Offset { get; set; }
+
+    /// <summary>
+    /// Returns a number unique to this chunk. Can be used as a key in a dictionary for example.
+    /// </summary>
+    public int Key {
+        get {
+            var (x, y, z) = Offset / 16;
+            return x * CHUNK_SIZE * CHUNK_SIZE + y * CHUNK_SIZE + z;
+        }
+    }
 
     public Chunk() {
         Blocks = new int[CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE];
@@ -28,7 +48,7 @@ public class Chunk {
     }
 
     /// <summary>
-    /// Checks whether the block has a neighbor
+    /// Checks whether the block has a neighbor. At the chunk edges, false is returned
     /// </summary>
     /// <param name="position">The block whose neighbors are checked</param>
     /// <param name="direction">The direction relative to the block where there is a neighbor</param>

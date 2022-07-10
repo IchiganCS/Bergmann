@@ -8,31 +8,37 @@ public class World {
     /// Holds Distance * Distance elements. To get a chunk at offset (n, ..., m), access n * Distance + m.
     /// The elements of the list are a vertical list (bottom to top) of a chunk column.
     /// </summary>
-    public LinkedList<Chunk[]> Chunks { get; set; }
+    public Dictionary<int, Chunk> Chunks { get; set; }
 
     public World() {
         Chunks = new();
     }
 
-    public void InitChunks() {       
+    public void InitChunks() {
 
         for (int i = 0; i < Distance * Distance; i++) {
             int x = i / Distance, z = i % Distance;
-            Chunks.AddLast(LoadChunkColumn(x, z));
+
+            for (int y = 0; y < ColumnHeight; y++) {
+                Chunk newChunk = new() { Offset = new(x * 16, y * 16, z * 16) };
+                if (Chunks.ContainsKey(newChunk.Key))
+                    Chunks[newChunk.Key] = newChunk;
+                else
+                    Chunks.Add(newChunk.Key, newChunk);
+
+                OnChunkLoading?.Invoke(newChunk);
+            }
         }
     }
 
-    private Chunk[] LoadChunkColumn(int x, int z) {
 
-        Chunk[] column = new Chunk[ColumnHeight];
-        for (int i = 0; i < ColumnHeight; i++) {
-            column[i] = new() { Offset = new(x * 16, i * 16, z * 16) };
-            OnChunkLoading?.Invoke(column[i], x, i, z);
-        }
-
-        return column;
-    }
-
-    public delegate void ChunkLoadingDelegate(Chunk newChunk, int x, int y, int z);
+    /// <summary>
+    /// The delegate for the corresponding event
+    /// </summary>
+    /// <param name="newChunk">Chunk is fully initialized and already inserted</param>
+    public delegate void ChunkLoadingDelegate(Chunk newChunk);
+    /// <summary>
+    /// This event is called after loading a chunk. All arguments are initialized and the list is already updated.
+    /// </summary>
     public event ChunkLoadingDelegate OnChunkLoading;
 }
