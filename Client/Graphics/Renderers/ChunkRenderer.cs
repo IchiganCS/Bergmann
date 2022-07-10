@@ -42,10 +42,10 @@ public class ChunkRenderer : IDisposable {
 
                     Vector3[] ps = Block.Positions[(int)face];
                     Vertex[] positions = new Vertex[4] {
-                        new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(0, 0) },
-                        new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 0) },
-                        new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(1, 1) },
-                        new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 1) }
+                        new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0) },
+                        new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1) },
+                        new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1) },
+                        new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0) }
                     };
 
                     if (Cache.ContainsKey(key)) {

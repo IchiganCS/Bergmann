@@ -9,6 +9,8 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Shared;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Bergmann.Client.Graphics;
 
@@ -45,6 +47,8 @@ public class Window : GameWindow {
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
+    private Texture2D Dirt { get; set; }
+
     private WorldRenderer WorldRenderer { get; set; }
 
     private Quaternion Rotation =>
@@ -72,6 +76,11 @@ public class Window : GameWindow {
         World world = new World();
         WorldRenderer = new(world);
         world.InitChunks();
+
+        using Image<Rgba32> dirtSide = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "dirt_side.jpg")).CloneAs<Rgba32>();
+
+        Dirt = new();
+        Dirt.Write(dirtSide);
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(0, 0);
@@ -145,6 +154,10 @@ public class Window : GameWindow {
         projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
         Program.SetUniform("pvm", viewMat * projMat);
         GlLogger.WriteGLError();
+
+        GL.ActiveTexture(TextureUnit.Texture0);
+        Dirt.Bind();
+        GL.Uniform1(GL.GetUniformLocation(Program.Handle, "atlas"), 0);
 
         WorldRenderer.Render();
 
