@@ -2,8 +2,7 @@
 
 This article describes how the rendering is done in this project.
 
-## Thoughts
-
+## 3D
 Drawing a whole block is bad. You can possibly only see three of all faces, drawing six is irresponsibly expensive. For most blocks, they won't be visible at all.
 It seems that providing a unified way to render block*faces* is better overall and should be used. A disadvantage is the non-reusability of vertices. That's ok, using the same vertex while interpolating for different textures on the same block seems impossible to do right.
 
@@ -19,8 +18,7 @@ We can use a very specific information: The world won't change much. We keep a b
 
 The updating of the chunk buffers is of course the expensive part. This can be implemented fairly efficient. Sending the data to the GPU every frame is not too bad since it is only required when the chunk updates and even if every chunk is update on the same time: The vertices hold very little data and there aren't many of them.
 
-## Specification
-
+### Specification
 A draw call is made for every chunk which holds a buffer of the faces (vertices + indices: `glDrawElements`).
 
 - The vertex shader has access to the following uniforms:
@@ -32,6 +30,27 @@ A draw call is made for every chunk which holds a buffer of the faces (vertices 
 - The vertex shader computes `gl_Position` in NDC
 - The vertex shader passes to the fragment shader:
   - The normal of a primitive
-  - The position in world space
+  - The position in camera space
 - The fragment shader has access to:
-  - The position of light sources in world space
+  - The position of light sources in camera space
+
+
+
+
+## UI
+UI rendering is of course handled separately:
+There need to be two ways to access coordinates: Absolutely in pixel size and relative in percent. With these two, is the thought, can be every thing expressed.
+We need of course a whole new pipeline for UI rendering which isn't a big problem. With percent values, we have the great advantage that we can simply interpret them as coordinates in NDC so that any transformation is unnecessary. Transforming the absolute parts is very simple, we do it on the GPU so that everything is in one place (though it really doesn't matter).
+We of course need to tell the GPU the size of the display so that it may transform accurately.
+
+A new UIVertex class is necessary. Handling textures is the difficult part. We need to generate textures on the fly, especially for changing text.
+
+### Specification
+
+- The vertex shader has access to the following uniforms:
+  - The size of the window in pixels as vec2
+- The vertex shader inputs per vertex:
+  - The texture coordinates (maybe as vec3?) because of texture array
+  - The percent and absolute positioning
+- The fragment shader receives from the vertex shader
+  - the interpolated texure coordinates

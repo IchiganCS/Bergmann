@@ -98,7 +98,7 @@ public class Window : GameWindow {
         if (MouseState.IsButtonDown(MouseButton.Left))
             CursorState = CursorState.Grabbed;
 
-        if (MouseState.IsButtonPressed(MouseButton.Right)) {
+        if (MouseState.IsButtonDown(MouseButton.Right)) {
             //destroy block
             var (pos, face) = World.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
             if (hit) {
@@ -159,7 +159,8 @@ public class Window : GameWindow {
         Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
         projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
-        Program.SetUniform("pvm", viewMat * projMat);
+        Program.SetUniform("projection", projMat);
+        Program.SetUniform("view", viewMat);
         GlLogger.WriteGLError();
 
         GL.ActiveTexture(TextureUnit.Texture0);
