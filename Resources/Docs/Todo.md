@@ -7,9 +7,11 @@ Covering which still needs to be done.
   - Complex light sources with shadows
 - Skybox
 - UI
-- Raycasting
 - World generation
 - Texturing
+  - Make textures
+  - Stitch atlas
+  - Generate dynamically from blocks
 - Game logic
 - Walking and collision
 
