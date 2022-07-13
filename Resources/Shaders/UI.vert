@@ -12,8 +12,8 @@ out vec2 texCoord;
 void main() {
     texCoord = inTexCoord;
 
-    vec2 position = percent
+    vec2 position = (percent * 2  - 1.0)
         + absolute / windowsize;
 
-    gl_Position = vec4(position, 1.0, 1.0);
+    gl_Position = vec4(position, -1.0, 1.0);
 }

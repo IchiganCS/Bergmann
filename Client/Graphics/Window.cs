@@ -23,26 +23,58 @@ public class Window : GameWindow {
     }
 #pragma warning restore CS8618
 
-    private Program Program { get; set; }
+    private Program WorldProgram { get; set; }
+    private Program UIProgram { get; set; }
+
     private void MakeProgram() {
-        if (Program is not null)
-            Program.Dispose();
+        if (WorldProgram is not null)
+            WorldProgram.Dispose();
+
+        if (UIProgram is not null)
+            UIProgram.Dispose();
+
+        Shader VertexShader = new(ShaderType.VertexShader);
+        Shader Fragment = new(ShaderType.FragmentShader);
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.vert"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));        
+
+        WorldProgram = new();
+        WorldProgram.AddShader(VertexShader);
+        WorldProgram.AddShader(Fragment);
+        WorldProgram.Compile();
+        WorldProgram.OnLoad += () => {
+            GL.Enable(EnableCap.CullFace);
+            
+            Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
+            Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
+            projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
+            WorldProgram.SetUniform("projection", projMat);
+            WorldProgram.SetUniform("view", viewMat);
+            GlLogger.WriteGLError();
+        };
+
+        VertexShader.Dispose();
+        Fragment.Dispose();
 
         VertexShader = new(ShaderType.VertexShader);
         Fragment = new(ShaderType.FragmentShader);
-        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "UI.vert"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "UI.frag"));
 
-        Program = new();
-        Program.AddShader(VertexShader);
-        Program.AddShader(Fragment);
-        Program.Compile();
+        UIProgram = new();
+        UIProgram.AddShader(VertexShader);
+        UIProgram.AddShader(Fragment);
+        UIProgram.Compile();
 
-        Program.Active = Program;
+        UIProgram.OnLoad += () => {
+            GL.Disable(EnableCap.CullFace);
+
+            UIProgram.SetUniform("windowsize", new Vector2i(Size.X, Size.Y));
+        };
+
+        VertexShader.Dispose();
+        Fragment.Dispose();
     }
-
-    private Shader VertexShader { get; set; }
-    private Shader Fragment { get; set; }
 
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
@@ -51,6 +83,8 @@ public class Window : GameWindow {
 
     private WorldRenderer WorldRenderer { get; set; }
     private World World { get; set; }
+
+    private OpenGL.Buffer TestUI { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -69,7 +103,6 @@ public class Window : GameWindow {
 
         //note that face culling doesn't save runs on the vertex shader 
         //but only on the fragment shader - which still is quite nice to be honest.
-        GL.Enable(EnableCap.CullFace);
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
 
@@ -84,14 +117,22 @@ public class Window : GameWindow {
         Dirt.Write(dirtSide);
 
         Camera = new(0f, 0f, -3f);
-        Eulers = new(0, 0);
+        Eulers = new(20, 40);
+
+        TestUI = new OpenGL.Buffer(BufferTarget.ArrayBuffer);
+        TestUI.Fill(
+            new UIVertex[3] {
+                new() {},
+                new() {Percent=new(0, 0.5f)},
+                new() {Percent=new(0.5f, 0)}
+        });
     }
 
     protected override void OnUnload() {
-        Program.Dispose();
-        VertexShader.Dispose();
-        Fragment.Dispose();
+        WorldProgram.Dispose();
+        UIProgram.Dispose();
         Vertex.CloseVAO();
+        UIVertex.CloseVAO();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
@@ -155,19 +196,24 @@ public class Window : GameWindow {
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
+        Program.Active = WorldProgram;
 
-        Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
-        Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
-        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
-        Program.SetUniform("projection", projMat);
-        Program.SetUniform("view", viewMat);
-        GlLogger.WriteGLError();
 
         GL.ActiveTexture(TextureUnit.Texture0);
         Dirt.Bind();
-        GL.Uniform1(GL.GetUniformLocation(Program.Handle, "atlas"), 0);
+        GL.Uniform1(GL.GetUniformLocation(WorldProgram.Handle, "atlas"), 0);
 
         WorldRenderer.Render();
+
+
+        Program.Active = UIProgram;
+        TestUI.Bind();
+        UIVertex.UseVAO(); 
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GlLogger.WriteGLError();
+
+
 
         Context.SwapBuffers();
     }

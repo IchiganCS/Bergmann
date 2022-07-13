@@ -11,7 +11,8 @@ public class Program : IDisposable {
     private static Program? _Active;
     /// <summary>
     /// Sets the currently running program. It is not possible to set it to null.
-    /// Only accepts compiled non-null programs.
+    /// Only accepts compiled non-null programs. Calls the <see cref="OnLoad"/> and <see cref="OnUnload"/>
+    /// events when appropriate. The events are not invoked, if the program is already active.
     /// </summary>
     public static Program? Active { 
         get => _Active;
@@ -19,9 +20,18 @@ public class Program : IDisposable {
             if (value is null || !value.IsCompiled)
                 return;
 
+            if (_Active is not null) {
+                if (_Active.Handle == value.Handle)
+                    return;
+
+                _Active.OnUnload?.Invoke();
+            }
+
             GL.UseProgram(value.Handle);
             GlLogger.WriteGLError();
             _Active = value;
+
+            _Active.OnLoad.Invoke();
         } 
     }
 
@@ -111,6 +121,9 @@ public class Program : IDisposable {
         else if (item is Vector3 vector3)
             GL.Uniform3(pos, ref vector3);
 
+        else if (item is Vector2i vector2i)
+            GL.Uniform2(pos, ref vector2i);
+
         else
             Logger.Warn($"Couldn't bind uniform {name} for type {typeof(T).ToString()}. Unsupported type?");
     }
@@ -123,7 +136,20 @@ public class Program : IDisposable {
             SetUniform($"{name}[{i}]", items[i]);
     }
 
+    /// <summary>
+    /// Is called when the program is set as active. You can call whatever functions are necessary.
+    /// The main use case is to make program specific GL calls.
+    /// </summary>
+    public event LoadDelegate OnLoad = default!;
+    public delegate void LoadDelegate();
 
+
+
+    /// <summary>
+    /// Is called when the shader is unloaded. Can be used to restore the OpenGL state if necessary.
+    /// </summary>
+    public event UnloadDelegate OnUnload = default!;
+    public delegate void UnloadDelegate();
 
 
     public void Dispose() {

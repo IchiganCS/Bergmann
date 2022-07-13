@@ -41,10 +41,10 @@ public struct UIVertex {
 
         GL.BindVertexArray(Handle);
 
-        int size = Marshal.SizeOf<Vertex>();
-        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Percent)));
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Absolute)));
-        GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
+        int size = Marshal.SizeOf<UIVertex>();
+        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Percent)));
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Absolute)));
+        GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(TexCoord)));
         GlLogger.WriteGLError();
     }
 
