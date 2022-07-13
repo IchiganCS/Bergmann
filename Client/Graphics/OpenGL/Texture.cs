@@ -6,19 +6,23 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
-public class Texture2D : IDisposable {
+public class Texture : IDisposable {
     public int Handle { get; set; }
 
     public bool IsWritten { get; private set; }
 
-    public Texture2D() {
+    public TextureTarget Target { get; private set; }
+
+    public Texture(TextureTarget target) {
         Handle = GL.GenTexture();
 
-        GL.BindTexture(TextureTarget.Texture2D, Handle);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+        Target = target;
+
+        GL.BindTexture(Target, Handle);
+        GL.TexParameter(Target, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(Target, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(Target, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+        GL.TexParameter(Target, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
         IsWritten = false;
     }
@@ -27,7 +31,8 @@ public class Texture2D : IDisposable {
     /// Fills the texture
     /// </summary>
     /// <param name="image">Unaltered image by ImageSharp.</param>
-    public void Write(Image<Rgba32> image) {
+    /// <param name="level">The level if the texture is 3d or an array of 2d images. Can be ignored for 2d textures</param>
+    public void Write(Image<Rgba32> image, int level = 0) {
         if (IsWritten) {
             Logger.Warn("Tried to write to already finished texture");
             return;
@@ -37,7 +42,10 @@ public class Texture2D : IDisposable {
         image.Mutate(x => x.Flip(FlipMode.Vertical));
         byte[] pixels = new byte[4 * image.Width * image.Height];
         image.CopyPixelDataTo(pixels);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+        if (Target == TextureTarget.Texture2D)
+            GL.TexImage2D(Target, 0, PixelInternalFormat.Rgba, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+        else if (Target == TextureTarget.Texture2DArray)
+            GL.TexImage3D(Target, 0, PixelInternalFormat.Rgba, image.Width, image.Height, level, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
         GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
         IsWritten = true;

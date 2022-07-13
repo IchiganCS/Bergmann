@@ -1,6 +1,6 @@
 using Bergmann.Shared.World;
 
-namespace Bergmann.Client.Graphics.OpenGL.Renderers;
+namespace Bergmann.Client.Graphics.Renderers;
 
 public class WorldRenderer : IDisposable {
     private World World { get; set; }

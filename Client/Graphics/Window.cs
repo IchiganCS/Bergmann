@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.OpenGL.Renderers;
+using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Shared;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
@@ -19,7 +19,7 @@ public class Window : GameWindow {
     public Window(GameWindowSettings gameWindowSettings,
                   NativeWindowSettings nativeWindowSettings) :
         base(gameWindowSettings, nativeWindowSettings) {
-            
+
     }
 #pragma warning restore CS8618
 
@@ -36,7 +36,7 @@ public class Window : GameWindow {
         Shader VertexShader = new(ShaderType.VertexShader);
         Shader Fragment = new(ShaderType.FragmentShader);
         VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));        
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));
 
         WorldProgram = new();
         WorldProgram.AddShader(VertexShader);
@@ -44,8 +44,8 @@ public class Window : GameWindow {
         WorldProgram.Compile();
         WorldProgram.OnLoad += () => {
             GL.Enable(EnableCap.CullFace);
-            
-            Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));        
+
+            Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));
             Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
             projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
             WorldProgram.SetUniform("projection", projMat);
@@ -79,7 +79,7 @@ public class Window : GameWindow {
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
-    private Texture2D Dirt { get; set; }
+    private Texture Dirt { get; set; }
 
     private WorldRenderer WorldRenderer { get; set; }
     private World World { get; set; }
@@ -113,7 +113,7 @@ public class Window : GameWindow {
 
         using Image<Rgba32> dirtSide = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "dirt_side.jpg")).CloneAs<Rgba32>();
 
-        Dirt = new();
+        Dirt = new(TextureTarget.Texture2D);
         Dirt.Write(dirtSide);
 
         Camera = new(0f, 0f, -3f);
@@ -195,7 +195,7 @@ public class Window : GameWindow {
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        
+
         Program.Active = WorldProgram;
 
 
@@ -208,7 +208,7 @@ public class Window : GameWindow {
 
         Program.Active = UIProgram;
         TestUI.Bind();
-        UIVertex.UseVAO(); 
+        UIVertex.UseVAO();
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         GlLogger.WriteGLError();

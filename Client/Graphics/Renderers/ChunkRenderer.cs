@@ -1,15 +1,16 @@
 
+using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Client.Graphics.OpenGL.Renderers;
+namespace Bergmann.Client.Graphics.Renderers;
 
 public class ChunkRenderer : IDisposable {
     private Chunk Chunk { get; set; }
-    private Buffer VertexBuffer { get; set; }
-    private Buffer IndexBuffer { get; set; }
+    private OpenGL.Buffer VertexBuffer { get; set; }
+    private OpenGL.Buffer IndexBuffer { get; set; }
 
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
@@ -80,8 +81,8 @@ public class ChunkRenderer : IDisposable {
             IndexBuffer.Dispose();
 
 
-        VertexBuffer = new Buffer(BufferTarget.ArrayBuffer);
-        IndexBuffer = new Buffer(BufferTarget.ElementArrayBuffer);
+        VertexBuffer = new OpenGL.Buffer(BufferTarget.ArrayBuffer);
+        IndexBuffer = new OpenGL.Buffer(BufferTarget.ElementArrayBuffer);
 
         List<Vertex> vertices = new();
         List<uint> indices = new();
