@@ -18,6 +18,8 @@ We can use a very specific information: The world won't change much. We keep a b
 
 The updating of the chunk buffers is of course the expensive part. This can be implemented fairly efficient. Sending the data to the GPU every frame is not too bad since it is only required when the chunk updates and even if every chunk is update on the same time: The vertices hold very little data and there aren't many of them.
 
+> For more information on how textures are bound to which face, refer to `Block.md`
+
 ### Specification
 A draw call is made for every chunk which holds a buffer of the faces (vertices + indices: `glDrawElements`).
 

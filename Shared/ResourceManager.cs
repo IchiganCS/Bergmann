@@ -3,7 +3,7 @@ namespace Shared;
 public static class ResourceManager {
 
     public enum Type {
-        Shaders, Images, Textures, Jsons
+        Shaders, Images, Textures, Jsons, Fonts
     }
 
     private static string? _Root;

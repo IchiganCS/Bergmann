@@ -120,7 +120,7 @@ public class ChunkRenderer : IDisposable {
         List<Vertex> vertices = new();
         List<uint> indices = new();
 
-        // add the count of already processed vertices, so the indices do refer to the correct vertex
+        // add the count of already processed vertices, so the indices refer to the correct vertex
         uint vertexCount = 0;
         foreach (var renderStuff in Cache.Values) {
             vertices.AddRange(renderStuff.Item1);

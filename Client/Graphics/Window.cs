@@ -1,7 +1,5 @@
-using System.Runtime.InteropServices;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Shared;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -15,13 +13,13 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-#pragma warning disable CS8618
+    #pragma warning disable CS8618
     public Window(GameWindowSettings gameWindowSettings,
                   NativeWindowSettings nativeWindowSettings) :
         base(gameWindowSettings, nativeWindowSettings) {
 
     }
-#pragma warning restore CS8618
+    #pragma warning restore CS8618
 
     private Program WorldProgram { get; set; }
     private Program UIProgram { get; set; }
@@ -70,6 +68,7 @@ public class Window : GameWindow {
             GL.Disable(EnableCap.CullFace);
 
             UIProgram.SetUniform("windowsize", new Vector2i(Size.X, Size.Y));
+            UIProgram.SetUniform("text", 0);
         };
 
         VertexShader.Dispose();
@@ -83,7 +82,7 @@ public class Window : GameWindow {
 
     private WorldRenderer WorldRenderer { get; set; }
 
-    private OpenGL.Buffer TestUI { get; set; }
+    private TextRenderer textTest { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -103,6 +102,9 @@ public class Window : GameWindow {
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
 
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
         //note that face culling doesn't save runs on the vertex shader 
         //but only on the fragment shader - which still is quite nice to be honest.
         GL.CullFace(CullFaceMode.Back);
@@ -119,13 +121,7 @@ public class Window : GameWindow {
         Camera = new(0f, 0f, -3f);
         Eulers = new(20, 40);
 
-        TestUI = new OpenGL.Buffer(BufferTarget.ArrayBuffer);
-        TestUI.Fill(
-            new UIVertex[3] {
-                new() {},
-                new() {Percent=new(0, 0.5f)},
-                new() {Percent=new(0.5f, 0)}
-        });
+        textTest = new TextRenderer("This is a very long text to check the centering.", new(0, 200), new(0.5f, 0), new(0.5f, 0));
     }
 
     protected override void OnUnload() {
@@ -213,10 +209,7 @@ public class Window : GameWindow {
 
 
         Program.Active = UIProgram;
-        TestUI.Bind();
-        UIVertex.UseVAO();
-
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        textTest.Render();
         GlLogger.WriteGLError();
 
 

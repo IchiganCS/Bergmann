@@ -101,7 +101,7 @@ public class Texture : IDisposable {
     }
 
     /// <summary>
-    /// Binds the texture to its provided target
+    /// Binds the texture to its provided target. Does not handle texture unit, it's a pure bind call
     /// </summary>
     public void Bind() {
         GL.BindTexture(Target, Handle);

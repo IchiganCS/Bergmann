@@ -124,6 +124,9 @@ public class Program : IDisposable {
         else if (item is Vector2i vector2i)
             GL.Uniform2(pos, ref vector2i);
 
+        else if (item is int int1)
+            GL.Uniform1(pos, int1);
+
         else
             Logger.Warn($"Couldn't bind uniform {name} for type {typeof(T).ToString()}. Unsupported type?");
     }

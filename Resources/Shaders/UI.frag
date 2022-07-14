@@ -2,12 +2,12 @@
 
 in vec2 texCoord;
 
-uniform sampler2D atlas;
+uniform sampler2D text;
 
 out vec4 fragColor;
 
 void main() 
 {
-    //fragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    fragColor = texture(atlas, texCoord);
+    vec4 texColor = texture(text, texCoord);
+    fragColor = texColor;
 }
