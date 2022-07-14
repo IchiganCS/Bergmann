@@ -9,8 +9,6 @@ Covering which still needs to be done.
 - UI
 - World generation
 - Texturing
-  - Make textures
-  - Stitch atlas
   - Generate dynamically from blocks
 - Game logic
 - Walking and collision

@@ -7,19 +7,17 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Shared;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     public Window(GameWindowSettings gameWindowSettings,
                   NativeWindowSettings nativeWindowSettings) :
         base(gameWindowSettings, nativeWindowSettings) {
 
     }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
     private Program WorldProgram { get; set; }
     private Program UIProgram { get; set; }
@@ -78,11 +76,10 @@ public class Window : GameWindow {
     private Vector3 Camera { get; set; }
     private Vector2 Eulers { get; set; }
 
-    private Texture Dirt { get; set; }
-
     private WorldRenderer WorldRenderer { get; set; }
 
-    private TextRenderer textTest { get; set; }
+    private TextRenderer TextRender { get; set; }
+    private string Text{ get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -91,7 +88,6 @@ public class Window : GameWindow {
 
     protected override void OnLoad() {
         VSync = VSyncMode.On;
-        CursorState = CursorState.Grabbed;
 
         MakeProgram();
 
@@ -114,14 +110,9 @@ public class Window : GameWindow {
 
         WorldRenderer = new();
 
-        using Image<Rgba32> dirtSide = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "dirt_side.jpg")).CloneAs<Rgba32>();
-
-        Dirt = new(TextureTarget.Texture2D);
-        Dirt.Write(dirtSide);
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(20, 40);
-
     }
 
     protected override void OnUnload() {
@@ -130,14 +121,28 @@ public class Window : GameWindow {
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
         BlockRenderer.Dispose();
-        TextRenderer.Dispose();
+        TextRenderer.Delete();
+    }
+
+    protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
+        if (e.IsFocused)
+            CursorState = CursorState.Grabbed;
+        else
+            CursorState = CursorState.Normal;
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
-        if (MouseState.IsButtonDown(MouseButton.Left))
-            CursorState = CursorState.Grabbed;
+        if (!IsFocused)
+            return;
 
-        if (MouseState.IsButtonDown(MouseButton.Right)) {
+        if (KeyboardState.IsKeyPressed(Keys.Escape)) {
+            if (CursorState == CursorState.Grabbed)
+                CursorState = CursorState.Normal;
+            else
+                CursorState = CursorState.Grabbed;
+        }
+
+        if (MouseState.IsButtonDown(MouseButton.Left)) {
             //destroy block
             var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
             if (hit) {
@@ -145,22 +150,23 @@ public class Window : GameWindow {
             }
         }
 
-        if (!IsFocused || CursorState != CursorState.Grabbed)
-            return;
 
-        if (KeyboardState.IsKeyDown(Keys.Escape))
-            CursorState = CursorState.Normal;
-
-        if (KeyboardState.IsKeyPressed(Keys.Enter))
+        if (KeyboardState.IsKeyPressed(Keys.F12))
             MakeProgram();
 
-        if (KeyboardState.IsKeyPressed(Keys.F11)) {
-            if (WindowState == WindowState.Normal)
-                WindowState = WindowState.Fullscreen;
-            else
-                WindowState = WindowState.Normal;
-        }
 
+        if (KeyboardState.IsKeyPressed(Keys.J))
+            Text += "j";
+        if (KeyboardState.IsKeyPressed(Keys.K))
+            Text += "k";
+        if (KeyboardState.IsKeyPressed(Keys.L))
+            Text += "l";
+
+        if (KeyboardState.IsKeyPressed(Keys.Enter))
+            Text = "";
+
+
+        //movement
         Vector3 delta = new();
         if (KeyboardState.IsKeyDown(Keys.W))
             delta += (float)args.Time * new Vector3(0, 0, 0.8f);
@@ -189,16 +195,13 @@ public class Window : GameWindow {
         delta = Rotation * delta;
         Camera += delta;
         Camera += new Vector3(0, y, 0);
-
-
-        
     }
+
+
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-    
-        textTest = new TextRenderer($"Pos: {Camera.ToString()}", 60, new(30, -30), new(0, 1), new(0, 1));
 
         Program.Active = WorldProgram;
 
@@ -216,10 +219,15 @@ public class Window : GameWindow {
 
 
         Program.Active = UIProgram;
-        textTest.Render();
         GlLogger.WriteGLError();
 
 
+        TextRender?.Dispose();
+        TextRender = new TextRenderer($"Pos: {Camera.ToString()}", 60, new(30, -30), new(0, 1), new(0, 1));
+        TextRender.Render();
+        TextRender.Dispose();
+        TextRender = new TextRenderer($"Text: {Text}", 60, new(30, -100), new(0, 1), new(0, 1));
+        TextRender.Render();
 
         Context.SwapBuffers();
     }

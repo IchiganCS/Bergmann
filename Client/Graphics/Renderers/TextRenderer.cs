@@ -10,10 +10,12 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
-public class TextRenderer : BoxRenderer {    
+public class TextRenderer : BoxRenderer {
+    #pragma warning disable CS8618
     private static FontCollection FontCollection { get; set; } = new();
     private static Font DebugFont { get; set; }
     private static Texture DebugFontStack { get; set; }
+    #pragma warning restore CS8618
     private const string CHARS = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@(){}+=-*/.#:\\<>";
 
     /// <summary>
@@ -28,7 +30,7 @@ public class TextRenderer : BoxRenderer {
         Texture stack = new Texture(TextureTarget.Texture2DArray);
         stack.Reserve(size, size, CHARS.Length);
 
-        
+
         TextOptions options = new(font) {
 
         };
@@ -69,7 +71,7 @@ public class TextRenderer : BoxRenderer {
     /// <param name="anchor">Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right</param>
     public TextRenderer(string text, float height, Vector2 originAbs, Vector2 originPct, Vector2 anchor) :
         base(originAbs, originPct, anchor, new Vector2(height * text.Length, height), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c)))) {
-        
+
     }
 
     /// <summary>
@@ -82,7 +84,8 @@ public class TextRenderer : BoxRenderer {
         base.Render();
     }
 
-    public static new void Dispose() {
+
+    public static void Delete() {
         DebugFontStack.Dispose();
     }
 }
