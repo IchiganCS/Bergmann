@@ -16,6 +16,9 @@ public class Texture : IDisposable {
 
     public TextureTarget Target { get; private set; }
 
+    public int Width { get; private set; }
+    public int Height { get; private set; }
+
     /// <summary>
     /// Creates a new texture with sensible default parameters.
     /// </summary>
@@ -50,7 +53,13 @@ public class Texture : IDisposable {
     /// <param name="image">Unaltered image by ImageSharp.</param>
     /// <param name="level">The level if the texture is 3d or an array of 2d images. Can be ignored for 2d textures</param>
     public void Write(Image<Rgba32> image, int level = 0) {
-        
+        if (Width > 0 && Height > 0 && (image.Width != Width || image.Height != Height))
+            Logger.Warn("Supplied image doesn't fit the previously supplied dimensions");
+            
+        Width = image.Width;
+        Height = image.Height;
+
+
         GL.BindTexture(Target, Handle);
         image.Mutate(x => x.Flip(FlipMode.Vertical));
         byte[] pixels = new byte[4 * image.Width * image.Height];
@@ -89,6 +98,10 @@ public class Texture : IDisposable {
     /// <param name="height">The height of all images that should be stored</param>
     /// <param name="depth">The depth of the texture, the number of layers for 2d arrays or 3d textures. Can be ignored for a normal 2d texture</param>
     public void Reserve(int width, int height, int depth = 0) {
+        Width = width;
+        Height = height;
+
+
         GL.BindTexture(Target, Handle);
         if (Target == TextureTarget.Texture2D) {
             GL.TexStorage2D(TextureTarget2d.Texture2D, 1, SizedInternalFormat.Rgba8, width, height);

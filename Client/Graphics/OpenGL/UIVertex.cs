@@ -11,7 +11,7 @@ public struct UIVertex {
     public Vector2 Percent;
     public Vector2 Absolute;
 
-    public Vector2 TexCoord;
+    public Vector3 TexCoord;
 
 
     /// <summary>
@@ -44,7 +44,7 @@ public struct UIVertex {
         int size = Marshal.SizeOf<UIVertex>();
         GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Percent)));
         GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Absolute)));
-        GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(TexCoord)));
+        GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(TexCoord)));
         GlLogger.WriteGLError();
     }
 

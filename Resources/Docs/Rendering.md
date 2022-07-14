@@ -45,14 +45,15 @@ There need to be two ways to access coordinates: Absolutely in pixel size and re
 We need of course a whole new pipeline for UI rendering which isn't a big problem. With percent values, we have the great advantage that we can simply interpret them as coordinates in NDC so that any transformation is unnecessary. Transforming the absolute parts is very simple, we do it on the GPU so that everything is in one place (though it really doesn't matter).
 We of course need to tell the GPU the size of the display so that it may transform accurately.
 
-A new UIVertex class is necessary. Handling textures is the difficult part. We need to generate textures on the fly, especially for changing text.
+A new `UIVertex` class is necessary. Handling textures is the difficult part. We need to generate textures on the fly, especially for changing text. Testing has proven the last sentence to be impossible. Generating textures on the fly is possible, but computationally very expensive. We'd need a whole thread just for texture generation. We won't do that.
+If we only use monospace fonts, we could generate another 2d texture array and give each letter its own space. Then, similar to the chunks, we build the vertices for the letters and render them with a specific texture layer.
 
 ### Specification
 
 - The vertex shader has access to the following uniforms:
   - The size of the window in pixels as vec2
 - The vertex shader inputs per vertex:
-  - The texture coordinates (maybe as vec3?) because of texture array
+  - The texture coordinates as vec3 because of texture array
   - The percent and absolute positioning
 - The fragment shader receives from the vertex shader
   - the interpolated texure coordinates

@@ -82,7 +82,7 @@ public class Window : GameWindow {
 
     private WorldRenderer WorldRenderer { get; set; }
 
-    private BoxRenderer textTest { get; set; }
+    private TextRenderer textTest { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -97,6 +97,7 @@ public class Window : GameWindow {
 
         BlockInfo.ReadFromJson("Blocks.json");
         BlockRenderer.MakeTextureStack("Textures.json");
+        TextRenderer.Initialize();
 
         GL.ClearColor(0.0f, 0.0f, 1.0f, 0.0f);
         GL.Enable(EnableCap.DepthTest);
@@ -121,7 +122,6 @@ public class Window : GameWindow {
         Camera = new(0f, 0f, -3f);
         Eulers = new(20, 40);
 
-        textTest = BoxRenderer.MakeTextRenderer("This is a very long text to check the centering.", new(0, 200), new(0.5f, 0), new(0.5f, 0));
     }
 
     protected override void OnUnload() {
@@ -130,6 +130,7 @@ public class Window : GameWindow {
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
         BlockRenderer.Dispose();
+        TextRenderer.Dispose();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
@@ -188,10 +189,16 @@ public class Window : GameWindow {
         delta = Rotation * delta;
         Camera += delta;
         Camera += new Vector3(0, y, 0);
+
+
+        
     }
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+    
+        textTest = new TextRenderer($"Pos: {Camera.ToString()}", 60, new(30, -30), new(0, 1), new(0, 1));
 
         Program.Active = WorldProgram;
 

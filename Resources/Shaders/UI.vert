@@ -3,11 +3,11 @@
 //x is percent, y is absolute
 layout(location=0) in vec2 percent;
 layout(location=1) in vec2 absolute;
-layout(location=2) in vec2 inTexCoord;
+layout(location=2) in vec3 inTexCoord;
 
 uniform ivec2 windowsize;
 
-out vec2 texCoord;
+out vec3 texCoord;
 
 void main() {
     texCoord = inTexCoord;

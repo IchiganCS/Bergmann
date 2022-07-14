@@ -1,8 +1,8 @@
 #version 330 core
 
-in vec2 texCoord;
+in vec3 texCoord;
 
-uniform sampler2D text;
+uniform sampler2DArray text;
 
 out vec4 fragColor;
 
