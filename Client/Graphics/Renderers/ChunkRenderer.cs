@@ -5,6 +5,12 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
+/// <summary>
+/// Renders a chunk. It registers on the events of the specific chunk and updates automatically.
+/// This class is used extensively by <see cref="WorldRenderer"/>. It generally works by creating buffers on the gpu and achieving fast render calls.
+/// However, updates are therefore expensive, because the entire buffers need to be sent to the gpu whenever an update is called for.
+/// This class can be further optimized to work with multiple threads.
+/// </summary>
 public class ChunkRenderer : IDisposable {
     private Chunk Chunk { get; set; }
     private OpenGL.Buffer VertexBuffer { get; set; }
@@ -58,11 +64,11 @@ public class ChunkRenderer : IDisposable {
 
                 Vector3[] ps = Block.Positions[(int)face];
                 Vertex[] positions = new Vertex[4] {
-                        new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0, bi.GetLayerFromFace(face)) },
-                        new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1, bi.GetLayerFromFace(face)) },
-                        new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1, bi.GetLayerFromFace(face)) },
-                        new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0, bi.GetLayerFromFace(face)) }
-                    };
+                    new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0, bi.GetLayerFromFace(face)) },
+                    new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1, bi.GetLayerFromFace(face)) },
+                    new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1, bi.GetLayerFromFace(face)) },
+                    new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0, bi.GetLayerFromFace(face)) }
+                };
 
                 if (Cache.ContainsKey(key)) {
                     var old = Cache[key];
@@ -81,7 +87,7 @@ public class ChunkRenderer : IDisposable {
 
 
     /// <summary>
-    /// Updates the cache, since rebuilding is expensive. This is an optimization though, theoretically
+    /// Updates the cache at specific points, since rebuilding the entire cache is too expensive. This is an optimization though, theoretically
     /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
     /// </summary>
     /// <param name="positions"></param>
@@ -133,7 +139,7 @@ public class ChunkRenderer : IDisposable {
 
     
     /// <summary>
-    /// Binds all buffers automatically and renders this chunk. The texture atlas needs to be bound though.
+    /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding program need to be bound though.
     /// </summary>
     public void Render() {
         VertexBuffer.Bind();

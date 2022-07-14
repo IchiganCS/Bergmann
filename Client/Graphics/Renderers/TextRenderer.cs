@@ -38,12 +38,12 @@ public class TextRenderer : BoxRenderer {
         for (int i = 0; i < CHARS.Length; i++) {
             string sub = CHARS[i].ToString();
 
-
             FontRectangle bounds = TextMeasurer.Measure(sub, options);
             using Image<Rgba32> img = new(Configuration.Default, (int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height));
-            img.Mutate(x => x.BackgroundColor(Color.Transparent));
-            img.Mutate(x => x.DrawText(options, sub, Brushes.Solid(Color.White), Pens.Solid(Color.Black, 1.4f)));
-            img.Mutate(x => x.Resize(size, size));
+            img.Mutate(x => x.BackgroundColor(Color.Transparent)
+                .DrawText(options, sub, Brushes.Solid(Color.White), Pens.Solid(Color.Black, 1.4f))
+                .Resize(size, size));
+                
             stack.Write(img, i);
         }
         GlLogger.WriteGLError();
