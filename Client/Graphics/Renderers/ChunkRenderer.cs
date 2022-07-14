@@ -18,59 +18,90 @@ public class ChunkRenderer : IDisposable {
     /// </summary>
     private Dictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
-#pragma warning disable CS8618
+    #pragma warning disable CS8618
     public ChunkRenderer(Chunk chunk) {
         Chunk = chunk;
 
-        Chunk.OnUpdate += UpdateBuffers;
+        Chunk.OnUpdate += Update;
 
         BuildCache();
         SendToGpu();
     }
-#pragma warning restore CS8618
+    #pragma warning restore CS8618
 
     /// <summary>
     /// Looks up each block and each face and loads the Cache. This is a very costly operation and should 
     /// preferabbly only executed once.
     /// </summary>
     private void BuildCache() {
-
         Cache = new();
 
-        List<Vector3i> blocks = Chunk.EveryBlock();
+        foreach (Vector3i block in  Chunk.EveryBlock()) {
+            UpdateCacheAt(block);
+        }
+    }
 
-        foreach (Vector3i block in blocks) {
-            BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
+    /// <summary>
+    /// Updates the cache at a specific position.
+    /// </summary>
+    /// <param name="position">The position in chunk space</param>
+    private void UpdateCacheAt(Vector3i block) {
+        BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
+        int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
+        Cache.Remove(key);
 
-            foreach (Block.Face face in Block.AllFaces) {
-                int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
+        if (bi.ID == 0)
+            return;
 
-                if (!Chunk.HasNeighborAt(block, face)) {
-                    //we have to add it to the dicitionary
+        foreach (Block.Face face in Block.AllFaces) {
 
-                    Vector3[] ps = Block.Positions[(int)face];
-                    Vertex[] positions = new Vertex[4] {
+            if (!Chunk.HasNeighborAt(block, face)) {
+                //we have to add it to the dicitionary
+
+                Vector3[] ps = Block.Positions[(int)face];
+                Vertex[] positions = new Vertex[4] {
                         new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0, bi.GetLayerFromFace(face)) },
                         new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1, bi.GetLayerFromFace(face)) },
                         new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1, bi.GetLayerFromFace(face)) },
                         new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0, bi.GetLayerFromFace(face)) }
                     };
 
-                    if (Cache.ContainsKey(key)) {
-                        var old = Cache[key];
-                        List<Vertex> newVertex = old.Item1.ToList();
-                        newVertex.AddRange(positions);
-                        List<uint> newIndices = old.Item2.ToList();
-                        newIndices.AddRange(Block.Indices.Select(x => x + (uint)old.Item1.Length));
-                        Cache[key] = (newVertex.ToArray(), newIndices.ToArray());
-                    }
-                    else {
-                        Cache.Add(key, (positions, Block.Indices));
-                    }
+                if (Cache.ContainsKey(key)) {
+                    var old = Cache[key];
+                    List<Vertex> newVertex = old.Item1.ToList();
+                    newVertex.AddRange(positions);
+                    List<uint> newIndices = old.Item2.ToList();
+                    newIndices.AddRange(Block.Indices.Select(x => x + (uint)old.Item1.Length));
+                    Cache[key] = (newVertex.ToArray(), newIndices.ToArray());
+                }
+                else {
+                    Cache.Add(key, (positions, Block.Indices));
                 }
             }
         }
     }
+
+
+    /// <summary>
+    /// Updates the cache, since rebuilding is expensive. This is an optimization though, theoretically
+    /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
+    /// </summary>
+    /// <param name="positions"></param>
+    private void Update(List<Vector3i> positions) {
+        List<Vector3i> all = new();
+
+        all.AddRange(positions);
+        foreach (IEnumerable<Vector3i> neighbors in positions.Select(x => Block.AllNeighbors(x)))
+            all.AddRange(neighbors);
+
+        all.ForEach(x => {
+            if (Chunk.ComputeKey(x + Chunk.Offset) == Chunk.Key)
+                UpdateCacheAt(x);
+        });
+
+        SendToGpu();
+    }
+
 
     /// <summary>
     /// Assembles the contiguous arrays from the Cache and writes it to buffers. 
@@ -102,6 +133,7 @@ public class ChunkRenderer : IDisposable {
         IndexBuffer.Fill(indices.ToArray());
     }
 
+    
     /// <summary>
     /// Binds all buffers automatically and renders this chunk. The texture atlas needs to be bound though.
     /// </summary>
@@ -114,17 +146,6 @@ public class ChunkRenderer : IDisposable {
         GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
     }
 
-    /// <summary>
-    /// Updates the cache, since rebuilding is expensive. This is an optimization though, theoretically
-    /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
-    /// </summary>
-    /// <param name="positions"></param>
-    private void UpdateBuffers(List<Vector3i> positions) {
-        BuildCache(); //TODO
-
-        SendToGpu();
-    }
-    
     public void Dispose() {
         VertexBuffer.Dispose();
         IndexBuffer.Dispose();

@@ -82,7 +82,6 @@ public class Window : GameWindow {
     private Texture Dirt { get; set; }
 
     private WorldRenderer WorldRenderer { get; set; }
-    private World World { get; set; }
 
     private OpenGL.Buffer TestUI { get; set; }
 
@@ -110,9 +109,7 @@ public class Window : GameWindow {
         GL.FrontFace(FrontFaceDirection.Ccw);
 
 
-        World = new World();
-        WorldRenderer = new(World);
-        World.InitChunks();
+        WorldRenderer = new();
 
         using Image<Rgba32> dirtSide = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "dirt_side.jpg")).CloneAs<Rgba32>();
 
@@ -145,9 +142,9 @@ public class Window : GameWindow {
 
         if (MouseState.IsButtonDown(MouseButton.Right)) {
             //destroy block
-            var (pos, face) = World.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
+            var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
             if (hit) {
-                World.SetBlockAt(pos, 0);
+                World.Instance.SetBlockAt(pos, 0);
             }
         }
 

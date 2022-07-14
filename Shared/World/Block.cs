@@ -24,6 +24,15 @@ public struct Block {
     };
 
     /// <summary>
+    /// Gets all neighboring blocks from a given position, using an iteration over <see cref="FaceToVector"/>
+    /// </summary>
+    /// <param name="position">The origin position</param>
+    /// <returns>All neighboring blocks; the origin is not included</returns>
+    public static IEnumerable<Vector3i> AllNeighbors(Vector3i position) {
+        return Enumerable.Range(0, 6).Select(x => position + FaceToVector[x]);
+    }
+
+    /// <summary>
     /// Gets the face of the block where position lies in the block and is hit from <see cref="incomingDirection"/>.
     /// Position is treated to be in the base block at (0, 0, 0).
     /// </summary>

@@ -6,17 +6,22 @@ public class World {
     public static int Distance { get; private set; } = 5;
     public static int ColumnHeight { get; private set; } = 2;
 
+
     /// <summary>
-    /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>
+    /// The current world used by the entire environment
+    /// </summary>
+    public static World Instance { get; set; } = new();
+
+    /// <summary>
+    /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded. To observer the dictionary, register on
+    /// <see cref="OnChunkLoading"/>
     /// </summary>
     public Dictionary<int, Chunk> Chunks { get; set; }
 
-    public World() {
+    private World() {
         Chunks = new();
-    }
 
-    public void InitChunks() {
-
+        
         for (int i = 0; i < Distance * Distance; i++) {
             int x = i / Distance, z = i % Distance;
 
@@ -31,10 +36,21 @@ public class World {
             }
         }
     }
+    
 
+    /// <summary>
+    /// Gets the chunk for the given <see cref="Chunk.Key"/>.
+    /// </summary>
+    /// <param name="key">The key as given by <see cref="Chunk.ComputeKey"/></param>
+    /// <returns>The chunk, null if the chunk is not loaded</returns>
+    public Chunk? GetChunk(int key) {
+        if (Chunks.ContainsKey(key))
+            return Chunks[key];
+        return null;
+    }
 
     public Block GetBlockAt(Vector3i position) {
-        int key = Chunk.CalculateKey(position);
+        int key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
             return 0;
 
@@ -43,7 +59,7 @@ public class World {
     }
 
     public void SetBlockAt(Vector3i position, Block block) {
-        int key = Chunk.CalculateKey(position);
+        int key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
             return;
 

@@ -14,13 +14,13 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// It could also be added to Block.cs but let's keep shared clean of any graphical issues.
 /// </summary>
 public static class BlockRenderer {
+    #pragma warning disable CS8618
     /// <summary>
     /// The texture stack is a 2d array of textures, compiled out of a supplied json file in <see cref="MakeTextureStack"/>.
     /// It can be bound and every block can find its appropriate textures if the layer specified in <see cref="BlockInfo"/> is used as the texture coordiante's
     /// z component.
     /// </summary>
-    #pragma warning disable CS8618
-    public static Texture TextureStack;
+    public static Texture TextureStack { get; set; }
     #pragma warning restore CS8618
 
     public static void MakeTextureStack(string filename) {

@@ -3,15 +3,16 @@ using Bergmann.Shared.World;
 namespace Bergmann.Client.Graphics.Renderers;
 
 public class WorldRenderer : IDisposable {
-    private World World { get; set; }
 
     private Dictionary<int, ChunkRenderer> ChunkRenderers{ get; set; }
 
-    public WorldRenderer(World world) {
-        World = world;
+    public WorldRenderer() {
         ChunkRenderers = new();
 
-        World.OnChunkLoading += NewChunkRenderer;
+        World.Instance.OnChunkLoading += NewChunkRenderer;
+        
+        foreach (Chunk ch in World.Instance.Chunks.Values)
+            NewChunkRenderer(ch);
     }
 
     private void NewChunkRenderer(Chunk newChunk) {

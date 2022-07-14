@@ -15,7 +15,7 @@ public class Chunk {
     public const int CHUNK_SIZE = 16;
 
     /// <summary>
-    /// The blocks this chunk holds. It is always size (CHUNK_SIZE), size, size in its dimensions.
+    /// The blocks this chunk holds. It is always size (<see cref="CHUNK_SIZE"/>), size, size in its dimensions.
     /// </summary>
     /// <value></value>
     public int[,,] Blocks { get; set; }
@@ -29,19 +29,19 @@ public class Chunk {
 
     /// <summary>
     /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
-    /// The key is calculated using <see cref="CalculateKey"/>.
+    /// The key is calculated using <see cref="ComputeKey"/>.
     /// </summary>
     public int Key
-        => CalculateKey(Offset);
+        => ComputeKey(Offset);
 
     /// <summary>
     /// Calculates the key for a chunk given a position in that chunk.
     /// </summary>
     /// <param name="position">Any block position; the returned key is the key to the chunk which holds position</param>
     /// <returns>The key to the chunk</returns>
-    public static int CalculateKey(Vector3i position) {
-        var (x, y, z) = position / 16; //rounded down
-        return x * CHUNK_SIZE * CHUNK_SIZE + y * CHUNK_SIZE + z;
+    public static int ComputeKey(Vector3i position) {
+        var (x, y, z) = (Vector3)position / 16f; //rounded down
+        return (int)Math.Floor(x) * CHUNK_SIZE * CHUNK_SIZE + (int)Math.Floor(y) * CHUNK_SIZE + (int)Math.Floor(z);
     }
 
     public Chunk() {
@@ -56,7 +56,7 @@ public class Chunk {
     /// Gets a list of every block in the chunk. Since this is a three dimensional pass, this 
     /// can be quite expensive.
     /// </summary>
-    /// <returns>A list filled in no particular order</returns>
+    /// <returns>A list filled in no particular order in chunk space</returns>
     public List<Vector3i> EveryBlock() {
         List<Vector3i> ls = new();
         for (int i = 0; i < Blocks.GetLength(0); i++)
@@ -135,12 +135,15 @@ public class Chunk {
     }
 
     /// <summary>
-    /// The delegate which is called when this chunk updates
+    /// The delegate which is called when this chunk updates. It may be called unnecessarily sometimes, ensure that your implementation is independent of the number
+    /// of calls
     /// </summary>
-    /// <param name="positions">The positions of each block that has changed. Either through replacment, deletion or any other update</param>
+    /// <param name="positions">The positions of each block that has changed. Either through replacment, deletion or any other update. 
+    /// Only includes those blocks that directly change. If the game logic dictates to update neighboring blocks for example, then those are passed as well.
+    /// If that is not the case, then the callee is responsible to update additional information. The positions are in chunk space.</param>
     public delegate void UpdateDelegate(List<Vector3i> positions);
     /// <summary>
-    /// Called whenever any block changes states or the blocks itself change
+    /// Called whenever any block changes states or the blocks itself change.
     /// </summary>
     public event UpdateDelegate OnUpdate = default!;
 }
