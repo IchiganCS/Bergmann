@@ -1,6 +1,6 @@
 #version 330 core
 
-//position is in global space!
+//position is in camera space!
 in vec3 position;
 in vec3 texCoord;
 

@@ -82,7 +82,7 @@ public class Window : GameWindow {
 
     private WorldRenderer WorldRenderer { get; set; }
 
-    private TextRenderer textTest { get; set; }
+    private BoxRenderer textTest { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -121,7 +121,7 @@ public class Window : GameWindow {
         Camera = new(0f, 0f, -3f);
         Eulers = new(20, 40);
 
-        textTest = new TextRenderer("This is a very long text to check the centering.", new(0, 200), new(0.5f, 0), new(0.5f, 0));
+        textTest = BoxRenderer.MakeTextRenderer("This is a very long text to check the centering.", new(0, 200), new(0.5f, 0), new(0.5f, 0));
     }
 
     protected override void OnUnload() {
