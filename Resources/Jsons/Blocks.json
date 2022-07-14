@@ -1,0 +1,17 @@
+{
+    "Blocks": [
+        {
+            "ID": 1,
+            "Name": "dirt",
+
+            "Type": "normal",
+
+            "TopTexture": 0,
+            "LeftTexture": 1,
+            "RightTexture": 1,
+            "FrontTexture": 1,
+            "BackTexture": 1,
+            "BottomTexture": 2
+        }
+    ]
+}

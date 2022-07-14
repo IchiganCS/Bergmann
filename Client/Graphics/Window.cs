@@ -97,6 +97,9 @@ public class Window : GameWindow {
 
         MakeProgram();
 
+        BlockInfo.ReadFromJson("Blocks.json");
+        BlockRenderer.MakeTextureStack("Textures.json");
+
         GL.ClearColor(0.0f, 0.0f, 1.0f, 0.0f);
         GL.Enable(EnableCap.DepthTest);
         GL.DepthFunc(DepthFunction.Less);
@@ -133,6 +136,7 @@ public class Window : GameWindow {
         UIProgram.Dispose();
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
+        BlockRenderer.Dispose();
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
@@ -200,8 +204,13 @@ public class Window : GameWindow {
 
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        Dirt.Bind();
-        GL.Uniform1(GL.GetUniformLocation(WorldProgram.Handle, "atlas"), 0);
+        GlLogger.WriteGLError();
+        BlockRenderer.TextureStack.Bind();
+        GlLogger.WriteGLError();
+        GL.Uniform1(GL.GetUniformLocation(WorldProgram.Handle, "stack"), 0);
+        GlLogger.WriteGLError();
+
+
 
         WorldRenderer.Render();
 

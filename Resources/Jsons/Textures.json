@@ -1,0 +1,17 @@
+{
+    "Size": 16,
+    "Textures": [
+        {
+            "Layer": 0,
+            "Texture": "dirt_top.jpg"
+        },
+        {
+            "Layer": 1,
+            "Texture": "dirt_side.jpg"
+        },
+        {
+            "Layer": 2,
+            "Texture": "dirt_bottom.jpg"
+        }
+    ]
+}

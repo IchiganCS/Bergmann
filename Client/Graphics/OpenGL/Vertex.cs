@@ -10,7 +10,7 @@ namespace Bergmann.Client.Graphics.OpenGL;
 public struct Vertex {
     public Vector3 Position;
 
-    public Vector2 TexCoord;
+    public Vector3 TexCoord;
 
     /// <summary>
     /// The handle to a VAO object applicable to all instances of this class.
@@ -40,7 +40,7 @@ public struct Vertex {
 
         int size = Marshal.SizeOf<Vertex>();
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(Position)));
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
+        GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<Vertex>(nameof(TexCoord)));
         GlLogger.WriteGLError();
     }
 

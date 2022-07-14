@@ -1,4 +1,8 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using OpenTK.Mathematics;
+using Shared;
 
 namespace Bergmann.Shared.World;
 
@@ -161,9 +165,17 @@ public struct Block {
         },
     };
 
+    public const int INFO_MASK = 0b111111111111;
+
     #endregion Statics
 
+
+
     public int Type { get; set; }
+
+    public BlockInfo Info
+        => BlockInfo.GetFromID(Type & INFO_MASK);
+
     public Block(int type) {
         Type = type;
     }
@@ -172,4 +184,5 @@ public struct Block {
         => block.Type;
     public static implicit operator Block(int type)
         => new(type);
+
 }
