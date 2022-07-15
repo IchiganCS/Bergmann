@@ -1,4 +1,5 @@
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.Renderers;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using Buffer = Bergmann.Client.Graphics.OpenGL.Buffer;
@@ -8,7 +9,7 @@ using Buffer = Bergmann.Client.Graphics.OpenGL.Buffer;
 /// Renders a texture on a box. This is a ui class, the box is two dimensional. It can display any two dimensional texture array and can as such be used to render text
 /// indirectly. See <see cref="TextRenderer"/> for more info about that.
 /// </summary>
-public class BoxRenderer : IDisposable {
+public class BoxRenderer : IDisposable, IRenderer {
 
     /// <summary>
     /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. Take a look at it to see the options you have for the layout

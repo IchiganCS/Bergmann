@@ -75,7 +75,7 @@ public class TextRenderer : BoxRenderer {
     }
 
     /// <summary>
-    /// Renders the underlying box renderer with the specfic text on it.
+    /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to texture unit
     /// </summary>
     public override void Render() {
         GL.ActiveTexture(TextureUnit.Texture0);

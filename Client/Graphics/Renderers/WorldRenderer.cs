@@ -7,7 +7,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// the rendering of chunks. It holds a set of <see cref="ChunkRenderer"/> which are automatically created
 /// and destroyed when called for. It registers to the events of the <see cref="World"/> class to achieve this.
 /// </summary>
-public class WorldRenderer : IDisposable {
+public class WorldRenderer : IDisposable, IRenderer {
 
     /// <summary>
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed

@@ -49,7 +49,7 @@ public class Chunk {
         for (int i = 0; i < Blocks.GetLength(0); i++)
             for (int j = 0; j < Blocks.GetLength(1); j++)
                 for (int k = 0; k < Blocks.GetLength(2); k++)
-                    Blocks[i, j, k] = 1;
+                    Blocks[i, j, k] = (k % 2) + 1;
     }
 
     /// <summary>

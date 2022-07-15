@@ -7,6 +7,8 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Shared;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Bergmann.Client.Graphics;
 
@@ -21,6 +23,9 @@ public class Window : GameWindow {
 
     private Program WorldProgram { get; set; }
     private Program UIProgram { get; set; }
+
+    private UICollection UICollection{ get; set; }
+
 
     private void MakeProgram() {
         if (WorldProgram is not null)
@@ -113,6 +118,17 @@ public class Window : GameWindow {
 
         Camera = new(0f, 0f, -3f);
         Eulers = new(20, 40);
+
+        Texture UIElems = new Texture(TextureTarget.Texture2DArray);
+        UIElems.Reserve(100, 100, 1);
+
+        using Image<Rgba32> img = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
+        UIElems.Write(img, 0);
+
+
+        UICollection = new(UIElems);
+
+        UICollection.ImageRenderers.Add((new BoxRenderer(new(0, 0), new(0.5f, 0.5f), new(0.5f, 0.5f), new(100, 100), layer: 0), true));
     }
 
     protected override void OnUnload() {
@@ -122,6 +138,7 @@ public class Window : GameWindow {
         UIVertex.CloseVAO();
         BlockRenderer.Dispose();
         TextRenderer.Delete();
+        UICollection.Dispose();
     }
 
     protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
@@ -223,11 +240,13 @@ public class Window : GameWindow {
 
 
         TextRender?.Dispose();
-        TextRender = new TextRenderer($"Pos: {Camera.ToString()}", 60, new(30, -30), new(0, 1), new(0, 1));
+        TextRender = new TextRenderer($"Pos: {Camera.ToString()}\na", 60, new(30, -30), new(0, 1), new(0, 1));
         TextRender.Render();
         TextRender.Dispose();
         TextRender = new TextRenderer($"Text: {Text}", 60, new(30, -100), new(0, 1), new(0, 1));
         TextRender.Render();
+
+        UICollection.Render();
 
         Context.SwapBuffers();
     }

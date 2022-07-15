@@ -2,9 +2,9 @@
     "Blocks": [
         {
             "ID": 1,
-            "Name": "dirt",
+            "Name": "Dirt",
 
-            "Type": "normal",
+            "Type": "Normal",
 
             "TopTexture": 0,
             "LeftTexture": 1,
@@ -12,6 +12,19 @@
             "FrontTexture": 1,
             "BackTexture": 1,
             "BottomTexture": 2
+        },
+        {
+            "ID": 2,
+            "Name": "Sand",
+
+            "Type": "Normal",
+
+            "TopTexture":    3,
+            "LeftTexture":   3,
+            "RightTexture":  3,
+            "FrontTexture":  3,
+            "BackTexture":   3,
+            "BottomTexture": 3
         }
     ]
 }

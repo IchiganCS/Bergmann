@@ -12,6 +12,10 @@
         {
             "Layer": 2,
             "Texture": "dirt_bottom.jpg"
+        },
+        {
+            "Layer": 3,
+            "Texture": "sand.jpg"
         }
     ]
 }

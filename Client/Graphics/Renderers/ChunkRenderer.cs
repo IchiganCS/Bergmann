@@ -11,7 +11,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// However, updates are therefore expensive, because the entire buffers need to be sent to the gpu whenever an update is called for.
 /// This class can be further optimized to work with multiple threads.
 /// </summary>
-public class ChunkRenderer : IDisposable {
+public class ChunkRenderer : IDisposable, IRenderer {
     private Chunk Chunk { get; set; }
     private OpenGL.Buffer VertexBuffer { get; set; }
     private OpenGL.Buffer IndexBuffer { get; set; }
