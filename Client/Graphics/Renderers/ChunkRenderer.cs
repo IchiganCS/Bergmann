@@ -13,8 +13,8 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// </summary>
 public class ChunkRenderer : IDisposable, IRenderer {
     private Chunk Chunk { get; set; }
-    private OpenGL.Buffer VertexBuffer { get; set; }
-    private OpenGL.Buffer IndexBuffer { get; set; }
+    private Buffer<Vertex> VertexBuffer { get; set; }
+    private Buffer<uint> IndexBuffer { get; set; }
 
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
@@ -40,7 +40,16 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private void BuildCache() {
         Cache = new();
 
-        foreach (Vector3i block in  Chunk.EveryBlock()) {
+        var blocks = Chunk.EveryBlock();
+
+        //estimate for buffer size: You see a quarter of the blocks and three faces each.
+        //this is purely random
+        //vertices needs 4 * face
+        //indices needs 6 * face
+        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer, 3 * blocks.Count);
+        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 4 * blocks.Count);
+
+        foreach (Vector3i block in blocks) {
             UpdateCacheAt(block);
         }
     }
@@ -112,14 +121,6 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// This is "quite" a costly operation.
     /// </summary>
     private void SendToGpu() {
-        if (VertexBuffer is not null)
-            VertexBuffer.Dispose();
-        if (IndexBuffer is not null)
-            IndexBuffer.Dispose();
-
-
-        VertexBuffer = new OpenGL.Buffer(BufferTarget.ArrayBuffer);
-        IndexBuffer = new OpenGL.Buffer(BufferTarget.ElementArrayBuffer);
 
         List<Vertex> vertices = new();
         List<uint> indices = new();

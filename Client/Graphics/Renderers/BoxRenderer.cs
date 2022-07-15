@@ -2,7 +2,6 @@ using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using Buffer = Bergmann.Client.Graphics.OpenGL.Buffer;
 
 
 /// <summary>
@@ -15,13 +14,50 @@ public class BoxRenderer : IDisposable, IRenderer {
     /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. Take a look at it to see the options you have for the layout
     /// of boxes. Since each box can be separated into different textures, this buffer can hold 4 * num_of_cuts.
     /// </summary>
-    private Buffer Vertices { get; set; }
+    private Buffer<UIVertex> Vertices { get; set; }
 
     /// <summary>
     /// The indices for the vertices.
     /// </summary>
-    private Buffer Indices { get; set; }
+    private Buffer<uint> Indices { get; set; }
 
+
+    /// <summary>
+    /// Ensures that buffers are large enought to hold sections many items.
+    /// Regenerates if necessary.
+    /// </summary>
+    /// <param name="sections">The number of sections for the box renderer</param>
+    private void EnsureBufferCapacity(int sections) {
+        if (Vertices is null || Indices is null) {
+            Vertices?.Dispose();
+            Indices?.Dispose();
+
+            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
+            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
+        }
+
+        else if (Vertices.Reserved < sections * 4 || Indices.Reserved < sections * 6) {
+            Vertices.Dispose();
+            Indices.Dispose();
+            
+            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
+            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
+        }
+    }
+
+
+    public Vector2 AbsoluteAnchorOffset { get; private set; }
+    public Vector2 PercentageAnchorOffset { get; private set; }
+    public Vector2 RelativeAnchor { get; private set; }
+    public Vector2 Dimension { get; private set; }
+
+    /// <summary>
+    /// Constructs an empty box renderer
+    /// </summary>
+    /// <param name="estimateSections">How many sections this box renderer probably holds. It's not a hard boundary, but nice to have for optimization</param>
+    public BoxRenderer(int estimateSections = 1) {
+        EnsureBufferCapacity(estimateSections);
+    }
 
     /// <summary>
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
@@ -34,17 +70,22 @@ public class BoxRenderer : IDisposable, IRenderer {
     /// and symbolizes the beginning of the next texture. The integer is the layer the texture is connected. The cutting is done along the horizontal axis, so the cuts are vertical.
     /// All the first items of the pairs should be one when summed up</param>
     /// <param name="layer">Layer is used if not separators are supplied. It's the layer in the bound texture stack</param>
-    public BoxRenderer(Vector2 originAbs, Vector2 originPct, Vector2 anchor, Vector2 dimension, IEnumerable<(float, int)>? separators = null, int layer = -1) {
-        Vertices = new Buffer(BufferTarget.ArrayBuffer);
-        Indices = new Buffer(BufferTarget.ElementArrayBuffer);
+    public void MakeLayout(Vector2 originAbs, Vector2 originPct, Vector2 anchor, Vector2 dimension, IEnumerable<(float, int)>? separators = null, int layer = -1) {
 
-        Vector2 anchorOffset = new(-anchor.X * dimension.X, -anchor.Y * dimension.Y);
+        Dimension = dimension;
+        AbsoluteAnchorOffset = originAbs;
+        PercentageAnchorOffset = originPct;
+        RelativeAnchor = anchor;
+
+        Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
+
         if (separators is null) {
+            EnsureBufferCapacity(1);
             Vertices.Fill(new UIVertex[4] {
-                new() { Absolute = anchorOffset + originAbs, Percent = originPct, TexCoord = new(0, 0, layer)},
-                new() { Absolute = anchorOffset + originAbs + new Vector2(dimension.X, 0), Percent = originPct, TexCoord = new(1, 0, layer)},
-                new() { Absolute = anchorOffset + originAbs + new Vector2(0, dimension.Y), Percent = originPct, TexCoord = new(0, 1, layer)},
-                new() { Absolute = anchorOffset + originAbs + new Vector2(dimension.X, dimension.Y), Percent = originPct, TexCoord = new(1, 1, layer)},
+                new() { Absolute = anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, layer)},
+                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(Dimension.X, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, layer)},
+                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, layer)},
+                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(Dimension.X, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, layer)},
             });
             Indices.Fill(new uint[6] {
                 0, 1, 3,
@@ -52,20 +93,22 @@ public class BoxRenderer : IDisposable, IRenderer {
             });
         }
         else {
+            EnsureBufferCapacity(separators.Count());
+
             List<UIVertex> vertices = new();
-            List<int> indices = new();
+            List<uint> indices = new();
 
             float passedSpace = 0f;
-            int indexToUse = 0;
+            uint indexToUse = 0;
             foreach ((float, int) pair in separators) {
-                Vector2 coveredWidth = new(passedSpace * dimension.X, 0);
-                float spaceThisPass = pair.Item1 * dimension.X;
+                Vector2 coveredWidth = new(passedSpace * Dimension.X, 0);
+                float spaceThisPass = pair.Item1 * Dimension.X;
                 vertices.AddRange(new UIVertex[4] {
-                    new() { Absolute = coveredWidth + anchorOffset + originAbs, Percent = originPct, TexCoord = new(0, 0, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + originAbs + new Vector2(spaceThisPass, 0), Percent = originPct, TexCoord = new(1, 0, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + originAbs + new Vector2(0, dimension.Y), Percent = originPct, TexCoord = new(0, 1, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + originAbs + new Vector2(spaceThisPass, dimension.Y), Percent = originPct, TexCoord = new(1, 1, pair.Item2)}});
-                indices.AddRange(new int[6] {
+                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, pair.Item2)},
+                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, pair.Item2)},
+                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, pair.Item2)},
+                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, pair.Item2)}});
+                indices.AddRange(new uint[6] {
                     indexToUse + 0, indexToUse + 1, indexToUse + 3, 
                     indexToUse + 0, indexToUse + 2, indexToUse + 3
                 });

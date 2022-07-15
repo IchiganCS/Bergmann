@@ -83,8 +83,7 @@ public class Window : GameWindow {
 
     private WorldRenderer WorldRenderer { get; set; }
 
-    private TextRenderer TextRender { get; set; }
-    private string Text{ get; set; }
+    private string Text { get; set; }
 
     private Quaternion Rotation =>
         Quaternion.FromEulerAngles(0, Eulers.X, 0) *
@@ -128,7 +127,14 @@ public class Window : GameWindow {
 
         UICollection = new(UIElems);
 
-        UICollection.ImageRenderers.Add((new BoxRenderer(new(0, 0), new(0.5f, 0.5f), new(0.5f, 0.5f), new(100, 100), layer: 0), true));
+        BoxRenderer cross = new(1);
+        cross.MakeLayout(new(0, 0), new(0.5f, 0.5f), new(0.5f, 0.5f), new(100, 100), layer: 0);
+        UICollection.ImageRenderers.Add((cross, true));
+
+        TextRenderer posText = new("Pos: first", 50, new(30, -30), new(0, 1), new(0, 1));
+        UICollection.OtherRenderers.Add((posText, true));
+        TextRenderer text = new("Text: ", 50, new(30, -100), new(0, 1), new(0, 1));
+        UICollection.OtherRenderers.Add((text, true));
     }
 
     protected override void OnUnload() {
@@ -238,14 +244,8 @@ public class Window : GameWindow {
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-
-        TextRender?.Dispose();
-        TextRender = new TextRenderer($"Pos: {Camera.ToString()}\na", 60, new(30, -30), new(0, 1), new(0, 1));
-        TextRender.Render();
-        TextRender.Dispose();
-        TextRender = new TextRenderer($"Text: {Text}", 60, new(30, -100), new(0, 1), new(0, 1));
-        TextRender.Render();
-
+        (UICollection.OtherRenderers[0].Item1 as TextRenderer).SetText($"Pos: {Camera}");
+        (UICollection.OtherRenderers[1].Item1 as TextRenderer).SetText($"Text: {Text}");
         UICollection.Render();
 
         Context.SwapBuffers();

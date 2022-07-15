@@ -61,6 +61,8 @@ public class TextRenderer : BoxRenderer {
         DebugFontStack = MakeLetterStack(DebugFont, 50);
     }
 
+    public float TextHeight { get; private set; }
+
     /// <summary>
     /// Constructs a new TextRenderer.
     /// </summary>
@@ -70,8 +72,14 @@ public class TextRenderer : BoxRenderer {
     /// <param name="originPct">Percentage offset for the anchor</param>
     /// <param name="anchor">Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right</param>
     public TextRenderer(string text, float height, Vector2 originAbs, Vector2 originPct, Vector2 anchor) :
-        base(originAbs, originPct, anchor, new Vector2(height * text.Length, height), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c)))) {
+        base(text.Length) {
+        TextHeight = height;
+        MakeLayout(originAbs, originPct, anchor, new Vector2(TextHeight * text.Length, TextHeight), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c))));
 
+    }
+
+    public void SetText(string text) {
+        MakeLayout(AbsoluteAnchorOffset, PercentageAnchorOffset, RelativeAnchor, new Vector2(TextHeight * text.Length, TextHeight), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c))));
     }
 
     /// <summary>

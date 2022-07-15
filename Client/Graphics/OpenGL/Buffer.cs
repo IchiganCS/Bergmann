@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 
 namespace Bergmann.Client.Graphics.OpenGL;
@@ -6,55 +7,75 @@ namespace Bergmann.Client.Graphics.OpenGL;
 /// <summary>
 /// Represents any buffer object
 /// </summary>
-public class Buffer : IDisposable {
+public class Buffer<T> : IDisposable where T : struct {
     /// <summary>
     /// The handle to the OpenGL buffer object
     /// </summary>
     public int Handle { get; set; }
 
-    /// <summary>
-    /// Indicates whether the buffer holds data. The buffer can only be written once.
-    /// </summary>
-    private bool Filled { get; set; }
 
     /// <summary>
     /// The target (=type) of the buffer. It can't be changed after
     /// </summary>
-    public BufferTarget Target { get; private set; }
+    public BufferTarget Target { get; init; }
 
     /// <summary>
-    /// The count of elements in the buffer. It returns -1 if the buffer doesn't hold data yet.
+    /// How many times the buffer is expected to change
+    /// </summary>
+    public BufferUsageHint Hint { get; init; }
+
+    /// <summary>
+    /// The count of elements in the buffer. It returns -1 if the buffer doesn't hold data yet. This is a count int items of <see cref="T"/>
     /// </summary>
     public int Length { get; private set; }
 
     /// <summary>
-    /// The type of the elements that were used to fill the buffer. null if the buffer is not filled.
+    /// How many items can fit in the buffer. Can't be changed after construction. This is a count in items of <see cref="T"/>
     /// </summary>
-    public Type? ItemType { get; private set; }
+    public int Reserved { get; private set; }
 
     /// <summary>
     /// Constructs a new buffer with the specified target
     /// </summary>
     /// <param name="target">The target can't be changed later</param>
-    public Buffer(BufferTarget target) {
+    /// <param name="count">If a count is given, </param>
+    public Buffer(BufferTarget target, int count = -1, BufferUsageHint hint = BufferUsageHint.StaticDraw) {
         Target = target;
         Handle = GL.GenBuffer();
-        Filled = false;
+        Reserved = count;
         Length = -1;
-        ItemType = null;
+        Hint = hint;
     }
 
     /// <summary>
-    /// Fills the buffer with the appropriate data. Can only be execute once. T has to be a struct.
+    /// Fills the buffer with the appropriate data. The buffer is not updated, if <see cref="items.Length"/> > <see cref="Reserved"/>
     /// </summary>
-    public void Fill<T>(T[] items, BufferUsageHint hint = BufferUsageHint.StaticDraw) where T : struct {
+    /// <param name="items">The new items to be written into the buffer</param>
+    /// <param name="hint">The hint given to OpenGL</param>
+    public void Fill(T[] items) {
+        if (items.Length > Reserved && Reserved > 0) {
+            Logger.Warn("Can't write this many items into the buffer. Aborting");
+            return;
+        }
+
         GL.BindBuffer(Target, Handle);
         GlLogger.WriteGLError();
-        GL.BufferData(Target, items.Length * Marshal.SizeOf<T>(), items, hint);
+
+        //checks whether the buffer has already been initalized
+        if (Length <= 0) {
+
+            if (Reserved <= 0)
+                Reserved = items.Length;
+
+            //first reserve the buffer. Note that data is zero, no data is copied
+            GL.BufferData(Target, Reserved * Marshal.SizeOf<T>(), IntPtr.Zero, Hint);
+        }
+
+
+        GL.BufferSubData(Target, IntPtr.Zero, items.Length * Marshal.SizeOf<T>(), items);
+
         GlLogger.WriteGLError();
 
-        Filled = true;
-        ItemType = typeof(T);
         Length = items.Length;
     }
 
