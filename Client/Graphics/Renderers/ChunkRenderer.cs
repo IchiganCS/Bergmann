@@ -138,7 +138,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
         IndexBuffer.Fill(indices.ToArray());
     }
 
-    
+
     /// <summary>
     /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding program need to be bound though.
     /// </summary>

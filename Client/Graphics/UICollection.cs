@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 
@@ -15,27 +14,27 @@ public class UICollection : IDisposable, IRenderer {
     /// Stores all ui textures that could be rendered sometimes. This doesn't include letter stacks or block previews,
     /// just normal images like the cross, health and item bar.
     /// </summary>
-    private Texture ImageElements { get; set; }
+    private Texture? ImageElements { get; set; }
 
     /// <summary>
     /// A collection for all rendereres responsible for ui. It is rendered with <see cref="ImageElements"/> bound. 
     /// Text and item preview renderers should not be included. The boolean represents the enabled state of the renderers.
     /// </summary>
-    public List<(IRenderer, bool)> ImageRenderers { get; set; }
+    public List<(IUIRenderer, bool)> ImageRenderers { get; set; }
 
     /// <summary>
     /// A collection of all renderers that provide their own textures. E.g. text renderers or item previews.
     /// The index specifies in which order the renderes are rendered and which ones are on top (last is on top).
     /// The boolean represents the enabled state of the renderers.
     /// </summary>
-    public List<(IRenderer, bool)> OtherRenderers { get; set; }
+    public List<(IUIRenderer, bool)> OtherRenderers { get; set; }
 
 
     /// <summary>
     /// Constructs a ui collection and stores the image elements.
     /// </summary>
-    /// <param name="imgElements">The iamge elements used to renderer all <see cref="ImageRenderers"/></param>
-    public UICollection(Texture imgElements) {
+    /// <param name="imgElements">The image elements used to renderer all <see cref="ImageRenderers"/></param>
+    public UICollection(Texture? imgElements) {
         ImageElements = imgElements;
         ImageRenderers = new();
         OtherRenderers = new();
@@ -49,7 +48,7 @@ public class UICollection : IDisposable, IRenderer {
         //rendering order matters. text should be rendered last to be always on top.
         //item previews second.
 
-        ImageElements.Bind();
+        ImageElements?.Bind();
         foreach ((IRenderer, bool) r in ImageRenderers)
             if (r.Item2)
                 r.Item1.Render();
@@ -64,7 +63,7 @@ public class UICollection : IDisposable, IRenderer {
     /// but it may be comfortable
     /// </summary>
     public void Dispose() {
-        ImageElements.Dispose();
+        ImageElements?.Dispose();
 
         foreach ((IRenderer, bool) r in OtherRenderers)
             r.Item1.Dispose();

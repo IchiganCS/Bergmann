@@ -24,7 +24,8 @@ public class Window : GameWindow {
     private Program WorldProgram { get; set; }
     private Program UIProgram { get; set; }
 
-    private UICollection UICollection{ get; set; }
+    private UICollection FixedUIItems{ get; set; }
+    private UICollection DebugItems { get; set; }
 
 
     private void MakeProgram() {
@@ -125,18 +126,19 @@ public class Window : GameWindow {
         UIElems.Write(img, 0);
 
 
-        UICollection = new(UIElems);
+        FixedUIItems = new(UIElems);
+        DebugItems = new(null);
 
         BoxRenderer cross = new(1);
         cross.MakeLayout(new(0, 0), new(0.5f, 0.5f), new(0.5f, 0.5f), new(100, 100), layer: 0);
-        UICollection.ImageRenderers.Add((cross, true));
+        FixedUIItems.ImageRenderers.Add((cross, true));
 
         TextRenderer posText = new("Pos: first", 50, new(30, -30), new(0, 1), new(0, 1));
-        UICollection.OtherRenderers.Add((posText, true));
+        DebugItems.OtherRenderers.Add((posText, true));
         TextRenderer text = new("Text: ", 50, new(30, -100), new(0, 1), new(0, 1));
-        UICollection.OtherRenderers.Add((text, true));
+        DebugItems.OtherRenderers.Add((text, true));
         TextRenderer blockText = new("Block: ", 50, new(30, -170), new(0, 1), new(0, 1));
-        UICollection.OtherRenderers.Add((blockText, true));
+        DebugItems.OtherRenderers.Add((blockText, true));
     }
 
     protected override void OnUnload() {
@@ -146,7 +148,8 @@ public class Window : GameWindow {
         UIVertex.CloseVAO();
         BlockRenderer.Dispose();
         TextRenderer.Delete();
-        UICollection.Dispose();
+        FixedUIItems.Dispose();
+        DebugItems.Dispose();
     }
 
     protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
@@ -157,6 +160,7 @@ public class Window : GameWindow {
     }
 
     private (Vector3i, Block.Face)? RayCast { get; set; }
+    private bool DebugViewEnabled { get; set; } = false;
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
         if (!IsFocused)
@@ -168,6 +172,9 @@ public class Window : GameWindow {
             else
                 CursorState = CursorState.Grabbed;
         }
+
+        if (KeyboardState.IsKeyPressed(Keys.F1))
+            DebugViewEnabled = !DebugViewEnabled;
 
         var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
         if (hit) {
@@ -253,15 +260,19 @@ public class Window : GameWindow {
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-        (UICollection.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({Camera.X:0.00}, {Camera.Y:0.00}, {Camera.Z:0.00})");
-        (UICollection.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Text: {Text}");
-        if (RayCast is not null) {
-            UICollection.OtherRenderers[2] = (UICollection.OtherRenderers[2].Item1, true);
-            (UICollection.OtherRenderers[2].Item1 as TextRenderer).SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
+        if (DebugViewEnabled) {
+            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({Camera.X:0.00}, {Camera.Y:0.00}, {Camera.Z:0.00})");
+            (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Text: {Text}");
+            if (RayCast is not null) {
+                DebugItems.OtherRenderers[2] = (DebugItems.OtherRenderers[2].Item1, true);
+                (DebugItems.OtherRenderers[2].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
+            }
+            else
+                DebugItems.OtherRenderers[2] = (DebugItems.OtherRenderers[2].Item1, false);
+            DebugItems.Render();
         }
-        else
-            UICollection.OtherRenderers[2] = (UICollection.OtherRenderers[2].Item1, false);
-        UICollection.Render();
+
+        FixedUIItems.Render();
 
         Context.SwapBuffers();
     }

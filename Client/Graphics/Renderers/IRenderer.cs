@@ -1,3 +1,5 @@
+using OpenTK.Mathematics;
+
 namespace Bergmann.Client.Graphics.Renderers;
 
 /// <summary>
@@ -5,5 +7,8 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// </summary>
 public interface IRenderer : IDisposable {
 
+    /// <summary>
+    /// Renders the renderer
+    /// </summary>
     public void Render();
 }

@@ -1,5 +1,6 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
@@ -8,7 +9,7 @@ using OpenTK.Mathematics;
 /// Renders a texture on a box. This is a ui class, the box is two dimensional. It can display any two dimensional texture array and can as such be used to render text
 /// indirectly. See <see cref="TextRenderer"/> for more info about that.
 /// </summary>
-public class BoxRenderer : IDisposable, IRenderer {
+public class BoxRenderer : IDisposable, IUIRenderer {
 
     /// <summary>
     /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. Take a look at it to see the options you have for the layout
@@ -50,6 +51,7 @@ public class BoxRenderer : IDisposable, IRenderer {
     public Vector2 PercentageAnchorOffset { get; private set; }
     public Vector2 RelativeAnchor { get; private set; }
     public Vector2 Dimension { get; private set; }
+
 
     #pragma warning disable CS8618
     /// <summary>
@@ -123,6 +125,17 @@ public class BoxRenderer : IDisposable, IRenderer {
         }
     }
 
+    /// <inheritdoc/>
+    public bool PointInShape(Vector2 point, Vector2 windowsize) {
+
+        Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
+        Vector2 pctOffset = new(windowsize.X * PercentageAnchorOffset.X, windowsize.Y * PercentageAnchorOffset.Y);
+
+        Vector2 startPoint = anchorOffset + AbsoluteAnchorOffset + pctOffset;
+
+        Box2 box = new(startPoint, startPoint + Dimension);
+        return box.Contains(point);
+    }
 
     /// <summary>
     /// Renders the box and its texture. Make sure the UI program is bound. Make sure an appropriate texture is bound
