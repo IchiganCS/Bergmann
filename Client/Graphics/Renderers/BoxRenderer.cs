@@ -51,6 +51,7 @@ public class BoxRenderer : IDisposable, IRenderer {
     public Vector2 RelativeAnchor { get; private set; }
     public Vector2 Dimension { get; private set; }
 
+    #pragma warning disable CS8618
     /// <summary>
     /// Constructs an empty box renderer
     /// </summary>
@@ -58,6 +59,7 @@ public class BoxRenderer : IDisposable, IRenderer {
     public BoxRenderer(int estimateSections = 1) {
         EnsureBufferCapacity(estimateSections);
     }
+    #pragma warning restore CS8618
 
     /// <summary>
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.

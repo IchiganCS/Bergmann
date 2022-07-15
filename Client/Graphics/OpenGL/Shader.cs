@@ -40,7 +40,9 @@ public class Shader : IDisposable {
         GlLogger.WriteGLError();
         GL.CompileShader(Handle);
         GlLogger.WriteGLError();
-        Logger.Info(GL.GetShaderInfoLog(Handle));
+        string log = GL.GetShaderInfoLog(Handle);
+        if (!string.IsNullOrEmpty(log))
+            Logger.Warn(log);
 
         IsCompiled = true;
     }

@@ -135,6 +135,8 @@ public class Window : GameWindow {
         UICollection.OtherRenderers.Add((posText, true));
         TextRenderer text = new("Text: ", 50, new(30, -100), new(0, 1), new(0, 1));
         UICollection.OtherRenderers.Add((text, true));
+        TextRenderer blockText = new("Block: ", 50, new(30, -170), new(0, 1), new(0, 1));
+        UICollection.OtherRenderers.Add((blockText, true));
     }
 
     protected override void OnUnload() {
@@ -154,6 +156,8 @@ public class Window : GameWindow {
             CursorState = CursorState.Normal;
     }
 
+    private (Vector3i, Block.Face)? RayCast { get; set; }
+
     protected override void OnUpdateFrame(FrameEventArgs args) {
         if (!IsFocused)
             return;
@@ -165,13 +169,18 @@ public class Window : GameWindow {
                 CursorState = CursorState.Grabbed;
         }
 
-        if (MouseState.IsButtonDown(MouseButton.Left)) {
-            //destroy block
-            var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
-            if (hit) {
-                World.Instance.SetBlockAt(pos, 0);
-            }
+        var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
+        if (hit) {
+            RayCast = (pos, face);
+
+            if (MouseState.IsButtonPressed(MouseButton.Left))
+                World.Instance.SetBlockAt(RayCast.Value.Item1, 0);
+            else if (MouseState.IsButtonPressed(MouseButton.Right))
+                World.Instance.SetBlockAt(Block.FaceToVector[(int)RayCast.Value.Item2] + RayCast.Value.Item1, 1);
         }
+        else
+            RayCast = null;
+
 
 
         if (KeyboardState.IsKeyPressed(Keys.F12))
@@ -244,8 +253,14 @@ public class Window : GameWindow {
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-        (UICollection.OtherRenderers[0].Item1 as TextRenderer).SetText($"Pos: {Camera}");
-        (UICollection.OtherRenderers[1].Item1 as TextRenderer).SetText($"Text: {Text}");
+        (UICollection.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({Camera.X:0.00}, {Camera.Y:0.00}, {Camera.Z:0.00})");
+        (UICollection.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Text: {Text}");
+        if (RayCast is not null) {
+            UICollection.OtherRenderers[2] = (UICollection.OtherRenderers[2].Item1, true);
+            (UICollection.OtherRenderers[2].Item1 as TextRenderer).SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
+        }
+        else
+            UICollection.OtherRenderers[2] = (UICollection.OtherRenderers[2].Item1, false);
         UICollection.Render();
 
         Context.SwapBuffers();

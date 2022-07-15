@@ -106,8 +106,7 @@ public class World {
 
             _ = Block.GetFaceFromHit(position - flooredPosition, -direction, out Vector3 hit);
 
-            if (i > 50 ||
-                (origin - hit - flooredPosition).LengthSquared <= (origin - position).LengthSquared) {
+            if (i > 50) {
                 //this means, this iteration didn't get nearer to the origin
                 Logger.Warn("Something went wrong, returning no hit");
                 hasHit = false;

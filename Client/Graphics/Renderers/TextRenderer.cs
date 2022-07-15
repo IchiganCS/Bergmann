@@ -58,7 +58,7 @@ public class TextRenderer : BoxRenderer {
         FontCollection.Add(ResourceManager.FullPath(ResourceManager.Type.Fonts, "Consolas.ttf"));
         DebugFont = FontCollection.Get("Consolas").CreateFont(70);
 
-        DebugFontStack = MakeLetterStack(DebugFont, 50);
+        DebugFontStack = MakeLetterStack(DebugFont, 100);
     }
 
     public float TextHeight { get; private set; }
@@ -73,13 +73,17 @@ public class TextRenderer : BoxRenderer {
     /// <param name="anchor">Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right</param>
     public TextRenderer(string text, float height, Vector2 originAbs, Vector2 originPct, Vector2 anchor) :
         base(text.Length) {
-        TextHeight = height;
-        MakeLayout(originAbs, originPct, anchor, new Vector2(TextHeight * text.Length, TextHeight), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c))));
 
+        TextHeight = height;
+        float widthOfOne = TextHeight * 0.93f;
+        float entireWidth = widthOfOne * text.Length;
+        MakeLayout(originAbs, originPct, anchor, new Vector2(entireWidth, TextHeight), separators: text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
     }
 
     public void SetText(string text) {
-        MakeLayout(AbsoluteAnchorOffset, PercentageAnchorOffset, RelativeAnchor, new Vector2(TextHeight * text.Length, TextHeight), separators: text.Select((c, i) => ((1f / text.Length), CHARS.IndexOf(c))));
+        float widthOfOne = TextHeight * 0.93f;
+        float entireWidth = widthOfOne * text.Length;
+        MakeLayout(AbsoluteAnchorOffset, PercentageAnchorOffset, RelativeAnchor, new Vector2(entireWidth, TextHeight), separators: text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
     }
 
     /// <summary>

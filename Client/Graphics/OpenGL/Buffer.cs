@@ -67,7 +67,7 @@ public class Buffer<T> : IDisposable where T : struct {
             if (Reserved <= 0)
                 Reserved = items.Length;
 
-            //first reserve the buffer. Note that data is zero, no data is copied
+            //first reserve the buffer. Note that the data parameter is zero, no data is copied
             GL.BufferData(Target, Reserved * Marshal.SizeOf<T>(), IntPtr.Zero, Hint);
         }
 
