@@ -1,5 +1,6 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
+using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -47,7 +48,7 @@ public class Window : GameWindow {
         WorldProgram.OnLoad += () => {
             GL.Enable(EnableCap.CullFace);
 
-            Matrix4 viewMat = Matrix4.LookAt(Camera, Camera + Rotation * new Vector3(0, 0, 1), new(0, 1, 0));
+            Matrix4 viewMat = FPS.LookAt();
             Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
             projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
             WorldProgram.SetUniform("projection", projMat);
@@ -79,16 +80,9 @@ public class Window : GameWindow {
         Fragment.Dispose();
     }
 
-    private Vector3 Camera { get; set; }
-    private Vector2 Eulers { get; set; }
+    private FPSController FPS { get; set; }
 
     private WorldRenderer WorldRenderer { get; set; }
-
-    private string Text { get; set; }
-
-    private Quaternion Rotation =>
-        Quaternion.FromEulerAngles(0, Eulers.X, 0) *
-        Quaternion.FromEulerAngles(Eulers.Y, 0, 0);
 
 
     protected override void OnLoad() {
@@ -116,8 +110,9 @@ public class Window : GameWindow {
         WorldRenderer = new();
 
 
-        Camera = new(0f, 0f, -3f);
-        Eulers = new(20, 40);
+        FPS = new() {
+            Position = new(8, 35, 8)
+        };
 
         Texture UIElems = new Texture(TextureTarget.Texture2DArray);
         UIElems.Reserve(100, 100, 1);
@@ -135,8 +130,6 @@ public class Window : GameWindow {
 
         TextRenderer posText = new("Pos: first", 50, new(30, -30), new(0, 1), new(0, 1));
         DebugItems.OtherRenderers.Add((posText, true));
-        TextRenderer text = new("Text: ", 50, new(30, -100), new(0, 1), new(0, 1));
-        DebugItems.OtherRenderers.Add((text, true));
         TextRenderer blockText = new("Block: ", 50, new(30, -170), new(0, 1), new(0, 1));
         DebugItems.OtherRenderers.Add((blockText, true));
     }
@@ -176,7 +169,7 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
 
-        var (pos, face) = World.Instance.Raycast(Camera, Rotation * new Vector3(0, 0, 1), out bool hit);
+        var (pos, face) = World.Instance.Raycast(FPS.Position, FPS.Rotation * new Vector3(0, 0, 1), out bool hit);
         if (hit) {
             RayCast = (pos, face);
 
@@ -194,46 +187,10 @@ public class Window : GameWindow {
             MakeProgram();
 
 
-        if (KeyboardState.IsKeyPressed(Keys.J))
-            Text += "j";
-        if (KeyboardState.IsKeyPressed(Keys.K))
-            Text += "k";
-        if (KeyboardState.IsKeyPressed(Keys.L))
-            Text += "l";
 
-        if (KeyboardState.IsKeyPressed(Keys.Enter))
-            Text = "";
+        FPS.RotateCamera(MouseState.Delta);
 
-
-        //movement
-        Vector3 delta = new();
-        if (KeyboardState.IsKeyDown(Keys.W))
-            delta += (float)args.Time * new Vector3(0, 0, 0.8f);
-        if (KeyboardState.IsKeyDown(Keys.S))
-            delta -= (float)args.Time * new Vector3(0, 0, 0.8f);
-        if (KeyboardState.IsKeyDown(Keys.D))
-            delta += (float)args.Time * new Vector3(0.8f, 0, 0f);
-        if (KeyboardState.IsKeyDown(Keys.A))
-            delta -= (float)args.Time * new Vector3(0.8f, 0, 0f);
-        if (KeyboardState.IsKeyDown(Keys.Space))
-            delta += (float)args.Time * new Vector3(0, 0.8f, 0f);
-        if (KeyboardState.IsKeyDown(Keys.LeftControl))
-            delta -= (float)args.Time * new Vector3(0, 0.8f, 0f);
-
-        delta *= 4;
-
-        Eulers += MouseState.Delta / 330f * new Vector2(0.7f, 0.9f);
-
-        while (Math.Abs(Eulers.X) > 3.142)
-            Eulers += new Vector2(-MathF.CopySign(2 * MathF.PI, Eulers.X), 0);
-
-        Eulers = new Vector2(Eulers.X, Math.Clamp(Eulers.Y, -1.5f, 1.5f));
-
-        float y = delta.Y;
-        delta.Y = 0;
-        delta = Rotation * delta;
-        Camera += delta;
-        Camera += new Vector3(0, y, 0);
+        FPS.FlyingMovement((float)args.Time, KeyboardState);
     }
 
 
@@ -261,14 +218,13 @@ public class Window : GameWindow {
         GlLogger.WriteGLError();
 
         if (DebugViewEnabled) {
-            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({Camera.X:0.00}, {Camera.Y:0.00}, {Camera.Z:0.00})");
-            (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Text: {Text}");
+            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({FPS.Position.X:0.00}, {FPS.Position.Y:0.00}, {FPS.Position.Z:0.00})");
             if (RayCast is not null) {
-                DebugItems.OtherRenderers[2] = (DebugItems.OtherRenderers[2].Item1, true);
-                (DebugItems.OtherRenderers[2].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
+                DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
+                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
             }
             else
-                DebugItems.OtherRenderers[2] = (DebugItems.OtherRenderers[2].Item1, false);
+                DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
             DebugItems.Render();
         }
 
