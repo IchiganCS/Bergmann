@@ -16,7 +16,12 @@ public class TextRenderer : BoxRenderer {
     private static Font DebugFont { get; set; }
     private static Texture DebugFontStack { get; set; }
     #pragma warning restore CS8618
-    private const string CHARS = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@(){}+=-*/.#:\\<>";
+
+    /// <summary>
+    /// All the chars that can be rendered by the text renderer. If the used char is not known, OpenGl defaults to "a".
+    /// Then you can just add it.
+    /// </summary>
+    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(){}+=-*/.#:\\<>";
 
     /// <summary>
     /// Returns a new letter stack which can be used for fast rendering in shaders.

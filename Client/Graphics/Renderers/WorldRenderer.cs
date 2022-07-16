@@ -13,7 +13,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    private Dictionary<int, ChunkRenderer> ChunkRenderers{ get; set; }
+    private Dictionary<long, ChunkRenderer> ChunkRenderers{ get; set; }
 
     /// <summary>
     /// Constructs a world renderer for the <see cref="World.Instance"/>. It loads <see cref="ChunkRenderer"/> for

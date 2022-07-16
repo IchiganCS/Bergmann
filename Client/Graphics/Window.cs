@@ -31,6 +31,7 @@ public class Window : GameWindow {
     private FPSController FPS { get; set; }
     private (Vector3i, Block.Face)? RayCast { get; set; }
     private bool DebugViewEnabled { get; set; } = false;
+    private bool WireFrameEnabled { get; set; } = false;
 
 
     private void MakeProgram() {
@@ -164,6 +165,14 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
 
+        if (KeyboardState.IsKeyPressed(Keys.F11)) {
+            WireFrameEnabled = !WireFrameEnabled;
+            if (WireFrameEnabled)
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            else
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        }
+
         if (KeyboardState.IsKeyPressed(Keys.F12))
             MakeProgram();
 
@@ -184,6 +193,7 @@ public class Window : GameWindow {
 
         FPS.RotateCamera(MouseState.Delta);
         FPS.FlyingMovement((float)args.Time, KeyboardState);
+        World.Instance.EnsureChunksLoaded(FPS.Position, 4);
     }
 
 
@@ -214,7 +224,7 @@ public class Window : GameWindow {
             (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({FPS.Position.X:0.00}, {FPS.Position.Y:0.00}, {FPS.Position.Z:0.00})");
             if (RayCast is not null) {
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
-                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}");
+                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
             }
             else
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);

@@ -3,9 +3,6 @@ using OpenTK.Mathematics;
 namespace Bergmann.Shared.World;
 
 public class World {
-    public static int Distance { get; private set; } = 5;
-    public static int ColumnHeight { get; private set; } = 2;
-
 
     /// <summary>
     /// The current world used by the entire environment
@@ -16,41 +13,71 @@ public class World {
     /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded. To observer the dictionary, register on
     /// <see cref="OnChunkLoading"/>
     /// </summary>
-    public Dictionary<int, Chunk> Chunks { get; set; }
+    public Dictionary<long, Chunk> Chunks { get; set; }
 
     private World() {
         Chunks = new();
+    }
 
-        
-        for (int i = 0; i < Distance * Distance; i++) {
-            int x = i / Distance, z = i % Distance;
+    private void LoadChunk(long key) {
+        if (Chunks.ContainsKey(key))
+            return;
 
-            for (int y = 0; y < ColumnHeight; y++) {
-                Chunk newChunk = new() { Offset = new(x * 16, y * 16, z * 16) };
-                if (Chunks.ContainsKey(newChunk.Key))
-                    Chunks[newChunk.Key] = newChunk;
-                else
-                    Chunks.Add(newChunk.Key, newChunk);
+        Chunk newChunk = new() { Key = key };
+        Chunks.Add(key, newChunk);
+        OnChunkLoading?.Invoke(newChunk);
+    }
 
-                OnChunkLoading?.Invoke(newChunk);
+    /// <summary>
+    /// Ensures that all chunks in the required distance are loaded
+    /// </summary>
+    /// <param name="position">The position from which to calculate</param>
+    /// <param name="distance">The distance in world chunk space, the number of chunks</param>
+    public void EnsureChunksLoaded(Vector3 position, int distance) {
+
+        // this stores all offsets that need to be loaded
+        List<Vector3i> chunksInRange = new();
+
+        chunksInRange.Add((Vector3i)position);
+
+        for (int i = 0; i < chunksInRange.Count; i++) {
+            //pop the highest element
+            Vector3i current = chunksInRange[i];
+
+            foreach (Block.Face face in Block.AllFaces) {
+                Vector3i offset = 16 * Block.FaceToVector[(int)face];
+
+                //the offset of the chunk in world space
+                Vector3i world = offset + current;
+                
+                if (world.Y < 0 || ((Vector3i)(world - position)).ManhattanLength > distance * 16
+                    || chunksInRange.Contains(world))
+                    continue;
+
+                chunksInRange.Add(world);
             }
         }
+
+        chunksInRange.ForEach(x => {
+            if (x.Y > 0 && x.Y < 32) 
+                LoadChunk(Chunk.ComputeKey(x));
+        });
     }
-    
+
 
     /// <summary>
     /// Gets the chunk for the given <see cref="Chunk.Key"/>.
     /// </summary>
     /// <param name="key">The key as given by <see cref="Chunk.ComputeKey"/></param>
     /// <returns>The chunk, null if the chunk is not loaded</returns>
-    public Chunk? GetChunk(int key) {
+    public Chunk? GetChunk(long key) {
         if (Chunks.ContainsKey(key))
             return Chunks[key];
         return null;
     }
 
     public Block GetBlockAt(Vector3i position) {
-        int key = Chunk.ComputeKey(position);
+        long key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
             return 0;
 
@@ -59,7 +86,7 @@ public class World {
     }
 
     public void SetBlockAt(Vector3i position, Block block) {
-        int key = Chunk.ComputeKey(position);
+        long key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
             return;
 
@@ -76,7 +103,7 @@ public class World {
     /// <param name="direction">The direction shot from origin</param>
     /// <param name="hasHit">Sets a boolean whether there has been a hit.</param>
     /// <returns></returns>
-    public (Vector3i, Block.Face) Raycast(Vector3 origin, Vector3 direction, out bool hasHit) {
+    public (Vector3i, Block.Face) Raycast(Vector3 origin, Vector3 direction, out bool hasHit, float distance = 5) {
         //this method works like this:
         //We use the Block.GetFaceFromHit method to walk through each face that lies along direction.
         //We truly walk along every block - quite elegant.
@@ -90,7 +117,7 @@ public class World {
         directionDelta /= 100f;
 
         int i = -1;
-        while((position - origin).LengthSquared < 25) {
+        while((position - origin).LengthSquared < distance * distance) {
             i++;
 
             Vector3i flooredPosition = new(
@@ -107,7 +134,6 @@ public class World {
             _ = Block.GetFaceFromHit(position - flooredPosition, -direction, out Vector3 hit);
 
             if (i > 50) {
-                //this means, this iteration didn't get nearer to the origin
                 Logger.Warn("Something went wrong, returning no hit");
                 hasHit = false;
                 return (new(0, 0, 0), Block.Face.Front);
@@ -130,4 +156,16 @@ public class World {
     /// This event is called after loading a chunk. All arguments are initialized and the list is already updated.
     /// </summary>
     public event ChunkLoadingDelegate OnChunkLoading = default!;
+
+
+    /// <summary>
+    /// The delegate for the corresponding event
+    /// </summary>
+    /// <param name="oldChunk">The chunk is still part of the world, but is to be removed</param>
+    public delegate void ChunkUnloadingDelegate(Chunk oldChunk);
+
+    /// <summary>
+    /// This event is called when a chunk is to be unloaded. The chunk is still valid, but not after the event is ended.
+    /// </summary>
+    public event ChunkUnloadingDelegate OnChunkUnloading = default!;
 }

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -25,23 +26,46 @@ public class Chunk {
     /// to world space.
     /// </summary>
     /// <value></value>
-    public Vector3i Offset { get; set; }
+    public Vector3i Offset {
+        get => ComputeOffset(Key);
+        set => Key = ComputeKey(value);
+    }
 
     /// <summary>
     /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
-    /// The key is calculated using <see cref="ComputeKey"/>.
+    /// The key is calculated using <see cref="ComputeKey"/>. The key is a tightly packed array of the offsets in world chunk space as shorts
     /// </summary>
-    public int Key
-        => ComputeKey(Offset);
+    public long Key { get; set; }
+
 
     /// <summary>
     /// Calculates the key for a chunk given a position in that chunk.
     /// </summary>
     /// <param name="position">Any block position; the returned key is the key to the chunk which holds position</param>
     /// <returns>The key to the chunk</returns>
-    public static int ComputeKey(Vector3i position) {
-        var (x, y, z) = (Vector3)position / 16f; //rounded down
-        return (int)Math.Floor(x) * CHUNK_SIZE * CHUNK_SIZE + (int)Math.Floor(y) * CHUNK_SIZE + (int)Math.Floor(z);
+    public static long ComputeKey(Vector3i position) {
+        Span<short> span = stackalloc short[4];
+        var (x, y, z) = (Vector3)position / 16f;
+        span[0] = (short)Math.Floor(x);
+        span[1] = (short)Math.Floor(y);
+        span[2] = (short)Math.Floor(z);
+        return MemoryMarshal.Cast<short, long>(span)[0];
+    }
+
+    /// <summary>
+    /// Calculates the offset from a given key.
+    /// </summary>
+    /// <param name="key">The key of the chunk</param>
+    /// <returns>The base offset for the chunk</returns>
+    public static Vector3i ComputeOffset(long key) {
+        Span<long> span = stackalloc long[1];
+        span[0] = key;
+        Span<short> shorts = MemoryMarshal.Cast<long, short>(span);
+        Vector3i result = new();
+        result.X = shorts[0];
+        result.Y = shorts[1];
+        result.Z = shorts[2];
+        return result * 16;
     }
 
     public Chunk() {
