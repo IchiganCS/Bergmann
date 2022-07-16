@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
@@ -16,22 +17,33 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private Buffer<Vertex> VertexBuffer { get; set; }
     private Buffer<uint> IndexBuffer { get; set; }
 
+    private Vertex[] ContiguousVerticesCache { get; set; }
+    private uint[] ContiguousIndicesCache { get; set; }
+    private bool ContiguousCacheUpToDate{ get; set; }
+
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
     /// with the appropriate properties, the uint array stores the indices for these vertices. These indices are local for their key, there are many doubles overall
     /// </summary>
-    private Dictionary<int, (Vertex[], uint[])> Cache { get; set; }
+    private ConcurrentDictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
     #pragma warning disable CS8618
-    public ChunkRenderer(Chunk chunk) {
+    public ChunkRenderer() {
+        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer, 13000);
+        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 13000);
+    }
+    #pragma warning restore CS8618
+
+    public void InitWith(Chunk chunk) {
         Chunk = chunk;
 
         Chunk.OnUpdate += Update;
 
+        ContiguousCacheUpToDate = false;
+
         BuildCache();
-        SendToGpu();
+        UpdateContiguousCache();
     }
-    #pragma warning restore CS8618
 
     /// <summary>
     /// Looks up each block and each face and loads the Cache. This is a very costly operation and should 
@@ -42,12 +54,6 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
         var blocks = Chunk.EveryBlock();
 
-        //estimate for buffer size: You see a quarter of the blocks and three faces each.
-        //this is purely random
-        //vertices needs 4 * face
-        //indices needs 6 * face
-        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer, 3 * blocks.Count);
-        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 4 * blocks.Count);
 
         foreach (Vector3i block in blocks) {
             UpdateCacheAt(block);
@@ -59,9 +65,11 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// </summary>
     /// <param name="position">The position in chunk space</param>
     private void UpdateCacheAt(Vector3i block) {
+        ContiguousCacheUpToDate = false;
+
         BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
         int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
-        Cache.Remove(key);
+        Cache.Remove(key, out _);
 
         if (bi.ID == 0)
             return;
@@ -88,7 +96,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
                     Cache[key] = (newVertex.ToArray(), newIndices.ToArray());
                 }
                 else {
-                    Cache.Add(key, (positions, Block.Indices));
+                    Cache.AddOrUpdate(key, (positions, Block.Indices), (a, b) => b);
                 }
             }
         }
@@ -112,16 +120,32 @@ public class ChunkRenderer : IDisposable, IRenderer {
                 UpdateCacheAt(x);
         });
 
-        SendToGpu();
+        UpdateContiguousCache();
     }
 
 
+    
+
     /// <summary>
-    /// Assembles the contiguous arrays from the Cache and writes it to buffers. 
-    /// This is "quite" a costly operation.
+    /// Reads the contiguous arrays and writes it to buffers. 
     /// </summary>
     private void SendToGpu() {
+        //if the buffer is not up to date, but the buffer is filled with something, then it's fine.
+        //we may miss a frame of update, but not critical
+        if (!ContiguousCacheUpToDate && IndexBuffer.Length > 0)
+            return;
 
+        while (!ContiguousCacheUpToDate)
+            Thread.Sleep(1);
+
+        VertexBuffer.Fill(ContiguousVerticesCache);
+        IndexBuffer.Fill(ContiguousIndicesCache);
+    }
+
+    /// <summary>
+    /// Assembles the contiguous arrays from the Cache. This is "quite" a costly operation.
+    /// </summary>
+    private void UpdateContiguousCache() {
         List<Vertex> vertices = new();
         List<uint> indices = new();
 
@@ -134,8 +158,9 @@ public class ChunkRenderer : IDisposable, IRenderer {
             vertexCount += (uint)renderStuff.Item1.Length;
         }
 
-        VertexBuffer.Fill(vertices.ToArray());
-        IndexBuffer.Fill(indices.ToArray());
+        ContiguousVerticesCache = vertices.ToArray();
+        ContiguousIndicesCache = indices.ToArray();
+        ContiguousCacheUpToDate = true;
     }
 
 
@@ -143,6 +168,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding program need to be bound though.
     /// </summary>
     public void Render() {
+        SendToGpu();
         VertexBuffer.Bind();
         Vertex.UseVAO();
         IndexBuffer.Bind();

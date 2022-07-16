@@ -190,10 +190,10 @@ public class Window : GameWindow {
 
 
 
-
+        FPSController.FlyForwardsSpeed = 40;
         FPS.RotateCamera(MouseState.Delta);
         FPS.FlyingMovement((float)args.Time, KeyboardState);
-        World.Instance.EnsureChunksLoaded(FPS.Position, 4);
+        World.Instance.EnsureChunksLoaded(FPS.Position, 6);
     }
 
 

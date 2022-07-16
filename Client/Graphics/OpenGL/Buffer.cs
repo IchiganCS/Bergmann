@@ -8,6 +8,9 @@ namespace Bergmann.Client.Graphics.OpenGL;
 /// Represents any buffer object
 /// </summary>
 public class Buffer<T> : IDisposable where T : struct {
+
+    public static int ActiveBuffer { get; set; } = 0;
+
     /// <summary>
     /// The handle to the OpenGL buffer object
     /// </summary>
@@ -45,6 +48,7 @@ public class Buffer<T> : IDisposable where T : struct {
         Reserved = count;
         Length = -1;
         Hint = hint;
+        Logger.Info($"now having {++ActiveBuffer} active buffers");
     }
 
     /// <summary>
@@ -88,6 +92,7 @@ public class Buffer<T> : IDisposable where T : struct {
     }
 
     public void Dispose() {
+        Logger.Info($"now having {--ActiveBuffer} active buffers");
         GL.DeleteBuffer(Handle);
         Handle = 0;
     }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Bergmann.Shared.World;
 
 namespace Bergmann.Client.Graphics.Renderers;
@@ -13,7 +14,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    private Dictionary<long, ChunkRenderer> ChunkRenderers{ get; set; }
+    private ConcurrentDictionary<long, ChunkRenderer> ChunkRenderers{ get; set; }
 
     /// <summary>
     /// Constructs a world renderer for the <see cref="World.Instance"/>. It loads <see cref="ChunkRenderer"/> for
@@ -33,13 +34,17 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     /// <param name="newChunk">The chunk in whose renderer's generation we're interested in</param>
     private void NewChunkRenderer(Chunk newChunk) {
-        ChunkRenderer n = new(newChunk);
+        ChunkRenderer n = new();
+        Task.Run(() => {
+            n.InitWith(newChunk);
+        });
 
         if (ChunkRenderers.ContainsKey(newChunk.Key)) {
             ChunkRenderers[newChunk.Key].Dispose();
             ChunkRenderers[newChunk.Key] = n;
-        } else {
-            ChunkRenderers.Add(newChunk.Key, n);
+        }
+        else {
+            ChunkRenderers.AddOrUpdate(newChunk.Key, n, (a, b) => b);
         }
     }
 
