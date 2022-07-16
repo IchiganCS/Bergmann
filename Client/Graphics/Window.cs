@@ -14,19 +14,23 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-#pragma warning disable CS8618
-    public Window(GameWindowSettings gameWindowSettings,
-                  NativeWindowSettings nativeWindowSettings) :
-        base(gameWindowSettings, nativeWindowSettings) {
+    #pragma warning disable CS8618
+    public Window(GameWindowSettings gws, NativeWindowSettings nws) :
+        base(gws, nws) {
 
     }
-#pragma warning restore CS8618
+    #pragma warning restore CS8618
 
     private Program WorldProgram { get; set; }
     private Program UIProgram { get; set; }
 
     private UICollection FixedUIItems{ get; set; }
     private UICollection DebugItems { get; set; }
+    private WorldRenderer WorldRenderer { get; set; }
+
+    private FPSController FPS { get; set; }
+    private (Vector3i, Block.Face)? RayCast { get; set; }
+    private bool DebugViewEnabled { get; set; } = false;
 
 
     private void MakeProgram() {
@@ -80,9 +84,6 @@ public class Window : GameWindow {
         Fragment.Dispose();
     }
 
-    private FPSController FPS { get; set; }
-
-    private WorldRenderer WorldRenderer { get; set; }
 
 
     protected override void OnLoad() {
@@ -145,16 +146,6 @@ public class Window : GameWindow {
         DebugItems.Dispose();
     }
 
-    protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
-        if (e.IsFocused)
-            CursorState = CursorState.Grabbed;
-        else
-            CursorState = CursorState.Normal;
-    }
-
-    private (Vector3i, Block.Face)? RayCast { get; set; }
-    private bool DebugViewEnabled { get; set; } = false;
-
     protected override void OnUpdateFrame(FrameEventArgs args) {
         if (!IsFocused)
             return;
@@ -166,8 +157,15 @@ public class Window : GameWindow {
                 CursorState = CursorState.Grabbed;
         }
 
+        if (CursorState != CursorState.Grabbed)
+            return;
+
+
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
+
+        if (KeyboardState.IsKeyPressed(Keys.F12))
+            MakeProgram();
 
         var (pos, face) = World.Instance.Raycast(FPS.Position, FPS.Rotation * new Vector3(0, 0, 1), out bool hit);
         if (hit) {
@@ -183,13 +181,8 @@ public class Window : GameWindow {
 
 
 
-        if (KeyboardState.IsKeyPressed(Keys.F12))
-            MakeProgram();
-
-
 
         FPS.RotateCamera(MouseState.Delta);
-
         FPS.FlyingMovement((float)args.Time, KeyboardState);
     }
 

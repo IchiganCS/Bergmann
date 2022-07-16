@@ -48,6 +48,8 @@ We of course need to tell the GPU the size of the display so that it may transfo
 A new `UIVertex` class is necessary. Handling textures is the difficult part. We need to generate textures on the fly, especially for changing text. Testing has proven the last sentence to be impossible. Generating textures on the fly is possible, but computationally very expensive. We'd need a whole thread just for texture generation. We won't do that.
 If we only use monospace fonts, we could generate another 2d texture array and give each letter its own space. Then, similar to the chunks, we build the vertices for the letters and render them with a specific texture layer.
 
+We have an interface `IUIRenderer` which holds all methods required to use such an `IUIRenderer`. It also includes a method to see if a point lies in that rendered object (e.g. for checking clicks). Those interfaces are held in an `UICollection`. Those can be rendered separately, e.g. for debug information, for different types of ui renders. It's very comfortable to use.
+
 ### Specification
 
 - The vertex shader has access to the following uniforms:

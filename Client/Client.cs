@@ -13,7 +13,7 @@ public class Client {
         gwSet.RenderFrequency = 60f;
         gwSet.UpdateFrequency = 140f;
         nwSet.Title = "Bergmann";
-        nwSet.Size = new(800, 600);
+        nwSet.Size = new(1600, 1200);
 
         nwSet.APIVersion = Version.Parse("3.3");
 
