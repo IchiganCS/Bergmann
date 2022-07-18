@@ -7,20 +7,21 @@ namespace Bergmann.Client.InputHandlers;
 /// Collects all functionality to handle first person cameras.
 /// </summary>
 public class FPSController {
-    public static float FlySideSpeed { get; set; } = 4;
-    public static float FlyForwardsSpeed { get; set; } = 4;
-    public static float FlyBackwardSpeed { get; set; } = 4;
-    public static float FlyUpSpeed { get; set; } = 4;
-    public static float FlyDownSpeed { get; set; } = 4;
+    public float FlySideSpeed { get; set; } = 4;
+    public float FlyForwardsSpeed { get; set; } = 4;
+    public float FlyBackwardSpeed { get; set; } = 4;
+    public float FlyUpSpeed { get; set; } = 4;
+    public float FlyDownSpeed { get; set; } = 4;
+    public float FlyBoostMult { get; set; } = 10;
 
     /// <summary>
     /// Clamps the angle of the x rotation to this angle. Given in radians
     /// </summary>
-    public static float ClampAngle { get; set; } = 85f / 180f * (float)Math.PI;
+    public float ClampAngle { get; set; } = 85f / 180f * (float)Math.PI;
     /// <summary>
     /// The sensitvity of the mouse
     /// </summary>
-    public static Vector2 Sensitivity { get; set; } = new(0.003f, 0.0028f);
+    public Vector2 Sensitivity { get; set; } = new(0.003f, 0.0028f);
 
 
 
@@ -59,7 +60,7 @@ public class FPSController {
 
         float x = 0, y = 0, z = 0;
         if (keyboard.IsKeyDown(KeyMappings.Forward))
-            z += FlyForwardsSpeed;
+            z += FlyForwardsSpeed * (keyboard.IsKeyDown(KeyMappings.Boost) ? FlyBoostMult : 1);
         if (keyboard.IsKeyDown(KeyMappings.Backwards))
             z -= FlyBackwardSpeed;
 

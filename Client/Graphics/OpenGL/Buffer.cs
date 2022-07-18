@@ -48,16 +48,15 @@ public class Buffer<T> : IDisposable where T : struct {
         Reserved = count;
         Length = -1;
         Hint = hint;
-        Logger.Info($"now having {++ActiveBuffer} active buffers");
     }
 
     /// <summary>
     /// Fills the buffer with the appropriate data. The buffer is not updated, if <see cref="items.Length"/> > <see cref="Reserved"/>
     /// </summary>
     /// <param name="items">The new items to be written into the buffer</param>
-    /// <param name="hint">The hint given to OpenGL</param>
-    public void Fill(T[] items) {
-        if (items.Length > Reserved && Reserved > 0) {
+    /// <param name="reallocate">Tells the object whether to reallocate memory if the given items don't fit in the reserved space.</param>
+    public void Fill(T[] items, bool reallocate = false) {
+        if (items.Length > Reserved && Reserved > 0 && !reallocate) {
             Logger.Warn("Can't write this many items into the buffer. Aborting");
             return;
         }
@@ -66,9 +65,10 @@ public class Buffer<T> : IDisposable where T : struct {
         GlLogger.WriteGLError();
 
         //checks whether the buffer has already been initalized
-        if (Length <= 0) {
+        //or if reallocation is necessary
+        if (Length <= 0 || (reallocate && items.Length > Reserved)) {
 
-            if (Reserved <= 0)
+            if (Reserved <= 0 || reallocate)
                 Reserved = items.Length;
 
             //first reserve the buffer. Note that the data parameter is zero, no data is copied
@@ -92,7 +92,6 @@ public class Buffer<T> : IDisposable where T : struct {
     }
 
     public void Dispose() {
-        Logger.Info($"now having {--ActiveBuffer} active buffers");
         GL.DeleteBuffer(Handle);
         Handle = 0;
     }

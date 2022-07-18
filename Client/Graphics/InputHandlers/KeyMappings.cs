@@ -9,4 +9,5 @@ public static class KeyMappings {
     public static Keys Right { get; set; } = Keys.D;
     public static Keys Up { get; set; } = Keys.Space;
     public static Keys Down { get; set; } = Keys.LeftControl;
+    public static Keys Boost { get; set; } = Keys.LeftShift;
 }

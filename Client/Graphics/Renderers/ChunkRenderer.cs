@@ -10,7 +10,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// Renders a chunk. It registers on the events of the specific chunk and updates automatically.
 /// This class is used extensively by <see cref="WorldRenderer"/>. It generally works by creating buffers on the gpu and achieving fast render calls.
 /// However, updates are therefore expensive, because the entire buffers need to be sent to the gpu whenever an update is called for.
-/// This class can be further optimized to work with multiple threads.
+/// This class is further optimized to work with multiple threads. Check the docs to find out.
 /// </summary>
 public class ChunkRenderer : IDisposable, IRenderer {
     private Chunk Chunk { get; set; }
@@ -29,12 +29,19 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private ConcurrentDictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
     #pragma warning disable CS8618
+    /// <summary>
+    /// This object needs to be constructed on the gl thread.
+    /// </summary>
     public ChunkRenderer() {
-        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer, 13000);
-        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 13000);
+        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer);
+        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer);
     }
     #pragma warning restore CS8618
 
+    /// <summary>
+    /// Intializes this chunk renderer with a given chunk. It is quite a heavy operation because it builds the entire caches.
+    /// </summary>
+    /// <param name="chunk">The chunk to be rendered by the renderer</param>
     public void InitWith(Chunk chunk) {
         Chunk = chunk;
 
@@ -110,7 +117,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// Updates the cache at specific points, since rebuilding the entire cache is too expensive. This is an optimization though, theoretically
     /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
     /// </summary>
-    /// <param name="positions"></param>
+    /// <param name="positions">Updates the positions and each of the positon's neighbors</param>
     private void Update(List<Vector3i> positions) {
         List<Vector3i> all = new();
 
@@ -144,8 +151,8 @@ public class ChunkRenderer : IDisposable, IRenderer {
         while (!ContiguousCacheUpToDate)
             Thread.Sleep(1);
 
-        VertexBuffer.Fill(ContiguousVerticesCache);
-        IndexBuffer.Fill(ContiguousIndicesCache);
+        VertexBuffer.Fill(ContiguousVerticesCache, true);
+        IndexBuffer.Fill(ContiguousIndicesCache, true);
 
         BuffersUpToDate = true;
     }
