@@ -20,6 +20,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private Vertex[] ContiguousVerticesCache { get; set; }
     private uint[] ContiguousIndicesCache { get; set; }
     private bool ContiguousCacheUpToDate{ get; set; }
+    private bool BuffersUpToDate { get; set; }
 
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
@@ -40,6 +41,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
         Chunk.OnUpdate += Update;
 
         ContiguousCacheUpToDate = false;
+        BuffersUpToDate = false;
 
         BuildCache();
         UpdateContiguousCache();
@@ -66,6 +68,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// <param name="position">The position in chunk space</param>
     private void UpdateCacheAt(Vector3i block) {
         ContiguousCacheUpToDate = false;
+        BuffersUpToDate = false;
 
         BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
         int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
@@ -130,6 +133,9 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// Reads the contiguous arrays and writes it to buffers. 
     /// </summary>
     private void SendToGpu() {
+        if (BuffersUpToDate)
+            return;
+
         //if the buffer is not up to date, but the buffer is filled with something, then it's fine.
         //we may miss a frame of update, but not critical
         if (!ContiguousCacheUpToDate && IndexBuffer.Length > 0)
@@ -140,6 +146,8 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
         VertexBuffer.Fill(ContiguousVerticesCache);
         IndexBuffer.Fill(ContiguousIndicesCache);
+
+        BuffersUpToDate = true;
     }
 
     /// <summary>
