@@ -21,7 +21,7 @@ public class Window : GameWindow {
     }
     #pragma warning restore CS8618
 
-    private Program WorldProgram { get; set; }
+    private Program BlockProgram { get; set; }
     private Program UIProgram { get; set; }
 
     private UICollection FixedUIItems{ get; set; }
@@ -35,29 +35,29 @@ public class Window : GameWindow {
 
 
     private void MakeProgram() {
-        if (WorldProgram is not null)
-            WorldProgram.Dispose();
+        if (BlockProgram is not null)
+            BlockProgram.Dispose();
 
         if (UIProgram is not null)
             UIProgram.Dispose();
 
         Shader VertexShader = new(ShaderType.VertexShader);
         Shader Fragment = new(ShaderType.FragmentShader);
-        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.vert"));
-        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Box.frag"));
+        VertexShader.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Block.vert"));
+        Fragment.Compile(ResourceManager.ReadFile(ResourceManager.Type.Shaders, "Block.frag"));
 
-        WorldProgram = new();
-        WorldProgram.AddShader(VertexShader);
-        WorldProgram.AddShader(Fragment);
-        WorldProgram.Compile();
-        WorldProgram.OnLoad += () => {
+        BlockProgram = new();
+        BlockProgram.AddShader(VertexShader);
+        BlockProgram.AddShader(Fragment);
+        BlockProgram.Compile();
+        BlockProgram.OnLoad += () => {
             GL.Enable(EnableCap.CullFace);
 
             Matrix4 viewMat = FPS.LookAt();
             Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
             projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
-            WorldProgram.SetUniform("projection", projMat);
-            WorldProgram.SetUniform("view", viewMat);
+            BlockProgram.SetUniform("projection", projMat);
+            BlockProgram.SetUniform("view", viewMat);
             GlLogger.WriteGLError();
         };
 
@@ -137,7 +137,7 @@ public class Window : GameWindow {
     }
 
     protected override void OnUnload() {
-        WorldProgram.Dispose();
+        BlockProgram.Dispose();
         UIProgram.Dispose();
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
@@ -201,14 +201,14 @@ public class Window : GameWindow {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
-        Program.Active = WorldProgram;
+        Program.Active = BlockProgram;
 
 
         GL.ActiveTexture(TextureUnit.Texture0);
         GlLogger.WriteGLError();
         BlockRenderer.TextureStack.Bind();
         GlLogger.WriteGLError();
-        GL.Uniform1(GL.GetUniformLocation(WorldProgram.Handle, "stack"), 0);
+        GL.Uniform1(GL.GetUniformLocation(BlockProgram.Handle, "stack"), 0);
         GlLogger.WriteGLError();
 
 

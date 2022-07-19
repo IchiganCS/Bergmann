@@ -134,7 +134,7 @@ public class Program : IDisposable {
     /// Wraps all necessary calls for <see cref="SetUniform"/> needed to fill an array of uniforms. See that function for more detail.
     /// </summary>
     /// <param name="name">The name without any brackets.</param>
-    public void SetUniforms<T>(string name, T[] items) {
+    public void SetUniformArray<T>(string name, T[] items) {
         for (int i = 0; i < items.Length; i++)
             SetUniform($"{name}[{i}]", items[i]);
     }
