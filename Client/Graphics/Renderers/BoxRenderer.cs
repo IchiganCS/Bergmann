@@ -46,11 +46,23 @@ public class BoxRenderer : IDisposable, IUIRenderer {
         }
     }
 
+    /// <summary>
+    /// Absolute offset for the anchor
+    /// </summary>
+    public Vector2 AbsoluteAnchorOffset { get; set; }
+    /// <summary>
+    /// Percentage offset for the anchor
+    /// </summary>
+    public Vector2 PercentageAnchorOffset { get; set; }
+    /// <summary>
+    /// Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right
+    /// </summary>
+    public Vector2 RelativeAnchor { get; set; }
+    /// <summary>
+    /// The width and height of the box
+    /// </summary>
+    public Vector2 Dimension { get; set; }
 
-    public Vector2 AbsoluteAnchorOffset { get; private set; }
-    public Vector2 PercentageAnchorOffset { get; private set; }
-    public Vector2 RelativeAnchor { get; private set; }
-    public Vector2 Dimension { get; private set; }
 
 
     #pragma warning disable CS8618
@@ -63,67 +75,54 @@ public class BoxRenderer : IDisposable, IUIRenderer {
     }
     #pragma warning restore CS8618
 
+
+
     /// <summary>
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
-    /// </summary>
-    /// <param name="originAbs">Absolute offset for the anchor</param>
-    /// <param name="originPct">Percentage offset for the anchor</param>
-    /// <param name="anchor">Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right</param>
-    /// <param name="dimension">The width and height of the box. It's required to calculate the layout</param>
-    /// <param name="separators">If the parameter is supplied (is not null), then the texture is assumed to be an array. The values have to be between 0 and 1. Each separator is a cut
-    /// and symbolizes the beginning of the next texture. The integer is the layer the texture is connected. The cutting is done along the horizontal axis, so the cuts are vertical.
+    /// This method can only work if a layout is applied.
+    /// </summary>    
+    /// <param name="separators">The first values have to be between 0f and 1f. Each separator is a cut
+    /// and symbolizes the beginning of the next texture in the stack. The integer is the layer of the texture stack. The cutting is done along the horizontal axis, so the cuts are vertical.
     /// All the first items of the pairs should be one when summed up</param>
-    /// <param name="layer">Layer is used if not separators are supplied. It's the layer in the bound texture stack</param>
-    public void MakeLayout(Vector2 originAbs, Vector2 originPct, Vector2 anchor, Vector2 dimension, IEnumerable<(float, int)>? separators = null, int layer = -1) {
-
-        Dimension = dimension;
-        AbsoluteAnchorOffset = originAbs;
-        PercentageAnchorOffset = originPct;
-        RelativeAnchor = anchor;
+    public void ApplyTexture(IEnumerable<(float, int)> separators) {
 
         Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
 
-        if (separators is null) {
-            EnsureBufferCapacity(1);
-            Vertices.Fill(new UIVertex[4] {
-                new() { Absolute = anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, layer)},
-                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(Dimension.X, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, layer)},
-                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, layer)},
-                new() { Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(Dimension.X, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, layer)},
+        EnsureBufferCapacity(separators.Count());
+
+        List<UIVertex> vertices = new();
+        List<uint> indices = new();
+
+        float passedSpace = 0f;
+        uint indexToUse = 0;
+        foreach ((float, int) pair in separators) {
+            Vector2 coveredWidth = new(passedSpace * Dimension.X, 0);
+            float spaceThisPass = pair.Item1 * Dimension.X;
+            vertices.AddRange(new UIVertex[4] {
+                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, pair.Item2)},
+                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, pair.Item2)},
+                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, pair.Item2)},
+                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, pair.Item2)}});
+            indices.AddRange(new uint[6] {
+                indexToUse + 0, indexToUse + 1, indexToUse + 3, 
+                indexToUse + 0, indexToUse + 2, indexToUse + 3
             });
-            Indices.Fill(new uint[6] {
-                0, 1, 3,
-                0, 2, 3
-            });
+            indexToUse += 4;
+            passedSpace += pair.Item1;
         }
-        else {
-            EnsureBufferCapacity(separators.Count());
 
-            List<UIVertex> vertices = new();
-            List<uint> indices = new();
-
-            float passedSpace = 0f;
-            uint indexToUse = 0;
-            foreach ((float, int) pair in separators) {
-                Vector2 coveredWidth = new(passedSpace * Dimension.X, 0);
-                float spaceThisPass = pair.Item1 * Dimension.X;
-                vertices.AddRange(new UIVertex[4] {
-                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, pair.Item2)},
-                    new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, pair.Item2)}});
-                indices.AddRange(new uint[6] {
-                    indexToUse + 0, indexToUse + 1, indexToUse + 3, 
-                    indexToUse + 0, indexToUse + 2, indexToUse + 3
-                });
-                indexToUse += 4;
-                passedSpace += pair.Item1;
-            }
-
-            Vertices.Fill(vertices.ToArray());
-            Indices.Fill(indices.ToArray());
-        }
+        Vertices.Fill(vertices.ToArray());
+        Indices.Fill(indices.ToArray());
     }
+
+    /// <summary>
+    /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
+    /// This method can only work if a layout is applied.
+    /// </summary>    
+    /// <param name="layer">Applies the given texture to the entire box. It is the index used in the ui fragment shader for the texture stack</param>
+    public void ApplyTexture(int layer)
+        => ApplyTexture(new (float, int)[1] { (1f, layer) });
+
 
     /// <inheritdoc/>
     public bool PointInShape(Vector2 point, Vector2 windowsize) {

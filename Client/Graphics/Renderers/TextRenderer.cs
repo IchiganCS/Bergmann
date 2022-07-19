@@ -1,4 +1,5 @@
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.InputHandlers;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using Shared;
@@ -31,7 +32,7 @@ public class TextRenderer : BoxRenderer {
     /// <param name="size">The size of each layer (quadratic) in pixels. If the letter is not quadratic, the image
     /// is resized without keeping the same aspect ratio, so that the texture can be unstretched and it gives the correct image</param>
     /// <returns>A Texture2DArray. The caller needs to dispose of it</returns>
-    public static Texture MakeLetterStack(Font font, int size = 50) {
+    private static Texture MakeLetterStack(Font font, int size = 50) {
         Texture stack = new Texture(TextureTarget.Texture2DArray);
         stack.Reserve(size, size, CHARS.Length);
 
@@ -66,29 +67,24 @@ public class TextRenderer : BoxRenderer {
         DebugFontStack = MakeLetterStack(DebugFont, 100);
     }
 
-    public float TextHeight { get; private set; }
-
     /// <summary>
-    /// Constructs a new TextRenderer.
+    /// Renders a given text into the box renderer. The x component of <see cref="BoxRenderer.Dimension"/> is discarded to 
+    /// fit the text
     /// </summary>
     /// <param name="text">The text to be rendered</param>
-    /// <param name="height">The height of the text.</param>
-    /// <param name="originAbs">Absolute offset for the anchor</param>
-    /// <param name="originPct">Percentage offset for the anchor</param>
-    /// <param name="anchor">Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right</param>
-    public TextRenderer(string text, float height, Vector2 originAbs, Vector2 originPct, Vector2 anchor) :
-        base(text.Length) {
-
-        TextHeight = height;
-        float widthOfOne = TextHeight * 0.93f;
+    public void SetText(string text) {
+        float widthOfOne = Dimension.Y * 0.93f;
         float entireWidth = widthOfOne * text.Length;
-        MakeLayout(originAbs, originPct, anchor, new Vector2(entireWidth, TextHeight), separators: text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
+        Dimension = new (entireWidth, Dimension.Y);
+        ApplyTexture(text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
     }
 
-    public void SetText(string text) {
-        float widthOfOne = TextHeight * 0.93f;
-        float entireWidth = widthOfOne * text.Length;
-        MakeLayout(AbsoluteAnchorOffset, PercentageAnchorOffset, RelativeAnchor, new Vector2(entireWidth, TextHeight), separators: text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
+    /// <summary>
+    /// Hooks the text field to this text renderer. No further action on the text renderer is then required.
+    /// </summary>
+    /// <param name="tf">The text field whose values are checked on every update</param>
+    public void HookTextField(TextField tf) {
+        tf.OnUpdate += () => SetText(tf.Value);
     }
 
     /// <summary>

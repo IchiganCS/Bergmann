@@ -26,12 +26,16 @@ public class Window : GameWindow {
 
     private UICollection FixedUIItems{ get; set; }
     private UICollection DebugItems { get; set; }
+    private UICollection ChatItems{ get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
     private FPSController FPS { get; set; }
     private (Vector3i, Block.Face)? RayCast { get; set; }
     private bool DebugViewEnabled { get; set; } = false;
     private bool WireFrameEnabled { get; set; } = false;
+
+    private bool Chatting { get; set; } = false;
+    private TextField ChatField { get; set; } = new();
 
 
     private void MakeProgram() {
@@ -125,15 +129,39 @@ public class Window : GameWindow {
 
         FixedUIItems = new(UIElems);
         DebugItems = new(null);
+        ChatItems = new(null);
 
-        BoxRenderer cross = new(1);
-        cross.MakeLayout(new(0, 0), new(0.5f, 0.5f), new(0.5f, 0.5f), new(100, 100), layer: 0);
+        BoxRenderer cross = new(1) {
+            AbsoluteAnchorOffset = (0, 0), 
+            PercentageAnchorOffset = (0.5f, 0.5f), 
+            RelativeAnchor = (0.5f, 0.5f), 
+            Dimension = (100, 100)
+        };
+        cross.ApplyTexture(0);
         FixedUIItems.ImageRenderers.Add((cross, true));
 
-        TextRenderer posText = new("Pos: first", 50, new(30, -30), new(0, 1), new(0, 1));
+        TextRenderer posText = new() {
+            AbsoluteAnchorOffset = (30, -30), 
+            PercentageAnchorOffset = (0, 1), 
+            RelativeAnchor = (0, 1),
+            Dimension = (-1, 50)
+        };        
         DebugItems.OtherRenderers.Add((posText, true));
-        TextRenderer blockText = new("Block: ", 50, new(30, -170), new(0, 1), new(0, 1));
+        TextRenderer blockText = new() {
+            AbsoluteAnchorOffset = (30, -100),
+            PercentageAnchorOffset = (0, 1),
+            RelativeAnchor = (0, 1),
+            Dimension = (-1, 50)
+        };
         DebugItems.OtherRenderers.Add((blockText, true));
+
+        TextRenderer chatText = new() {
+            RelativeAnchor = (0, 0),
+            AbsoluteAnchorOffset = (50, 50),
+            PercentageAnchorOffset = (0, 0),
+            Dimension = (-1, 50)
+        };
+        ChatItems.OtherRenderers.Add((chatText, false));
     }
 
     protected override void OnUnload() {
@@ -148,6 +176,8 @@ public class Window : GameWindow {
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args) {
+        base.OnUpdateFrame(args);
+
         if (!IsFocused)
             return;
 
@@ -160,6 +190,21 @@ public class Window : GameWindow {
 
         if (CursorState != CursorState.Grabbed)
             return;
+
+        if (KeyboardState.IsKeyPressed(Keys.Enter)) {
+            Chatting = !Chatting;
+            if (Chatting) {
+                //ChatText = TextField.GetTypedString(ChatText, KeyboardState);
+                TextInput += ChatField.HandleTextInput;
+            }
+            else {
+                TextInput -= ChatField.HandleTextInput;
+            }
+        }
+        if (Chatting) {
+            ChatField.HandleCursor(KeyboardState);
+            return;
+        }
 
 
         if (KeyboardState.IsKeyPressed(Keys.F1))
@@ -229,6 +274,16 @@ public class Window : GameWindow {
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
             DebugItems.Render();
         }
+
+        if (!string.IsNullOrEmpty(ChatField.Value)) {
+            (ChatItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(ChatField.Value);
+            ChatItems.OtherRenderers[0] = (ChatItems.OtherRenderers[0].Item1, true);
+            ChatItems.Render();
+        }
+        else {
+
+        }
+
 
         FixedUIItems.Render();
 

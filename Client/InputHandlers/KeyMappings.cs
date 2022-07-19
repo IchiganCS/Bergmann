@@ -10,4 +10,6 @@ public static class KeyMappings {
     public static Keys Up { get; set; } = Keys.Space;
     public static Keys Down { get; set; } = Keys.LeftControl;
     public static Keys Boost { get; set; } = Keys.LeftShift;
+
+    public static Keys ChatToggle { get; set; } = Keys.Enter;
 }
