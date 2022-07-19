@@ -56,6 +56,12 @@ public class Window : GameWindow {
         BlockProgram.Compile();
         BlockProgram.OnLoad += () => {
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.DepthTest);
+
+            if (WireFrameEnabled)
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            else
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             Matrix4 viewMat = FPS.LookAt();
             Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
@@ -80,6 +86,8 @@ public class Window : GameWindow {
 
         UIProgram.OnLoad += () => {
             GL.Disable(EnableCap.CullFace);
+            GL.Disable(EnableCap.DepthTest);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             UIProgram.SetUniform("windowsize", new Vector2i(Size.X, Size.Y));
             UIProgram.SetUniform("text", 0);
@@ -161,7 +169,8 @@ public class Window : GameWindow {
             PercentageAnchorOffset = (0, 0),
             Dimension = (-1, 50)
         };
-        ChatItems.OtherRenderers.Add((chatText, false));
+        chatText.HookTextField(ChatField);
+        ChatItems.OtherRenderers.Add((chatText, true));
     }
 
     protected override void OnUnload() {
@@ -194,32 +203,33 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyPressed(Keys.Enter)) {
             Chatting = !Chatting;
             if (Chatting) {
-                //ChatText = TextField.GetTypedString(ChatText, KeyboardState);
-                TextInput += ChatField.HandleTextInput;
+                TextInput += ChatField.Insert;
             }
             else {
-                TextInput -= ChatField.HandleTextInput;
+                TextInput -= ChatField.Insert;
+
+                string text = ChatField.Text.Trim();
+                if (text.StartsWith('/')) {
+                    if (text == "/wireframe")
+                        WireFrameEnabled = !WireFrameEnabled;
+                    
+
+
+                    if (text == "/debug")
+                        DebugViewEnabled = !DebugViewEnabled;
+
+                    if (text == "/recompile")
+                        MakeProgram();
+                }
+
+                ChatField.Clear();
             }
         }
         if (Chatting) {
-            ChatField.HandleCursor(KeyboardState);
+            ChatField.UpdateState(KeyboardState);
             return;
         }
 
-
-        if (KeyboardState.IsKeyPressed(Keys.F1))
-            DebugViewEnabled = !DebugViewEnabled;
-
-        if (KeyboardState.IsKeyPressed(Keys.F11)) {
-            WireFrameEnabled = !WireFrameEnabled;
-            if (WireFrameEnabled)
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-            else
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-        }
-
-        if (KeyboardState.IsKeyPressed(Keys.F12))
-            MakeProgram();
 
         var (pos, face) = World.Instance.Raycast(FPS.Position, FPS.Rotation * new Vector3(0, 0, 1), out bool hit);
         if (hit) {
@@ -257,7 +267,6 @@ public class Window : GameWindow {
         GlLogger.WriteGLError();
 
 
-
         WorldRenderer.Render();
 
 
@@ -265,23 +274,21 @@ public class Window : GameWindow {
         GlLogger.WriteGLError();
 
         if (DebugViewEnabled) {
-            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText($"Pos: ({FPS.Position.X:0.00}, {FPS.Position.Y:0.00}, {FPS.Position.Z:0.00})");
+            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(
+                $"Pos: ({FPS.Position.X:0.00}, {FPS.Position.Y:0.00}, {FPS.Position.Z:0.00})");
+
             if (RayCast is not null) {
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
-                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText($"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
+                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText(
+                    $"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
             }
             else
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
             DebugItems.Render();
         }
 
-        if (!string.IsNullOrEmpty(ChatField.Value)) {
-            (ChatItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(ChatField.Value);
-            ChatItems.OtherRenderers[0] = (ChatItems.OtherRenderers[0].Item1, true);
+        if (Chatting) {
             ChatItems.Render();
-        }
-        else {
-
         }
 
 

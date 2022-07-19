@@ -1,7 +1,6 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.InputHandlers;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Mathematics;
 using Shared;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -11,18 +10,24 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
+/// <summary>
+/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyTexture"/> method, so there's no need to call it.
+/// Additionally, when specifying the layout of the box, you only have to specify the y coordinate of 
+/// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextField"/>, 
+/// it renders the cursor automatically.
+/// </summary>
 public class TextRenderer : BoxRenderer {
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     private static FontCollection FontCollection { get; set; } = new();
     private static Font DebugFont { get; set; }
     private static Texture DebugFontStack { get; set; }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
     /// <summary>
     /// All the chars that can be rendered by the text renderer. If the used char is not known, OpenGl defaults to "a".
     /// Then you can just add it.
     /// </summary>
-    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(){}+=-*/.#:\\<>";
+    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(){}+=-*/.#:\\<>|äöüÄÖÜ";
 
     /// <summary>
     /// Returns a new letter stack which can be used for fast rendering in shaders.
@@ -30,7 +35,8 @@ public class TextRenderer : BoxRenderer {
     /// </summary>
     /// <param name="font">The font which is used to write the letters into the textures</param>
     /// <param name="size">The size of each layer (quadratic) in pixels. If the letter is not quadratic, the image
-    /// is resized without keeping the same aspect ratio, so that the texture can be unstretched and it gives the correct image</param>
+    /// is resized without keeping the same aspect ratio, 
+    /// so that the texture can be unstretched and it gives the correct image</param>
     /// <returns>A Texture2DArray. The caller needs to dispose of it</returns>
     private static Texture MakeLetterStack(Font font, int size = 50) {
         Texture stack = new Texture(TextureTarget.Texture2DArray);
@@ -49,7 +55,7 @@ public class TextRenderer : BoxRenderer {
             img.Mutate(x => x.BackgroundColor(Color.Transparent)
                 .DrawText(options, sub, Brushes.Solid(Color.White), Pens.Solid(Color.Black, 1.4f))
                 .Resize(size, size));
-                
+
             stack.Write(img, i);
         }
         GlLogger.WriteGLError();
@@ -72,11 +78,32 @@ public class TextRenderer : BoxRenderer {
     /// fit the text
     /// </summary>
     /// <param name="text">The text to be rendered</param>
-    public void SetText(string text) {
+    /// <param name="cursor">The position of the cursor to be rendered. If less than zero, then ignored</param>
+    public void SetText(string text, int cursor = -1) {
+        if (cursor >= 0) {
+            text = text.Insert(cursor, "|");
+        }
+
         float widthOfOne = Dimension.Y * 0.93f;
         float entireWidth = widthOfOne * text.Length;
-        Dimension = new (entireWidth, Dimension.Y);
-        ApplyTexture(text.Select(c => (1f / text.Length, CHARS.IndexOf(c))));
+        Dimension = new(entireWidth, Dimension.Y);
+        ApplyTexture(text.Select((c, i) => {
+            //make overlapping sections on the box renderer for the cursor
+            float width = 1f / text.Length;
+            float cursorWidth = width;
+            float cursorOffset = -0.5f * width;
+
+            int charLayer = CHARS.IndexOf(c);
+
+            if (i != cursor && i != cursor + 1)
+                return (0, width, charLayer);
+
+            else if (i == cursor)
+                return (cursorOffset, cursorWidth, charLayer);
+
+            else
+                return (-cursorWidth - cursorOffset, width, charLayer);
+        }));
     }
 
     /// <summary>
@@ -84,7 +111,8 @@ public class TextRenderer : BoxRenderer {
     /// </summary>
     /// <param name="tf">The text field whose values are checked on every update</param>
     public void HookTextField(TextField tf) {
-        tf.OnUpdate += () => SetText(tf.Value);
+        tf.OnUpdate += 
+            () => SetText(tf.Text, tf.Cursor);
     }
 
     /// <summary>

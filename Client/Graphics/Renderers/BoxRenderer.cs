@@ -6,13 +6,15 @@ using OpenTK.Mathematics;
 
 
 /// <summary>
-/// Renders a texture on a box. This is a ui class, the box is two dimensional. It can display any two dimensional texture array and can as such be used to render text
+/// Renders a texture on a box. This is a ui class, the box is two dimensional. 
+/// It can display any two dimensional texture array and can as such be used to render text
 /// indirectly. See <see cref="TextRenderer"/> for more info about that.
 /// </summary>
 public class BoxRenderer : IDisposable, IUIRenderer {
 
     /// <summary>
-    /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. Take a look at it to see the options you have for the layout
+    /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. 
+    /// Take a look at it to see the options you have for the layout
     /// of boxes. Since each box can be separated into different textures, this buffer can hold 4 * num_of_cuts.
     /// </summary>
     private Buffer<UIVertex> Vertices { get; set; }
@@ -69,7 +71,8 @@ public class BoxRenderer : IDisposable, IUIRenderer {
     /// <summary>
     /// Constructs an empty box renderer
     /// </summary>
-    /// <param name="estimateSections">How many sections this box renderer probably holds. It's not a hard boundary, but nice to have for optimization</param>
+    /// <param name="estimateSections">How many sections this box renderer probably holds. It's not a hard boundary, 
+    /// but nice to have for optimization</param>
     public BoxRenderer(int estimateSections = 1) {
         EnsureBufferCapacity(estimateSections);
     }
@@ -81,10 +84,13 @@ public class BoxRenderer : IDisposable, IUIRenderer {
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
     /// This method can only work if a layout is applied.
     /// </summary>    
-    /// <param name="separators">The first values have to be between 0f and 1f. Each separator is a cut
-    /// and symbolizes the beginning of the next texture in the stack. The integer is the layer of the texture stack. The cutting is done along the horizontal axis, so the cuts are vertical.
-    /// All the first items of the pairs should be one when summed up</param>
-    public void ApplyTexture(IEnumerable<(float, int)> separators) {
+    /// <param name="separators">Each separator is a cut and symbolizes the beginning of the next texture in the stack. 
+    /// The first float is the offset from the end of the last texture.
+    /// The second float is the width of the new block.
+    /// Overlapping is possible.
+    /// The integer is the layer of the texture stack. 
+    /// The cutting is done along the horizontal axis, so the cuts are vertical.</param>
+    public void ApplyTexture(IEnumerable<(float, float, int)> separators) {
 
         Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
 
@@ -95,20 +101,35 @@ public class BoxRenderer : IDisposable, IUIRenderer {
 
         float passedSpace = 0f;
         uint indexToUse = 0;
-        foreach ((float, int) pair in separators) {
-            Vector2 coveredWidth = new(passedSpace * Dimension.X, 0);
-            float spaceThisPass = pair.Item1 * Dimension.X;
+        foreach ((float, float, int) pair in separators) {
+            Vector2 coveredWidth = new(passedSpace * Dimension.X + pair.Item1 * Dimension.X, 0);
+            float spaceThisPass = pair.Item2 * Dimension.X;
+
+
             vertices.AddRange(new UIVertex[4] {
-                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, Percent = PercentageAnchorOffset, TexCoord = new(0, 0, pair.Item2)},
-                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), Percent = PercentageAnchorOffset, TexCoord = new(1, 0, pair.Item2)},
-                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(0, 1, pair.Item2)},
-                new() { Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y), Percent = PercentageAnchorOffset, TexCoord = new(1, 1, pair.Item2)}});
+                new() { 
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, 
+                    Percent = PercentageAnchorOffset, 
+                    TexCoord = new(0, 0, pair.Item3)},
+                new() { 
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), 
+                    Percent = PercentageAnchorOffset, 
+                    TexCoord = new(1, 0, pair.Item3)},
+                new() { 
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), 
+                    Percent = PercentageAnchorOffset, 
+                    TexCoord = new(0, 1, pair.Item3)},
+                new() { 
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y),
+                    Percent = PercentageAnchorOffset, 
+                    TexCoord = new(1, 1, pair.Item3)}});
+
             indices.AddRange(new uint[6] {
                 indexToUse + 0, indexToUse + 1, indexToUse + 3, 
                 indexToUse + 0, indexToUse + 2, indexToUse + 3
             });
             indexToUse += 4;
-            passedSpace += pair.Item1;
+            passedSpace += pair.Item2 + pair.Item1;
         }
 
         Vertices.Fill(vertices.ToArray());
@@ -119,9 +140,10 @@ public class BoxRenderer : IDisposable, IUIRenderer {
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
     /// This method can only work if a layout is applied.
     /// </summary>    
-    /// <param name="layer">Applies the given texture to the entire box. It is the index used in the ui fragment shader for the texture stack</param>
+    /// <param name="layer">Applies the given texture to the entire box. 
+    /// It is the index used in the ui fragment shader for the texture stack</param>
     public void ApplyTexture(int layer)
-        => ApplyTexture(new (float, int)[1] { (1f, layer) });
+        => ApplyTexture(new (float, float, int)[1] { (0f, 1f, layer) });
 
 
     /// <inheritdoc/>
