@@ -22,6 +22,9 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private bool ContiguousCacheUpToDate{ get; set; }
     private bool BuffersUpToDate { get; set; }
 
+    private bool BuffersRenderable
+        => VertexBuffer.IsFilled && IndexBuffer.IsFilled;
+
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
     /// with the appropriate properties, the uint array stores the indices for these vertices. These indices are local for their key, there are many doubles overall
@@ -137,19 +140,14 @@ public class ChunkRenderer : IDisposable, IRenderer {
     
 
     /// <summary>
-    /// Reads the contiguous arrays and writes it to buffers. 
+    /// Reads the contiguous arrays and writes it to buffers if the buffer is not up to date. This function may skip and
+    /// it is not guaranteed 
     /// </summary>
     private void SendToGpu() {
-        if (BuffersUpToDate)
+        //if the buffer is not up to date, but buffer is up to date, then do an update. 
+        //Skip sending data otherwise. We may miss a frame of asynchronous update, that's fine.
+        if (BuffersUpToDate || !ContiguousCacheUpToDate)
             return;
-
-        //if the buffer is not up to date, but the buffer is filled with something, then it's fine.
-        //we may miss a frame of update, but not critical
-        if (!ContiguousCacheUpToDate && IndexBuffer.Length > 0)
-            return;
-
-        while (!ContiguousCacheUpToDate)
-            Thread.Sleep(1);
 
         VertexBuffer.Fill(ContiguousVerticesCache, true);
         IndexBuffer.Fill(ContiguousIndicesCache, true);
@@ -184,12 +182,14 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// </summary>
     public void Render() {
         SendToGpu();
-        VertexBuffer.Bind();
-        Vertex.UseVAO();
-        IndexBuffer.Bind();
-        GlLogger.WriteGLError();
+        if (BuffersRenderable) {
+            VertexBuffer.Bind();
+            Vertex.UseVAO();
+            IndexBuffer.Bind();
+            GlLogger.WriteGLError();
 
-        GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
+        }
     }
 
     public void Dispose() {

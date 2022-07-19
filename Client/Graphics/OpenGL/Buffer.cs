@@ -38,6 +38,12 @@ public class Buffer<T> : IDisposable where T : struct {
     public int Reserved { get; private set; }
 
     /// <summary>
+    /// If the buffer was ever filled. This doesn't mean, that the buffer holds data, but it's then filled with any data.
+    /// </summary>
+    public bool IsFilled
+        => Length >= 0;
+
+    /// <summary>
     /// Constructs a new buffer with the specified target
     /// </summary>
     /// <param name="target">The target can't be changed later</param>
@@ -62,7 +68,6 @@ public class Buffer<T> : IDisposable where T : struct {
         }
 
         GL.BindBuffer(Target, Handle);
-        GlLogger.WriteGLError();
 
         //checks whether the buffer has already been initalized
         //or if reallocation is necessary

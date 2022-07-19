@@ -116,7 +116,7 @@ public class World {
         directionDelta.NormalizeFast();
         directionDelta /= 100f;
 
-        int i = -1;
+        int i = 0;
         while((position - origin).LengthSquared < distance * distance) {
             i++;
 

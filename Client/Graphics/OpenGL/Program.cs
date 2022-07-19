@@ -157,7 +157,6 @@ public class Program : IDisposable {
 
     public void Dispose() {
         GL.DeleteProgram(Handle);
-        GlLogger.WriteGLError();
         Handle = 0;
     }
 }
