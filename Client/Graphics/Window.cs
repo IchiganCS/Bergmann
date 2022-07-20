@@ -14,19 +14,19 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     public Window(GameWindowSettings gws, NativeWindowSettings nws) :
         base(gws, nws) {
 
     }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
     private Program BlockProgram { get; set; }
     private Program UIProgram { get; set; }
 
-    private UICollection FixedUIItems{ get; set; }
+    private UICollection FixedUIItems { get; set; }
     private UICollection DebugItems { get; set; }
-    private UICollection ChatItems{ get; set; }
+    private UICollection ChatItems { get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
     private FPSController FPS { get; set; }
@@ -86,7 +86,7 @@ public class Window : GameWindow {
 
         UIProgram.OnLoad += () => {
             GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest); //this is required so that ui elements may overlap
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             UIProgram.SetUniform("windowsize", new Vector2i(Size.X, Size.Y));
@@ -140,20 +140,20 @@ public class Window : GameWindow {
         ChatItems = new(null);
 
         BoxRenderer cross = new(1) {
-            AbsoluteAnchorOffset = (0, 0), 
-            PercentageAnchorOffset = (0.5f, 0.5f), 
-            RelativeAnchor = (0.5f, 0.5f), 
+            AbsoluteAnchorOffset = (0, 0),
+            PercentageAnchorOffset = (0.5f, 0.5f),
+            RelativeAnchor = (0.5f, 0.5f),
             Dimension = (100, 100)
         };
         cross.ApplyTexture(0);
         FixedUIItems.ImageRenderers.Add((cross, true));
 
         TextRenderer posText = new() {
-            AbsoluteAnchorOffset = (30, -30), 
-            PercentageAnchorOffset = (0, 1), 
+            AbsoluteAnchorOffset = (30, -30),
+            PercentageAnchorOffset = (0, 1),
             RelativeAnchor = (0, 1),
             Dimension = (-1, 50)
-        };        
+        };
         DebugItems.OtherRenderers.Add((posText, true));
         TextRenderer blockText = new() {
             AbsoluteAnchorOffset = (30, -100),
@@ -200,6 +200,9 @@ public class Window : GameWindow {
         if (CursorState != CursorState.Grabbed)
             return;
 
+        if (KeyboardState.IsKeyPressed(Keys.F1))
+            DebugViewEnabled = !DebugViewEnabled;
+
         if (KeyboardState.IsKeyPressed(Keys.Enter)) {
             Chatting = !Chatting;
             if (Chatting) {
@@ -212,8 +215,6 @@ public class Window : GameWindow {
                 if (text.StartsWith('/')) {
                     if (text == "/wireframe")
                         WireFrameEnabled = !WireFrameEnabled;
-                    
-
 
                     if (text == "/debug")
                         DebugViewEnabled = !DebugViewEnabled;

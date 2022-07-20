@@ -84,7 +84,7 @@ public class TextRenderer : BoxRenderer {
             text = text.Insert(cursor, "|");
         }
 
-        float widthOfOne = Dimension.Y * 0.93f;
+        float widthOfOne = Dimension.Y * 0.7f;
         float entireWidth = widthOfOne * text.Length;
         Dimension = new(entireWidth, Dimension.Y);
         ApplyTexture(text.Select((c, i) => {

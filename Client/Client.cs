@@ -13,7 +13,7 @@ public class Client {
         gwSet.RenderFrequency = 60f;
         gwSet.UpdateFrequency = 140f;
         nwSet.Title = "Bergmann";
-        nwSet.Size = (1600, 1200);
+        nwSet.Size = (1400, 1100);
         nwSet.CurrentMonitor = Monitors.GetPrimaryMonitor().Handle;
         nwSet.Location = (0, 0);
 
