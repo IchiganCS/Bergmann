@@ -2,6 +2,8 @@ using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.World;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -36,6 +38,8 @@ public class Window : GameWindow {
 
     private bool Chatting { get; set; } = false;
     private TextField ChatField { get; set; } = new();
+    public HubConnection Hub { get; set; }
+
 
 
     private void MakeProgram() {
@@ -119,6 +123,14 @@ public class Window : GameWindow {
         //but only on the fragment shader - which still is quite nice to be honest.
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
+
+
+        var hub = new HubConnectionBuilder()
+        .WithUrl("http://localhost:5000/ChatHub")
+        .WithAutomaticReconnect();
+        hub.Services.AddLogging();
+        Hub = hub.Build();
+        Hub.StartAsync();
 
 
         WorldRenderer = new();
@@ -221,6 +233,9 @@ public class Window : GameWindow {
 
                     if (text == "/recompile")
                         MakeProgram();
+                }
+                else {
+                    Hub.SendAsync("SendMessage", "ich", ChatField.Text);
                 }
 
                 ChatField.Clear();

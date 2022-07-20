@@ -34,10 +34,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     /// <param name="newChunk">The chunk in whose renderer's generation we're interested in</param>
     private void NewChunkRenderer(Chunk newChunk) {
-        ChunkRenderer n = new();
-        Task.Run(() => {
-            n.InitWith(newChunk);
-        });
+        ChunkRenderer n = new(newChunk);
 
         if (ChunkRenderers.ContainsKey(newChunk.Key)) {
             ChunkRenderers[newChunk.Key].Dispose();

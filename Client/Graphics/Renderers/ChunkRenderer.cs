@@ -19,7 +19,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
     private Vertex[] ContiguousVerticesCache { get; set; }
     private uint[] ContiguousIndicesCache { get; set; }
-    private bool ContiguousCacheUpToDate{ get; set; }
+    private bool ContiguousCacheUpToDate { get; set; }
     private bool BuffersUpToDate { get; set; }
 
     private bool BuffersRenderable
@@ -31,31 +31,29 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// </summary>
     private ConcurrentDictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     /// <summary>
-    /// This object needs to be constructed on the gl thread.
+    /// This object needs to be constructed on the gl thread. It asynchronously builds the entire caches.
     /// </summary>
-    public ChunkRenderer() {
+    /// <param name="chunk">The chunk to be rendered.</param>
+    public ChunkRenderer(Chunk chunk) {
         VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer);
         IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer);
-    }
-    #pragma warning restore CS8618
 
-    /// <summary>
-    /// Intializes this chunk renderer with a given chunk. It is quite a heavy operation because it builds the entire caches.
-    /// </summary>
-    /// <param name="chunk">The chunk to be rendered by the renderer</param>
-    public void InitWith(Chunk chunk) {
         Chunk = chunk;
-
         Chunk.OnUpdate += Update;
 
-        ContiguousCacheUpToDate = false;
-        BuffersUpToDate = false;
+        Task.Run(() => {
+            ContiguousCacheUpToDate = false;
+            BuffersUpToDate = false;
 
-        BuildCache();
-        UpdateContiguousCache();
+            BuildCache();
+            UpdateContiguousCache();
+        }).ConfigureAwait(false);
     }
+#pragma warning restore CS8618
+
+
 
     /// <summary>
     /// Looks up each block and each face and loads the Cache. This is a very costly operation and should 
@@ -137,7 +135,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     }
 
 
-    
+
 
     /// <summary>
     /// Reads the contiguous arrays and writes it to buffers if the buffer is not up to date. This function may skip and
