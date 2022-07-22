@@ -18,7 +18,7 @@ public class Buffer<T> : IDisposable where T : struct {
 
 
     /// <summary>
-    /// The target (=type) of the buffer. It can't be changed after
+    /// The target (=type) of the buffer. It can't be changed after construction.
     /// </summary>
     public BufferTarget Target { get; init; }
 

@@ -1,6 +1,6 @@
 # Bergmann
 
-This is a game about blocks and mining. Some people may (rightfully claim), it's a a clone of minecraft.
+This is a game about blocks and mining. Some people may claim, it's a a clone of minecraft.
 
 Bergmann is the German word for miner.
 

@@ -8,9 +8,10 @@ namespace Bergmann.Client.Graphics.Renderers;
 
 /// <summary>
 /// Renders a chunk. It registers on the events of the specific chunk and updates automatically.
-/// This class is used extensively by <see cref="WorldRenderer"/>. It generally works by creating buffers on the gpu and achieving fast render calls.
-/// However, updates are therefore expensive, because the entire buffers need to be sent to the gpu whenever an update is called for.
-/// This class is further optimized to work with multiple threads. Check the docs to find out.
+/// This class is used extensively by <see cref="WorldRenderer"/>. It generally works by creating buffers on 
+/// the gpu and achieving fast render calls. However, updates are therefore expensive, because the entire buffers 
+/// need to be sent to the gpu whenever an update is called for. This class is further optimized to work 
+/// with multiple threads. Check the docs to find out.
 /// </summary>
 public class ChunkRenderer : IDisposable, IRenderer {
     private Chunk Chunk { get; set; }
@@ -26,8 +27,9 @@ public class ChunkRenderer : IDisposable, IRenderer {
         => VertexBuffer.IsFilled && IndexBuffer.IsFilled;
 
     /// <summary>
-    /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered vertex of the block
-    /// with the appropriate properties, the uint array stores the indices for these vertices. These indices are local for their key, there are many doubles overall
+    /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered 
+    /// vertex of the block with the appropriate properties, the uint array stores the indices for these 
+    /// vertices. These indices are local for their key, there are many doubles overall
     /// </summary>
     private ConcurrentDictionary<int, (Vertex[], uint[])> Cache { get; set; }
 
@@ -115,8 +117,9 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
 
     /// <summary>
-    /// Updates the cache at specific points, since rebuilding the entire cache is too expensive. This is an optimization though, theoretically
-    /// rebuilding the entire cache works. This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
+    /// Updates the cache at specific points, since rebuilding the entire cache is too expensive. 
+    /// This is an optimization though, theoretically rebuilding the entire cache works. 
+    /// This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
     /// </summary>
     /// <param name="positions">Updates the positions and each of the positon's neighbors</param>
     private void Update(List<Vector3i> positions) {
@@ -138,8 +141,8 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
 
     /// <summary>
-    /// Reads the contiguous arrays and writes it to buffers if the buffer is not up to date. This function may skip and
-    /// it is not guaranteed 
+    /// Reads the contiguous arrays and writes it to buffers if the buffer is not up to date. 
+    /// This function may skip and it is not guaranteed to do anything.
     /// </summary>
     private void SendToGpu() {
         //if the buffer is not up to date, but buffer is up to date, then do an update. 
@@ -176,7 +179,8 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
 
     /// <summary>
-    /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding program need to be bound though.
+    /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding 
+    /// program need to be bound though.
     /// </summary>
     public void Render() {
         SendToGpu();

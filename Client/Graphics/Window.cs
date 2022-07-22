@@ -1,3 +1,4 @@
+using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
@@ -16,7 +17,10 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
+
 #pragma warning disable CS8618
+    public static Window Instance { get; set; }
+
     public Window(GameWindowSettings gws, NativeWindowSettings nws) :
         base(gws, nws) {
 
@@ -31,16 +35,13 @@ public class Window : GameWindow {
     private UICollection ChatItems { get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
-    private FPSController FPS { get; set; }
     private (Vector3i, Block.Face)? RayCast { get; set; }
     private bool DebugViewEnabled { get; set; } = false;
     private bool WireFrameEnabled { get; set; } = false;
 
-    private bool Chatting { get; set; } = false;
-    private TextField ChatField { get; set; } = new();
     public HubConnection Hub { get; set; }
-
-
+    public ControllerStack ControllerStack { get; set; }
+    public FPHandler Fph { get; set; }
 
     private void MakeProgram() {
         if (BlockProgram is not null)
@@ -67,7 +68,7 @@ public class Window : GameWindow {
             else
                 GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
-            Matrix4 viewMat = FPS.LookAt();
+            Matrix4 viewMat = Fph.LookAt;
             Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Size.X / Size.Y, 0.1f, 300f);
             projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
             BlockProgram.SetUniform("projection", projMat);
@@ -101,11 +102,35 @@ public class Window : GameWindow {
         Fragment.Dispose();
     }
 
+    private void MakeControllers() {
+        ChatController cont = new(x => Hub.SendAsync("SendMessage", "ich", x));
+        ChatItems = new(null);
+        ChatItems.OtherRenderers.Add((new ChatRenderer(cont), true));
 
+        cont.Commands.Add(new() {
+            Name = "wireframe",
+            Execute = x => WireFrameEnabled = !WireFrameEnabled,
+        });
+        cont.Commands.Add(new() {
+            Name = "debug",
+            Execute = x => DebugViewEnabled = !DebugViewEnabled,
+        });
+        cont.Commands.Add(new() {
+            Name = "recompile",
+            Execute = x => MakeProgram(),
+        });
+
+        Fph = new FPHandler() {
+            Position = (30, 34, 30)
+        };
+        RootController root = new(Fph, cont);
+        ControllerStack = new(root);
+    }
 
     protected override void OnLoad() {
         VSync = VSyncMode.On;
 
+        MakeControllers();
         MakeProgram();
 
         BlockInfo.ReadFromJson("Blocks.json");
@@ -126,30 +151,32 @@ public class Window : GameWindow {
 
 
         var hub = new HubConnectionBuilder()
-        .WithUrl("http://localhost:5000/ChatHub")
-        .WithAutomaticReconnect();
+            .WithUrl("http://localhost:5000/ChatHub")
+            .WithAutomaticReconnect();
+
         hub.Services.AddLogging();
         Hub = hub.Build();
+
+        Hub.On<string, string>("PrintMsg", (x, y) => {
+            Console.WriteLine($"{x} wrote {y}");
+        });
+
         Hub.StartAsync();
 
 
         WorldRenderer = new();
 
 
-        FPS = new() {
-            Position = new(8, 35, 8)
-        };
-
         Texture UIElems = new Texture(TextureTarget.Texture2DArray);
         UIElems.Reserve(100, 100, 1);
 
-        using Image<Rgba32> img = Image<Rgba32>.Load(ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
+        using Image<Rgba32> img = Image<Rgba32>.Load(
+            ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
         UIElems.Write(img, 0);
 
 
         FixedUIItems = new(UIElems);
         DebugItems = new(null);
-        ChatItems = new(null);
 
         BoxRenderer cross = new(1) {
             AbsoluteAnchorOffset = (0, 0),
@@ -164,25 +191,16 @@ public class Window : GameWindow {
             AbsoluteAnchorOffset = (30, -30),
             PercentageAnchorOffset = (0, 1),
             RelativeAnchor = (0, 1),
-            Dimension = (-1, 50)
+            Dimension = (-1, 70)
         };
         DebugItems.OtherRenderers.Add((posText, true));
         TextRenderer blockText = new() {
-            AbsoluteAnchorOffset = (30, -100),
+            AbsoluteAnchorOffset = (30, -120),
             PercentageAnchorOffset = (0, 1),
             RelativeAnchor = (0, 1),
-            Dimension = (-1, 50)
+            Dimension = (-1, 70)
         };
         DebugItems.OtherRenderers.Add((blockText, true));
-
-        TextRenderer chatText = new() {
-            RelativeAnchor = (0, 0),
-            AbsoluteAnchorOffset = (50, 50),
-            PercentageAnchorOffset = (0, 0),
-            Dimension = (-1, 50)
-        };
-        chatText.HookTextField(ChatField);
-        ChatItems.OtherRenderers.Add((chatText, true));
     }
 
     protected override void OnUnload() {
@@ -215,39 +233,10 @@ public class Window : GameWindow {
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
 
-        if (KeyboardState.IsKeyPressed(Keys.Enter)) {
-            Chatting = !Chatting;
-            if (Chatting) {
-                TextInput += ChatField.Insert;
-            }
-            else {
-                TextInput -= ChatField.Insert;
-
-                string text = ChatField.Text.Trim();
-                if (text.StartsWith('/')) {
-                    if (text == "/wireframe")
-                        WireFrameEnabled = !WireFrameEnabled;
-
-                    if (text == "/debug")
-                        DebugViewEnabled = !DebugViewEnabled;
-
-                    if (text == "/recompile")
-                        MakeProgram();
-                }
-                else {
-                    Hub.SendAsync("SendMessage", "ich", ChatField.Text);
-                }
-
-                ChatField.Clear();
-            }
-        }
-        if (Chatting) {
-            ChatField.UpdateState(KeyboardState);
-            return;
-        }
 
 
-        var (pos, face) = World.Instance.Raycast(FPS.Position, FPS.Rotation * new Vector3(0, 0, 1), out bool hit);
+
+        var (pos, face) = World.Instance.Raycast(Fph.Position, Fph.Forward, out bool hit);
         if (hit) {
             RayCast = (pos, face);
 
@@ -260,10 +249,9 @@ public class Window : GameWindow {
             RayCast = null;
 
 
-
-        FPS.RotateCamera(MouseState.Delta);
-        FPS.FlyingMovement((float)args.Time, KeyboardState);
-        World.Instance.EnsureChunksLoaded(FPS.Position, 6);
+        UpdateArgs updateArgs = new((float)args.Time);
+        ControllerStack.Execute(updateArgs);
+        World.Instance.EnsureChunksLoaded(Fph.Position, 6);
     }
 
 
@@ -291,7 +279,7 @@ public class Window : GameWindow {
 
         if (DebugViewEnabled) {
             (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(
-                $"Pos: ({FPS.Position.X:0.00}, {FPS.Position.Y:0.00}, {FPS.Position.Z:0.00})");
+                $"Pos: ({Fph.Position.X:0.00}, {Fph.Position.Y:0.00}, {Fph.Position.Z:0.00})");
 
             if (RayCast is not null) {
                 DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
@@ -303,9 +291,7 @@ public class Window : GameWindow {
             DebugItems.Render();
         }
 
-        if (Chatting) {
-            ChatItems.Render();
-        }
+        ChatItems.Render();
 
 
         FixedUIItems.Render();

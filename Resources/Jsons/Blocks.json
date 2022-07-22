@@ -4,27 +4,30 @@
             "ID": 1,
             "Name": "Dirt",
 
-            "Type": "Normal",
-
-            "TopTexture": 0,
-            "LeftTexture": 1,
-            "RightTexture": 1,
-            "FrontTexture": 1,
-            "BackTexture": 1,
-            "BottomTexture": 2
+            "TopLayer": 0,
+            "LeftLayer": 1,
+            "RightLayer": 1,
+            "FrontLayer": 1,
+            "BackLayer": 1,
+            "BottomLayer": 2
         },
         {
             "ID": 2,
             "Name": "Sand",
 
-            "Type": "Normal",
 
-            "TopTexture":    3,
-            "LeftTexture":   3,
-            "RightTexture":  3,
-            "FrontTexture":  3,
-            "BackTexture":   3,
-            "BottomTexture": 3
+            "TopLayer":    3,
+            "LeftLayer":   3,
+            "RightLayer":  3,
+            "FrontLayer":  3,
+            "BackLayer":   3,
+            "BottomLayer": 3
+        },
+        {
+            "ID": 3,
+            "Name": "Water",
+
+            "IsTransparent": true
         }
     ]
 }

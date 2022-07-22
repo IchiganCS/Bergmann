@@ -13,7 +13,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// <summary>
 /// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyTexture"/> method, so there's no need to call it.
 /// Additionally, when specifying the layout of the box, you only have to specify the y coordinate of 
-/// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextField"/>, 
+/// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextHandler"/>, 
 /// it renders the cursor automatically.
 /// </summary>
 public class TextRenderer : BoxRenderer {
@@ -27,7 +27,7 @@ public class TextRenderer : BoxRenderer {
     /// All the chars that can be rendered by the text renderer. If the used char is not known, OpenGl defaults to "a".
     /// Then you can just add it.
     /// </summary>
-    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(){}+=-*/.#:\\<>|äöüÄÖÜ!'\"";
+    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(^%&$){}+=-?_*/.#:\\<>|äöüÄÖÜ!'\"";
 
     /// <summary>
     /// Returns a new letter stack which can be used for fast rendering in shaders.
@@ -39,7 +39,7 @@ public class TextRenderer : BoxRenderer {
     /// so that the texture can be unstretched and it gives the correct image</param>
     /// <returns>A Texture2DArray. The caller needs to dispose of it</returns>
     private static Texture MakeLetterStack(Font font, int size = 50) {
-        Texture stack = new Texture(TextureTarget.Texture2DArray);
+        Texture stack = new(TextureTarget.Texture2DArray);
         stack.Reserve(size, size, CHARS.Length);
 
 
@@ -110,8 +110,9 @@ public class TextRenderer : BoxRenderer {
     /// Hooks the text field to this text renderer. No further action on the text renderer is then required.
     /// </summary>
     /// <param name="tf">The text field whose values are checked on every update</param>
-    public void HookTextField(TextField tf) {
-        tf.OnUpdate += 
+    public void HookTextField(TextHandler tf) {
+        SetText(tf.Text, tf.Cursor);
+        tf.OnTextChange += 
             () => SetText(tf.Text, tf.Cursor);
     }
 

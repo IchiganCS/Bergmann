@@ -1,4 +1,3 @@
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Bergmann.Client.InputHandlers;
@@ -7,7 +6,7 @@ namespace Bergmann.Client.InputHandlers;
 /// The model for a text field. It supports editing and a basic cursor.
 /// It can be hooked up to a <see cref="Renderer.TextRenderer"/>
 /// </summary>
-public class TextField {
+public class TextHandler : IInputHandler {
 
     /// <summary>
     /// The position of the cursor in the text. 0 means before the first character, 1 directly after the first character.
@@ -18,19 +17,40 @@ public class TextField {
     /// </summary>
     public string Text { get; private set; } = "";
 
+
     /// <summary>
-    /// This method moves the cursor and deletes characters if necessary, marks text pastes and copies, but doesn't write plain text.
+    /// Actions executed when a specific key is pressed. It is called during <see cref="HandleInput(UpdateArgs)"/>
     /// </summary>
-    /// <param name="keyboard">The current state of the keyboard</param>
-    public void UpdateState(KeyboardState keyboard) {
+    public List<(Keys, Action<KeyboardState>)> SpecialActions { get; set; } = new();
+
+
+    /// <summary>
+    /// This method moves the cursor and deletes characters if necessary, marks text pastes and copies, and writes plain text.
+    /// </summary>
+    /// <param name="updateArgs">The update to exectue</param>
+    public void HandleInput(UpdateArgs updateArgs) {
+        KeyboardState keyboard = updateArgs.KeyboardState;
+
+        foreach ((Keys, Action<KeyboardState>) pair in SpecialActions) {
+            if (keyboard.IsKeyPressed(pair.Item1))
+                pair.Item2(keyboard);
+        }
+
+        if (updateArgs.TextInput != "") {
+            Insert(updateArgs.TextInput);
+        }
+
         bool control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
 
         if (keyboard.IsKeyPressed(Keys.Backspace) && Cursor > 0) {
             Text = Text.Remove(Cursor - 1, 1);
             Cursor--;
+            OnTextChange?.Invoke();
         }
-        if (keyboard.IsKeyPressed(Keys.Delete) && Cursor < Text.Length)
+        if (keyboard.IsKeyPressed(Keys.Delete) && Cursor < Text.Length) {
             Text = Text.Remove(Cursor, 1);
+            OnTextChange?.Invoke();
+        }
         if (keyboard.IsKeyPressed(Keys.Left) && Cursor > 0)
             Cursor--;
         if (keyboard.IsKeyPressed(Keys.Right) && Cursor < Text.Length)
@@ -40,44 +60,34 @@ public class TextField {
         if (keyboard.IsKeyPressed(Keys.Home))
             Cursor = 0;
 
+
         //TODO: clipboard, shift selection, maybe mouse?
-            
-
-        OnUpdate?.Invoke();
     }
 
     /// <summary>
-    /// Clears the entire text
+    /// Sets the entire text and moves the cursor to the end.
     /// </summary>
-    public void Clear() {
-        Text = "";
-        Cursor = 0;
-        OnUpdate?.Invoke();
+    public void SetText(string newText) {
+        Text = newText;
+        Cursor = newText.Length;
+        OnTextChange?.Invoke();
     }
 
-    /// <summary>
-    /// Inserts text at the position of the cursor. This method is mostly used for subscribing to the text input 
-    /// event of the window. It works very well and you may use it, but there seems to be little other functionality.
-    /// </summary>
-    /// <param name="e">The parameter of the fired event.</param>
-    public void Insert(TextInputEventArgs e)
-        => Insert(e.AsString);
 
     /// <summary>
-    /// Inserts the text at the position of the cursor.
+    /// Inserts a given text at the position of the cursor.
     /// </summary>
     /// <param name="t">The text to be inserted</param>
     public void Insert(string t) {
         Text = Text.Insert(Cursor, t);
         Cursor += t.Length;
-        OnUpdate?.Invoke();
+        OnTextChange?.Invoke();
     }
 
 
-    public delegate void UpdateDelegate();
+    public delegate void TextChangeDelegate();
     /// <summary>
     /// Is called when the value of the text field has changed
     /// </summary>
-    public event UpdateDelegate OnUpdate = default!;
-
+    public event TextChangeDelegate OnTextChange = default!;
 }

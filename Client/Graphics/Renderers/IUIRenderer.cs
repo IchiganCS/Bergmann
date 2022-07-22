@@ -2,6 +2,9 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
+/// <summary>
+/// A renderer with a special functions useful for ui.
+/// </summary>
 public interface IUIRenderer : IRenderer {
 
     /// <summary>

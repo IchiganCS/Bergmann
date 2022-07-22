@@ -5,6 +5,8 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 
+namespace Bergmann.Client.Graphics.Renderers;
+
 /// <summary>
 /// Renders a texture on a box. This is a ui class, the box is two dimensional. 
 /// It can display any two dimensional texture array and can as such be used to render text
@@ -42,7 +44,7 @@ public class BoxRenderer : IDisposable, IUIRenderer {
         else if (Vertices.Reserved < sections * 4 || Indices.Reserved < sections * 6) {
             Vertices.Dispose();
             Indices.Dispose();
-            
+
             Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
             Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
         }
@@ -67,7 +69,7 @@ public class BoxRenderer : IDisposable, IUIRenderer {
 
 
 
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     /// <summary>
     /// Constructs an empty box renderer
     /// </summary>
@@ -76,7 +78,7 @@ public class BoxRenderer : IDisposable, IUIRenderer {
     public BoxRenderer(int estimateSections = 1) {
         EnsureBufferCapacity(estimateSections);
     }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
 
 
@@ -107,25 +109,25 @@ public class BoxRenderer : IDisposable, IUIRenderer {
 
 
             vertices.AddRange(new UIVertex[4] {
-                new() { 
-                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset, 
-                    Percent = PercentageAnchorOffset, 
+                new() {
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset,
+                    Percent = PercentageAnchorOffset,
                     TexCoord = new(0, 0, pair.Item3)},
-                new() { 
-                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0), 
-                    Percent = PercentageAnchorOffset, 
+                new() {
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, 0),
+                    Percent = PercentageAnchorOffset,
                     TexCoord = new(1, 0, pair.Item3)},
-                new() { 
-                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y), 
-                    Percent = PercentageAnchorOffset, 
+                new() {
+                    Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(0, Dimension.Y),
+                    Percent = PercentageAnchorOffset,
                     TexCoord = new(0, 1, pair.Item3)},
-                new() { 
+                new() {
                     Absolute = coveredWidth + anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass, Dimension.Y),
-                    Percent = PercentageAnchorOffset, 
+                    Percent = PercentageAnchorOffset,
                     TexCoord = new(1, 1, pair.Item3)}});
 
             indices.AddRange(new uint[6] {
-                indexToUse + 0, indexToUse + 1, indexToUse + 3, 
+                indexToUse + 0, indexToUse + 1, indexToUse + 3,
                 indexToUse + 0, indexToUse + 2, indexToUse + 3
             });
             indexToUse += 4;

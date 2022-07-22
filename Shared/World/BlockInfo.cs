@@ -19,8 +19,8 @@ public class BlockInfo {
 
         JsonSerializerOptions options = new() {
             Converters = {
-                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-                }
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            }
         };
 
         foreach (JsonElement x in doc.RootElement.GetProperty("Blocks").EnumerateArray()) {
@@ -34,31 +34,28 @@ public class BlockInfo {
         }
     }
 
-    public BlockType Type { get; set; }
-
     public string Name { get; set; } = default!;
     public int ID { get; set; }
 
-    public int TopTexture { get; set; }
-    public int BottomTexture { get; set; }
-    public int LeftTexture { get; set; }
-    public int RightTexture { get; set; }
-    public int FrontTexture { get; set; }
-    public int BackTexture { get; set; }
+    public bool IsTransparent { get; set; } = false;
+    public bool IsOpaque => !IsTransparent;
+
+    public int TopLayer { get; set; }
+    public int BottomLayer { get; set; }
+    public int LeftLayer { get; set; }
+    public int RightLayer { get; set; }
+    public int FrontLayer { get; set; }
+    public int BackLayer { get; set; }
 
     public int GetLayerFromFace(Block.Face face) {
         return face switch {
-            Block.Face.Top => TopTexture,
-            Block.Face.Left => LeftTexture,
-            Block.Face.Right => RightTexture,
-            Block.Face.Front => FrontTexture,
-            Block.Face.Back => BackTexture,
-            _ => BottomTexture
+            Block.Face.Top => TopLayer,
+            Block.Face.Left => LeftLayer,
+            Block.Face.Right => RightLayer,
+            Block.Face.Front => FrontLayer,
+            Block.Face.Back => BackLayer,
+            _ => BottomLayer
         };
     }
 
-
-    public enum BlockType {
-        Normal, Custom
-    }
 }

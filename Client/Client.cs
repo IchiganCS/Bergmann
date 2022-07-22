@@ -20,13 +20,7 @@ public class Client {
 
         Thread.Sleep(300);
 
-        HubConnection hub = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5000/ChatHub")
-            .Build();
 
-        hub.On<string, string>("PrintMsg", (x, y) => {
-            Console.WriteLine($"{x} wrote {y}");
-        });
 
 
         GameWindowSettings gwSet = GameWindowSettings.Default;
@@ -44,6 +38,7 @@ public class Client {
 
 
         using Window win = new(gwSet, nwSet);
+        Window.Instance = win;
         win.Run();
 
         server.Kill();
