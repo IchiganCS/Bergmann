@@ -1,5 +1,6 @@
 using Bergmann.Server.Hubs;
 using Bergmann.Shared;
+using MessagePack;
 using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Bergmann.Server;
@@ -10,7 +11,11 @@ public class Server {
 
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR()
+            .AddMessagePackProtocol(options => {
+                options.SerializerOptions = MessagePackSerializerOptions.Standard
+                    .WithSecurity(MessagePackSecurity.UntrustedData);
+            });
         builder.Services.AddResponseCompression(opts => {
             opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                 new[] { "application/octet-stream" });

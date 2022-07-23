@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Shared;
 using Bergmann.Shared.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -15,16 +16,14 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// </summary>
 public class ChunkRenderer : IDisposable, IRenderer {
     private Chunk Chunk { get; set; }
-    private Buffer<Vertex> VertexBuffer { get; set; }
-    private Buffer<uint> IndexBuffer { get; set; }
+    private Buffer<Vertex>? VertexBuffer { get; set; }
+    private Buffer<uint>? IndexBuffer { get; set; }
 
     private Vertex[] ContiguousVerticesCache { get; set; }
     private uint[] ContiguousIndicesCache { get; set; }
     private bool ContiguousCacheUpToDate { get; set; }
     private bool BuffersUpToDate { get; set; }
 
-    private bool BuffersRenderable
-        => VertexBuffer.IsFilled && IndexBuffer.IsFilled;
 
     /// <summary>
     /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered 
@@ -39,19 +38,13 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// </summary>
     /// <param name="chunk">The chunk to be rendered.</param>
     public ChunkRenderer(Chunk chunk) {
-        VertexBuffer = new Buffer<Vertex>(BufferTarget.ArrayBuffer);
-        IndexBuffer = new Buffer<uint>(BufferTarget.ElementArrayBuffer);
-
         Chunk = chunk;
-        Chunk.OnUpdate += Update;
 
-        Task.Run(() => {
-            ContiguousCacheUpToDate = false;
-            BuffersUpToDate = false;
+        ContiguousCacheUpToDate = false;
+        BuffersUpToDate = false;
 
-            BuildCache();
-            UpdateContiguousCache();
-        }).ConfigureAwait(false);
+        BuildCache();
+        UpdateContiguousCache();
     }
 #pragma warning restore CS8618
 
@@ -80,7 +73,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
         ContiguousCacheUpToDate = false;
         BuffersUpToDate = false;
 
-        BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
+        BlockInfo bi = ((Block)Chunk.Blocks[block.X][block.Y][block.Z]).Info;
         int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
         Cache.Remove(key, out _);
 
@@ -139,23 +132,6 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
 
 
-
-    /// <summary>
-    /// Reads the contiguous arrays and writes it to buffers if the buffer is not up to date. 
-    /// This function may skip and it is not guaranteed to do anything.
-    /// </summary>
-    private void SendToGpu() {
-        //if the buffer is not up to date, but buffer is up to date, then do an update. 
-        //Skip sending data otherwise. We may miss a frame of asynchronous update, that's fine.
-        if (BuffersUpToDate || !ContiguousCacheUpToDate)
-            return;
-
-        VertexBuffer.Fill(ContiguousVerticesCache, true);
-        IndexBuffer.Fill(ContiguousIndicesCache, true);
-
-        BuffersUpToDate = true;
-    }
-
     /// <summary>
     /// Assembles the contiguous arrays from the Cache. This is "quite" a costly operation.
     /// </summary>
@@ -177,14 +153,31 @@ public class ChunkRenderer : IDisposable, IRenderer {
         ContiguousCacheUpToDate = true;
     }
 
+    private static int renderCount = 0;
 
     /// <summary>
     /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding 
     /// program need to be bound though.
     /// </summary>
     public void Render() {
-        SendToGpu();
-        if (BuffersRenderable) {
+        if (VertexBuffer is null || IndexBuffer is null) {
+            VertexBuffer = new(BufferTarget.ArrayBuffer);
+            IndexBuffer = new(BufferTarget.ElementArrayBuffer);
+        }
+
+        //if the buffer is not up to date, but the contiguous cache is up to date, then do an update. 
+        //Skip sending data otherwise. We may miss a frame of asynchronous update, that's fine.
+        if (!BuffersUpToDate && ContiguousCacheUpToDate) {
+            Stopwatch stop = new("Filling", 1);
+            VertexBuffer.Fill(ContiguousVerticesCache, true);
+            IndexBuffer.Fill(ContiguousIndicesCache, true);
+
+            BuffersUpToDate = true;
+            stop.Dispose();
+        }
+
+
+        if (VertexBuffer.IsFilled && IndexBuffer.IsFilled) {
             VertexBuffer.Bind();
             Vertex.UseVAO();
             IndexBuffer.Bind();
@@ -195,7 +188,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     }
 
     public void Dispose() {
-        VertexBuffer.Dispose();
-        IndexBuffer.Dispose();
+        VertexBuffer?.Dispose();
+        IndexBuffer?.Dispose();
     }
 }

@@ -1,4 +1,6 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -19,13 +21,14 @@ public class Chunk {
     /// The blocks this chunk holds. It is always size (<see cref="CHUNK_SIZE"/>), size, size in its dimensions.
     /// </summary>
     /// <value></value>
-    public int[,,] Blocks { get; set; }
+    public int[][][] Blocks { get; set; }
 
     /// <summary>
     /// Since Blocks has coordinates relative to this chunk's origin, we need a way to transform it
     /// to world space.
     /// </summary>
     /// <value></value>
+    [JsonIgnoreAttribute]
     public Vector3i Offset {
         get => ComputeOffset(Key);
         set => Key = ComputeKey(value);
@@ -69,11 +72,15 @@ public class Chunk {
     }
 
     public Chunk() {
-        Blocks = new int[CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE];
-        for (int i = 0; i < Blocks.GetLength(0); i++)
-            for (int j = 0; j < Blocks.GetLength(1); j++)
-                for (int k = 0; k < Blocks.GetLength(2); k++)
-                    Blocks[i, j, k] = (k % 2) + 1;
+        Blocks = new int[CHUNK_SIZE][][];
+        for (int i = 0; i < CHUNK_SIZE; i++) {
+            Blocks[i] = new int[CHUNK_SIZE][];
+            for (int j = 0; j < CHUNK_SIZE; j++) {
+                Blocks[i][j] = new int[CHUNK_SIZE];
+                for (int k = 0; k < CHUNK_SIZE; k++)
+                    Blocks[i][j][k] = (k % 2) + 1;
+            }
+        }
     }
 
     /// <summary>
@@ -83,10 +90,10 @@ public class Chunk {
     /// <returns>A list filled in no particular order in chunk space</returns>
     public List<Vector3i> EveryBlock() {
         List<Vector3i> ls = new();
-        for (int i = 0; i < Blocks.GetLength(0); i++)
-            for (int j = 0; j < Blocks.GetLength(1); j++)
-                for (int k = 0; k < Blocks.GetLength(2); k++)
-                    if (Blocks[i, j, k] != 0)
+        for (int i = 0; i < CHUNK_SIZE; i++)
+            for (int j = 0; j < CHUNK_SIZE; j++)
+                for (int k = 0; k < CHUNK_SIZE; k++)
+                    if (Blocks[i][j][k] != 0)
                         ls.Add(new(i, j, k));
 
         return ls;
@@ -107,7 +114,7 @@ public class Chunk {
             z < 0 || z > CHUNK_SIZE - 1)
             return false; //TODO
             
-        return Blocks[x, y, z] != 0;
+        return Blocks[x][y][z]!= 0;
     }
 
     /// <summary>
@@ -131,7 +138,7 @@ public class Chunk {
             z < 0 || z > CHUNK_SIZE - 1)
             return 0; //TODO
 
-        return Blocks[x, y, z];
+        return Blocks[x][y][z];
     }
 
     /// <summary>
@@ -154,7 +161,7 @@ public class Chunk {
             z < 0 || z > CHUNK_SIZE - 1)
             return;
 
-        Blocks[x, y, z] = block;
+        Blocks[x][y][z] = block;
         OnUpdate?.Invoke(new(){position});
     }
 

@@ -2,6 +2,7 @@ using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -123,7 +124,7 @@ public class Window : GameWindow {
         Fph = new FPHandler() {
             Position = (30, 34, 30)
         };
-        RootController root = new(Fph, cont);
+        MainController root = new(Fph, cont);
         ControllerStack = new(root);
     }
 
@@ -132,6 +133,7 @@ public class Window : GameWindow {
 
         MakeControllers();
         MakeProgram();
+
 
         BlockInfo.ReadFromJson("Blocks.json");
         BlockRenderer.MakeTextureStack("Textures.json");
@@ -152,6 +154,7 @@ public class Window : GameWindow {
 
         var hub = new HubConnectionBuilder()
             .WithUrl("http://localhost:5000/ChatHub")
+            .AddMessagePackProtocol()
             .WithAutomaticReconnect();
 
         hub.Services.AddLogging();
@@ -233,27 +236,33 @@ public class Window : GameWindow {
             DebugViewEnabled = !DebugViewEnabled;
 
 
-        var (pos, face) = World.Instance.Raycast(Fph.Position, Fph.Forward, out bool hit);
-        if (hit) {
-            RayCast = (pos, face);
+        // var (pos, face) = World.Instance.Raycast(Fph.Position, Fph.Forward, out bool hit);
+        // if (hit) {
+        //     RayCast = (pos, face);
 
-            if (MouseState.IsButtonPressed(MouseButton.Left))
-                World.Instance.SetBlockAt(RayCast.Value.Item1, 0);
-            else if (MouseState.IsButtonPressed(MouseButton.Right))
-                World.Instance.SetBlockAt(Block.FaceToVector[(int)RayCast.Value.Item2] + RayCast.Value.Item1, 1);
-        }
-        else
-            RayCast = null;
+        //     if (MouseState.IsButtonPressed(MouseButton.Left))
+        //         World.Instance.SetBlockAt(RayCast.Value.Item1, 0);
+        //     else if (MouseState.IsButtonPressed(MouseButton.Right))
+        //         World.Instance.SetBlockAt(Block.FaceToVector[(int)RayCast.Value.Item2] + RayCast.Value.Item1, 1);
+        // }
+        // else
+        //     RayCast = null;
 
 
         UpdateArgs updateArgs = new((float)args.Time);
         ControllerStack.Execute(updateArgs);
-        World.Instance.EnsureChunksLoaded(Fph.Position, 6);
+        List<long> items = World.GetNearChunks(Fph.Position, 6);
+        using (Stopwatch stop = new("hi")) {
+            Task.Run(() => WorldRenderer.AddChunks(items));
+        }
     }
 
 
 
     protected override void OnRenderFrame(FrameEventArgs args) {
+        using (Stopwatch stopwatch = new("Queue work"))
+            GlThread.DoAll();
+
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
@@ -268,25 +277,27 @@ public class Window : GameWindow {
         GlLogger.WriteGLError();
 
 
-        WorldRenderer.Render();
+        using (Stopwatch stop = new("world render")) {
+            WorldRenderer.Render();
+        }
 
 
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-        if (DebugViewEnabled) {
-            (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(
-                $"Pos: ({Fph.Position.X:0.00}, {Fph.Position.Y:0.00}, {Fph.Position.Z:0.00})");
+        // if (DebugViewEnabled) {
+        //     (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(
+        //         $"Pos: ({Fph.Position.X:0.00}, {Fph.Position.Y:0.00}, {Fph.Position.Z:0.00})");
 
-            if (RayCast is not null) {
-                DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
-                (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText(
-                    $"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
-            }
-            else
-                DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
-            DebugItems.Render();
-        }
+        //     if (RayCast is not null) {
+        //         DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
+        //         (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText(
+        //             $"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
+        //     }
+        //     else
+        //         DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
+        //     DebugItems.Render();
+        // }
 
         ChatItems.Render();
 

@@ -14,13 +14,16 @@ public class World {
         Chunks = new();
     }
 
-    private void LoadChunk(long key) {
+    public void LoadChunk(long key) {
         if (Chunks.ContainsKey(key))
+            return;
+
+        Vector3i offset = Chunk.ComputeOffset(key);
+        if (offset.Y < 0 || offset.Y > 32)
             return;
 
         Chunk newChunk = new() { Key = key };
         Chunks.Add(key, newChunk);
-        OnChunkLoading?.Invoke(newChunk);
     }
 
     /// <summary>
@@ -28,9 +31,9 @@ public class World {
     /// </summary>
     /// <param name="position">The position from which to calculate</param>
     /// <param name="distance">The distance in world chunk space, the number of chunks</param>
-    public void EnsureChunksLoaded(Vector3 position, int distance) {
+    public static List<long> GetNearChunks(Vector3 position, int distance) {
 
-        // this stores all offsets that need to be loaded
+        // this stores all offsets
         List<Vector3i> chunksInRange = new();
 
         chunksInRange.Add((Vector3i)position);
@@ -53,10 +56,7 @@ public class World {
             }
         }
 
-        chunksInRange.ForEach(x => {
-            if (x.Y > 0 && x.Y < 32) 
-                LoadChunk(Chunk.ComputeKey(x));
-        });
+        return chunksInRange.Select(x => Chunk.ComputeKey(x)).ToList();
     }
 
 
@@ -140,27 +140,4 @@ public class World {
         hasHit = false;
         return (new(0, 0, 0), Block.Face.Front);
     }
-
-
-    /// <summary>
-    /// The delegate for the corresponding event
-    /// </summary>
-    /// <param name="newChunk">Chunk is fully initialized and already inserted</param>
-    public delegate void ChunkLoadingDelegate(Chunk newChunk);
-    /// <summary>
-    /// This event is called after loading a chunk. All arguments are initialized and the list is already updated.
-    /// </summary>
-    public event ChunkLoadingDelegate OnChunkLoading = default!;
-
-
-    /// <summary>
-    /// The delegate for the corresponding event
-    /// </summary>
-    /// <param name="oldChunk">The chunk is still part of the world, but is to be removed</param>
-    public delegate void ChunkUnloadingDelegate(Chunk oldChunk);
-
-    /// <summary>
-    /// This event is called when a chunk is to be unloaded. The chunk is still valid, but not after the event is ended.
-    /// </summary>
-    public event ChunkUnloadingDelegate OnChunkUnloading = default!;
 }

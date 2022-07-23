@@ -6,13 +6,13 @@ using Window = Bergmann.Client.Graphics.Window;
 namespace Bergmann.Client.Controllers;
 
 
-public class RootController : ControllerBase {
+public class MainController : ControllerBase {
     public override CursorState RequestedCursorState => CursorState.Grabbed;
 
     public FPHandler FPH { get; set; }
     public ChatController Chat { get; set; }
 
-    public RootController(FPHandler fph, ChatController chat) {
+    public MainController(FPHandler fph, ChatController chat) {
         FPH = fph;
         Chat = chat;
     }

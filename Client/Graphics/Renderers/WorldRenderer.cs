@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
+using Bergmann.Shared;
 using Bergmann.Shared.World;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
@@ -14,7 +17,13 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    private ConcurrentDictionary<long, ChunkRenderer> ChunkRenderers{ get; set; }
+    private ConcurrentDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
+
+    /// <summary>
+    /// The connection to a WorldHub of a server.
+    /// </summary>
+    /// <value></value>
+    private HubConnection Hub { get; set; }
 
     /// <summary>
     /// Constructs a world renderer for the <see cref="World.Instance"/>. It loads <see cref="ChunkRenderer"/> for
@@ -22,11 +31,19 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     public WorldRenderer() {
         ChunkRenderers = new();
-
-        World.Instance.OnChunkLoading += NewChunkRenderer;
+        var builder = new HubConnectionBuilder()
+            .WithUrl(Client.ServerAddress + "WorldHub")
+            .AddMessagePackProtocol()
+            .WithAutomaticReconnect();
         
-        foreach (Chunk ch in World.Instance.Chunks.Values)
-            NewChunkRenderer(ch);
+
+        Hub = builder.Build();
+
+        Hub.On<(int[][][], long)>("ReceiveChunk", x => {
+            Task.Run(() => NewChunkRenderer(new Chunk() { Blocks = x.Item1, Key = x.Item2 }));
+        });
+
+        Hub.StartAsync();
     }
 
     /// <summary>
@@ -34,14 +51,23 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     /// <param name="newChunk">The chunk in whose renderer's generation we're interested in</param>
     private void NewChunkRenderer(Chunk newChunk) {
+        if (ChunkRenderers.ContainsKey(newChunk.Key))
+            return;
+
         ChunkRenderer n = new(newChunk);
 
-        if (ChunkRenderers.ContainsKey(newChunk.Key)) {
-            ChunkRenderers[newChunk.Key].Dispose();
-            ChunkRenderers[newChunk.Key] = n;
-        }
-        else {
-            ChunkRenderers.AddOrUpdate(newChunk.Key, n, (a, b) => b);
+        ChunkRenderers.AddOrUpdate(newChunk.Key, n, (a, b) => b);
+    }
+
+    private ConcurrentBag<long> KeysToHandle { get; set; } = new();
+
+    public void AddChunks(IEnumerable<long> keys) {
+        foreach (long key in keys) {
+            if (KeysToHandle.Contains(key) || ChunkRenderers.ContainsKey(key))
+                continue;
+
+            KeysToHandle.Add(key);
+            Hub.SendAsync("RequestChunk", key);
         }
     }
 

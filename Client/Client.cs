@@ -7,6 +7,7 @@ using OpenTK.Windowing.Desktop;
 namespace Bergmann.Client;
 
 public class Client {
+    public static string ServerAddress = "http://localhost:5000/";
 
     public static void Main(string[] args) {
         Logger.Info("Starting client...");

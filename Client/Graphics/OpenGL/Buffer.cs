@@ -54,6 +54,7 @@ public class Buffer<T> : IDisposable where T : struct {
         Reserved = count;
         Length = -1;
         Hint = hint;
+        GlLogger.WriteGLError();
     }
 
     /// <summary>
@@ -68,6 +69,7 @@ public class Buffer<T> : IDisposable where T : struct {
         }
 
         GL.BindBuffer(Target, Handle);
+        Console.WriteLine($"Written {items.Length * Marshal.SizeOf<T>()} bytes");
 
         //checks whether the buffer has already been initalized
         //or if reallocation is necessary
@@ -98,7 +100,7 @@ public class Buffer<T> : IDisposable where T : struct {
 
     public void Dispose() {
         GL.DeleteBuffer(Handle);
-        Handle = 0;
+        Handle = -1;
     }
 
 }
