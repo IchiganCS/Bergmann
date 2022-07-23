@@ -10,6 +10,7 @@ namespace Bergmann.Client.Controllers;
 /// the method calls.
 /// </summary>
 public abstract class ControllerBase : IInputHandler {
+    
     /// <summary>
     /// Whether a new <see cref="ControllerBase"/> should be pushed. Is to be checked after every update.
     /// Can be null if none is requested.
@@ -21,7 +22,6 @@ public abstract class ControllerBase : IInputHandler {
     /// False if no action is required.
     /// </summary>
     public bool ShouldPop { get; set; } = false;
-
 
     /// <summary>
     /// Specifies whether the given controller is in any place in the <see cref="ControllerStack"/>.

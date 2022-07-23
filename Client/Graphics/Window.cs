@@ -214,21 +214,25 @@ public class Window : GameWindow {
         DebugItems.Dispose();
     }
 
+    protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
+        if (e.IsFocused)
+            CursorState = CursorState.Grabbed;
+        else
+            CursorState = CursorState.Normal;
+    }
+
     protected override void OnUpdateFrame(FrameEventArgs args) {
-        base.OnUpdateFrame(args);
 
         if (!IsFocused)
             return;
-
-        if (KeyboardState.IsKeyPressed(Keys.Escape)) {
-            if (CursorState == CursorState.Grabbed)
-                CursorState = CursorState.Normal;
-            else
+        
+        if (CursorState != CursorState.Grabbed) {
+            if (MouseState.IsButtonPressed(MouseButton.Left) || KeyboardState.IsKeyPressed(Keys.Escape))
                 CursorState = CursorState.Grabbed;
+            return;
         }
 
-        if (CursorState != CursorState.Grabbed)
-            return;
+        
 
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;

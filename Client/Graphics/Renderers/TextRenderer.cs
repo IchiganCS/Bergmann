@@ -53,7 +53,7 @@ public class TextRenderer : BoxRenderer {
             FontRectangle bounds = TextMeasurer.Measure(sub, options);
             using Image<Rgba32> img = new(Configuration.Default, (int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height));
             img.Mutate(x => x.BackgroundColor(Color.Transparent)
-                .DrawText(options, sub, Brushes.Solid(Color.White), Pens.Solid(Color.Black, 1.4f))
+                .DrawText(options, sub, Brushes.Solid(Color.White), Pens.Solid(Color.Black, 2f))
                 .Resize(size, size));
 
             stack.Write(img, i);
@@ -112,7 +112,7 @@ public class TextRenderer : BoxRenderer {
     /// <param name="tf">The text field whose values are checked on every update</param>
     public void HookTextField(TextHandler tf) {
         SetText(tf.Text, tf.Cursor);
-        tf.OnTextChange += 
+        tf.OnUpdate += 
             () => SetText(tf.Text, tf.Cursor);
     }
 

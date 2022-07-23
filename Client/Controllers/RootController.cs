@@ -1,5 +1,7 @@
 using Bergmann.Client.InputHandlers;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using Window = Bergmann.Client.Graphics.Window;
 
 namespace Bergmann.Client.Controllers;
 
@@ -19,5 +21,8 @@ public class RootController : ControllerBase {
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.Enter))
             ToPush = Chat;
+
+        if (updateArgs.KeyboardState.IsKeyPressed(Keys.Escape))
+            Window.Instance.CursorState = CursorState.Normal;
     }
 }

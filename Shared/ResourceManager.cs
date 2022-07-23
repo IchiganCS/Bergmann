@@ -1,3 +1,5 @@
+using Bergmann.Shared;
+
 namespace Shared;
 
 public static class ResourceManager {
@@ -13,7 +15,14 @@ public static class ResourceManager {
                 return _Root;
 
             //_Root = Environment.GetEnvironmentVariable("ResourceDirectory") ?? Environment.CurrentDirectory;
-            _Root = Path.Combine(Environment.CurrentDirectory, "Resources");
+            _Root = Path.Combine(Environment.CurrentDirectory, "Resources/");
+            if (!Directory.Exists(_Root)) {
+                _Root = Path.Combine("../../../../", _Root);
+                if (!Directory.Exists(_Root)) {
+                    Logger.Warn("Couldn't find resources directory");
+                    return "";
+                }
+            }
             return _Root;
         }
     }

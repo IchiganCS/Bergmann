@@ -45,11 +45,9 @@ public class TextHandler : IInputHandler {
         if (keyboard.IsKeyPressed(Keys.Backspace) && Cursor > 0) {
             Text = Text.Remove(Cursor - 1, 1);
             Cursor--;
-            OnTextChange?.Invoke();
         }
         if (keyboard.IsKeyPressed(Keys.Delete) && Cursor < Text.Length) {
             Text = Text.Remove(Cursor, 1);
-            OnTextChange?.Invoke();
         }
         if (keyboard.IsKeyPressed(Keys.Left) && Cursor > 0)
             Cursor--;
@@ -61,7 +59,8 @@ public class TextHandler : IInputHandler {
             Cursor = 0;
 
 
-        //TODO: clipboard, shift selection, maybe mouse?
+        OnUpdate?.Invoke();
+        //TODO: clipboard, shift selection, ctrl movement, maybe mouse?
     }
 
     /// <summary>
@@ -70,7 +69,7 @@ public class TextHandler : IInputHandler {
     public void SetText(string newText) {
         Text = newText;
         Cursor = newText.Length;
-        OnTextChange?.Invoke();
+        OnUpdate?.Invoke();
     }
 
 
@@ -81,7 +80,7 @@ public class TextHandler : IInputHandler {
     public void Insert(string t) {
         Text = Text.Insert(Cursor, t);
         Cursor += t.Length;
-        OnTextChange?.Invoke();
+        OnUpdate?.Invoke();
     }
 
 
@@ -89,5 +88,5 @@ public class TextHandler : IInputHandler {
     /// <summary>
     /// Is called when the value of the text field has changed
     /// </summary>
-    public event TextChangeDelegate OnTextChange = default!;
+    public event TextChangeDelegate OnUpdate = default!;
 }

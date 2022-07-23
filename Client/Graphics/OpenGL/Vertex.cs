@@ -14,7 +14,7 @@ public struct Vertex {
 
     /// <summary>
     /// The handle to a VAO object applicable to all instances of this class.
-    /// </summary>
+    /// </summary>-
     public static int Handle { get; set; }
 
     /// <summary>
