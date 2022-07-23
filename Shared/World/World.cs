@@ -5,17 +5,12 @@ namespace Bergmann.Shared.World;
 public class World {
 
     /// <summary>
-    /// The current world used by the entire environment
-    /// </summary>
-    public static World Instance { get; set; } = new();
-
-    /// <summary>
     /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded. To observer the dictionary, register on
     /// <see cref="OnChunkLoading"/>
     /// </summary>
     public Dictionary<long, Chunk> Chunks { get; set; }
 
-    private World() {
+    public World() {
         Chunks = new();
     }
 

@@ -7,6 +7,7 @@ namespace Bergmann.Client.Controllers;
 
 
 public class RootController : ControllerBase {
+    public override CursorState RequestedCursorState => CursorState.Grabbed;
 
     public FPHandler FPH { get; set; }
     public ChatController Chat { get; set; }
@@ -21,8 +22,5 @@ public class RootController : ControllerBase {
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.Enter))
             ToPush = Chat;
-
-        if (updateArgs.KeyboardState.IsKeyPressed(Keys.Escape))
-            Window.Instance.CursorState = CursorState.Normal;
     }
 }

@@ -1,4 +1,5 @@
 using Bergmann.Client.InputHandlers;
+using OpenTK.Windowing.Common;
 
 namespace Bergmann.Client.Controllers;
 
@@ -33,6 +34,8 @@ public abstract class ControllerBase : IInputHandler {
     /// Specifies whether the given controller is on top of the <see cref="ControllerStack"/>.
     /// </summary>
     public bool IsOnTop { get; set; } = false;
+
+    public abstract CursorState RequestedCursorState { get; }
 
 
     public abstract void HandleInput(UpdateArgs updateArgs);

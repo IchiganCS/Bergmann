@@ -216,7 +216,7 @@ public class Window : GameWindow {
 
     protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
         if (e.IsFocused)
-            CursorState = CursorState.Grabbed;
+            CursorState = ControllerStack.Top.RequestedCursorState;
         else
             CursorState = CursorState.Normal;
     }
@@ -225,19 +225,12 @@ public class Window : GameWindow {
 
         if (!IsFocused)
             return;
-        
-        if (CursorState != CursorState.Grabbed) {
-            if (MouseState.IsButtonPressed(MouseButton.Left) || KeyboardState.IsKeyPressed(Keys.Escape))
-                CursorState = CursorState.Grabbed;
-            return;
-        }
 
-        
+        CursorState = ControllerStack.Top.RequestedCursorState;
+                
 
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
-
-
 
 
         var (pos, face) = World.Instance.Raycast(Fph.Position, Fph.Forward, out bool hit);

@@ -1,4 +1,5 @@
 using Bergmann.Client.InputHandlers;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Bergmann.Client.Controllers;
@@ -9,6 +10,8 @@ namespace Bergmann.Client.Controllers;
 /// It eventually renders tooltips and already sent messages too.
 /// </summary>
 public class ChatController : ControllerBase {
+    public override CursorState RequestedCursorState => CursorState.Normal;
+
     /// <summary>
     /// The prefix for every command. It is recommended not to change this.
     /// </summary>

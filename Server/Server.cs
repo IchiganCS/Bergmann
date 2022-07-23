@@ -1,7 +1,6 @@
+using Bergmann.Server.Hubs;
 using Bergmann.Shared;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Bergmann.Server;
 
@@ -22,6 +21,8 @@ public class Server {
 
         app.UseRouting();
         app.MapHub<ChatHub>("/ChatHub");
+        app.MapHub<WorldHub>("/WorldHub");
+        app.MapHub<LoginHub>("/LoginHub");
 
 
         app.Run();

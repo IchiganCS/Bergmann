@@ -57,4 +57,10 @@ public class ControllerStack {
         Controllers.Peek().IsOnTop = true;
         Controllers.Peek().IsActive = true;
     }
+
+    /// <summary>
+    /// Gets the top of all <see cref="ControllerBase"/>s.
+    /// </summary>
+    public ControllerBase Top
+        => Controllers.Peek();
 }
