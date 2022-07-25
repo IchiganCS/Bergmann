@@ -62,32 +62,33 @@ public class Buffer<T> : IDisposable where T : struct {
     /// </summary>
     /// <param name="items">The new items to be written into the buffer</param>
     /// <param name="reallocate">Tells the object whether to reallocate memory if the given items don't fit in the reserved space.</param>
-    public void Fill(T[] items, bool reallocate = false) {
-        if (items.Length > Reserved && Reserved > 0 && !reallocate) {
+    public void Fill(T[] items, bool reallocate = false, int length = -1) {
+        length = length < 0 ? items.Length : length;
+        if (length > Reserved && Reserved > 0 && !reallocate) {
             Logger.Warn("Can't write this many items into the buffer. Aborting");
             return;
         }
 
         GL.BindBuffer(Target, Handle);
-        Console.WriteLine($"Written {items.Length * Marshal.SizeOf<T>()} bytes");
+        Console.WriteLine($"Written {length * Marshal.SizeOf<T>()} bytes");
 
         //checks whether the buffer has already been initalized
         //or if reallocation is necessary
-        if (Length <= 0 || (reallocate && items.Length > Reserved)) {
+        if (Length <= 0 || (reallocate && length > Reserved)) {
 
             if (Reserved <= 0 || reallocate)
-                Reserved = items.Length;
+                Reserved = length;
 
             //first reserve the buffer. Note that the data parameter is zero, no data is copied
             GL.BufferData(Target, Reserved * Marshal.SizeOf<T>(), IntPtr.Zero, Hint);
         }
 
 
-        GL.BufferSubData(Target, IntPtr.Zero, items.Length * Marshal.SizeOf<T>(), items);
+        GL.BufferSubData(Target, IntPtr.Zero, length * Marshal.SizeOf<T>(), items);
 
         GlLogger.WriteGLError();
 
-        Length = items.Length;
+        Length = length;
     }
 
     /// <summary>

@@ -59,3 +59,11 @@ We have an interface `IUIRenderer` which holds all methods required to use such 
   - The percent and absolute positioning
 - The fragment shader receives from the vertex shader
   - the interpolated texure coordinates
+
+
+## Chunk rendering
+
+Chunk rendering currently hogs just a **little** bit of memory. By that I mean, each Chunk renderer can easily take up to 15MB of space! That doesn't scale well if one has to render about a thousand chunks at the same time. An upper bound seems to be 100KB (on average!) which is about one thousand faces (96 bytes per face are required). Caching values seems impossible.
+Recalculating the entire chunk on an update and updating the buffers is required. The key lies in a fast recalculation algorithm and reusing a fixed list so that the garbage collector may not unnecessarily run.
+
+Therefore: The chunk renderer doesn't save any vertices. On an update, it is recalculated entirely. Thus, the GPU holds 96 bytes per rendered face (which is reasonable: A rough estimate: 500 faces per chunk, 1000 chunks in memory: 50MB).

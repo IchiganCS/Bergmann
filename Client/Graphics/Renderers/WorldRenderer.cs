@@ -40,7 +40,7 @@ public class WorldRenderer : IDisposable, IRenderer {
         Hub = builder.Build();
 
         Hub.On<(int[][][], long)>("ReceiveChunk", x => {
-            Task.Run(() => NewChunkRenderer(new Chunk() { Blocks = x.Item1, Key = x.Item2 }));
+            GlThread.Invoke(() => NewChunkRenderer(new Chunk() { Blocks = x.Item1, Key = x.Item2 }));
         });
 
         Hub.StartAsync();

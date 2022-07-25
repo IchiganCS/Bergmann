@@ -19,165 +19,80 @@ public class ChunkRenderer : IDisposable, IRenderer {
     private Buffer<Vertex>? VertexBuffer { get; set; }
     private Buffer<uint>? IndexBuffer { get; set; }
 
-    private Vertex[] ContiguousVerticesCache { get; set; }
-    private uint[] ContiguousIndicesCache { get; set; }
-    private bool ContiguousCacheUpToDate { get; set; }
-    private bool BuffersUpToDate { get; set; }
-
-
     /// <summary>
-    /// The key is the block position given by x * 16 * 16 + y * 16 + z. The pair stores each rendered 
-    /// vertex of the block with the appropriate properties, the uint array stores the indices for these 
-    /// vertices. These indices are local for their key, there are many doubles overall
+    /// A lock that allows one thread. We can't use a <see cref="Monitor"/> since it uses weird things as denying operation if
+    /// a thread doesn't hold a lock! Who needs that if we know that our code will work?!
     /// </summary>
-    private ConcurrentDictionary<int, (Vertex[], uint[])> Cache { get; set; }
+    private static Semaphore _Lock = new(1, 1);
+    private static uint[] _IndexArray = new uint[40000];
+    private static Vertex[] _VertexArray = new Vertex[30000];
 
-#pragma warning disable CS8618
     /// <summary>
-    /// This object needs to be constructed on the gl thread. It asynchronously builds the entire caches.
+    /// This is a blocking operation. It waits for the lock on the arrays and fills them, then queues an update on the gl thread.
+    /// This gl thread then releases the <see cref="_Lock"/>. Thus, only one update per chunk is possible per frame.
+    /// </summary>
+    private void Update() {
+        _Lock.WaitOne();
+        List<Vector3i> blocks = Chunk.EveryBlock();
+
+        int currentIndex = 0;
+        int currentVertex = 0;
+
+        foreach (Vector3i block in blocks) {
+            BlockInfo bi = ((Block)Chunk.Blocks[block.X][block.Y][block.Z]).Info;
+
+            if (bi.ID == 0)
+                return;
+
+            foreach (Block.Face face in Block.AllFaces) {
+
+                if (!Chunk.HasNeighborAt(block, face)) {
+                    Vector3[] ps = Block.Positions[(int)face];
+
+                    _VertexArray[currentVertex + 0] = new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0, bi.GetLayerFromFace(face)) };
+                    _VertexArray[currentVertex + 1] = new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1, bi.GetLayerFromFace(face)) };
+                    _VertexArray[currentVertex + 2] = new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1, bi.GetLayerFromFace(face)) };
+                    _VertexArray[currentVertex + 3] = new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0, bi.GetLayerFromFace(face)) };
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 0;
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 1;
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 2;
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 0;
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 2;
+                    _IndexArray[currentIndex++] = (uint)currentVertex + 3;
+                    currentVertex += 4;
+                }
+            }
+        }
+
+        GlThread.Invoke(() => {
+            VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
+            IndexBuffer ??= new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1);
+
+            IndexBuffer.Fill(_IndexArray, true, currentIndex + 1);
+            VertexBuffer.Fill(_VertexArray, true, currentVertex + 1);
+            _Lock.Release();
+        });
+    }
+
+    /// <summary>
+    /// This object constructs a new chunk renderer. It may not be ready to be used since the building is done
+    /// asynchronously.
     /// </summary>
     /// <param name="chunk">The chunk to be rendered.</param>
     public ChunkRenderer(Chunk chunk) {
         Chunk = chunk;
 
-        ContiguousCacheUpToDate = false;
-        BuffersUpToDate = false;
-
-        BuildCache();
-        UpdateContiguousCache();
-    }
-#pragma warning restore CS8618
-
-
-
-    /// <summary>
-    /// Looks up each block and each face and loads the Cache. This is a very costly operation and should 
-    /// preferabbly only executed once.
-    /// </summary>
-    private void BuildCache() {
-        Cache = new();
-
-        var blocks = Chunk.EveryBlock();
-
-
-        foreach (Vector3i block in blocks) {
-            UpdateCacheAt(block);
-        }
+        Task.Run(Update);
     }
 
-    /// <summary>
-    /// Updates the cache at a specific position.
-    /// </summary>
-    /// <param name="position">The position in chunk space</param>
-    private void UpdateCacheAt(Vector3i block) {
-        ContiguousCacheUpToDate = false;
-        BuffersUpToDate = false;
-
-        BlockInfo bi = ((Block)Chunk.Blocks[block.X][block.Y][block.Z]).Info;
-        int key = block.X * 16 * 16 + block.Y * 16 + block.Z;
-        Cache.Remove(key, out _);
-
-        if (bi.ID == 0)
-            return;
-
-        foreach (Block.Face face in Block.AllFaces) {
-
-            if (!Chunk.HasNeighborAt(block, face)) {
-                //we have to add it to the dicitionary
-
-                Vector3[] ps = Block.Positions[(int)face];
-                Vertex[] positions = new Vertex[4] {
-                    new() { Position = ps[0] + block + Chunk.Offset, TexCoord = new(1, 0, bi.GetLayerFromFace(face)) },
-                    new() { Position = ps[1] + block + Chunk.Offset, TexCoord = new(1, 1, bi.GetLayerFromFace(face)) },
-                    new() { Position = ps[2] + block + Chunk.Offset, TexCoord = new(0, 1, bi.GetLayerFromFace(face)) },
-                    new() { Position = ps[3] + block + Chunk.Offset, TexCoord = new(0, 0, bi.GetLayerFromFace(face)) }
-                };
-
-                if (Cache.ContainsKey(key)) {
-                    var old = Cache[key];
-                    List<Vertex> newVertex = old.Item1.ToList();
-                    newVertex.AddRange(positions);
-                    List<uint> newIndices = old.Item2.ToList();
-                    newIndices.AddRange(Block.Indices.Select(x => x + (uint)old.Item1.Length));
-                    Cache[key] = (newVertex.ToArray(), newIndices.ToArray());
-                }
-                else {
-                    Cache.AddOrUpdate(key, (positions, Block.Indices), (a, b) => b);
-                }
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// Updates the cache at specific points, since rebuilding the entire cache is too expensive. 
-    /// This is an optimization though, theoretically rebuilding the entire cache works. 
-    /// This is to be registered as a callback for the <see cref="Chunk.OnUpdate"/> event.
-    /// </summary>
-    /// <param name="positions">Updates the positions and each of the positon's neighbors</param>
-    private void Update(List<Vector3i> positions) {
-        List<Vector3i> all = new();
-
-        all.AddRange(positions);
-        foreach (IEnumerable<Vector3i> neighbors in positions.Select(x => Block.AllNeighbors(x)))
-            all.AddRange(neighbors);
-
-        all.ForEach(x => {
-            if (Chunk.ComputeKey(x + Chunk.Offset) == Chunk.Key)
-                UpdateCacheAt(x);
-        });
-
-        UpdateContiguousCache();
-    }
-
-
-
-    /// <summary>
-    /// Assembles the contiguous arrays from the Cache. This is "quite" a costly operation.
-    /// </summary>
-    private void UpdateContiguousCache() {
-        List<Vertex> vertices = new();
-        List<uint> indices = new();
-
-        // add the count of already processed vertices, so the indices refer to the correct vertex
-        uint vertexCount = 0;
-        foreach (var renderStuff in Cache.Values) {
-            vertices.AddRange(renderStuff.Item1);
-            indices.AddRange(renderStuff.Item2.Select(x => x + vertexCount));
-
-            vertexCount += (uint)renderStuff.Item1.Length;
-        }
-
-        ContiguousVerticesCache = vertices.ToArray();
-        ContiguousIndicesCache = indices.ToArray();
-        ContiguousCacheUpToDate = true;
-    }
-
-    private static int renderCount = 0;
 
     /// <summary>
     /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding 
-    /// program need to be bound though.
+    /// program need to be bound though. This method only will render something if an update has been queued.
     /// </summary>
     public void Render() {
-        if (VertexBuffer is null || IndexBuffer is null) {
-            VertexBuffer = new(BufferTarget.ArrayBuffer);
-            IndexBuffer = new(BufferTarget.ElementArrayBuffer);
-        }
-
-        //if the buffer is not up to date, but the contiguous cache is up to date, then do an update. 
-        //Skip sending data otherwise. We may miss a frame of asynchronous update, that's fine.
-        if (!BuffersUpToDate && ContiguousCacheUpToDate) {
-            Stopwatch stop = new("Filling", 1);
-            VertexBuffer.Fill(ContiguousVerticesCache, true);
-            IndexBuffer.Fill(ContiguousIndicesCache, true);
-
-            BuffersUpToDate = true;
-            stop.Dispose();
-        }
-
-
-        if (VertexBuffer.IsFilled && IndexBuffer.IsFilled) {
+        if (VertexBuffer is not null && IndexBuffer is not null &&
+            VertexBuffer.IsFilled && IndexBuffer.IsFilled) {
             VertexBuffer.Bind();
             Vertex.UseVAO();
             IndexBuffer.Bind();

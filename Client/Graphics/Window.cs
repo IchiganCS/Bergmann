@@ -230,7 +230,7 @@ public class Window : GameWindow {
             return;
 
         CursorState = ControllerStack.Top.RequestedCursorState;
-                
+
 
         if (KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;
@@ -277,9 +277,7 @@ public class Window : GameWindow {
         GlLogger.WriteGLError();
 
 
-        using (Stopwatch stop = new("world render")) {
-            WorldRenderer.Render();
-        }
+        WorldRenderer.Render();
 
 
         Program.Active = UIProgram;
