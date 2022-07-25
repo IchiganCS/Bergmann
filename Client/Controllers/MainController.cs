@@ -1,18 +1,30 @@
 using Bergmann.Client.InputHandlers;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Window = Bergmann.Client.Graphics.Window;
 
 namespace Bergmann.Client.Controllers;
 
-
-public class MainController : ControllerBase {
+/// <summary>
+/// Handles the base inputs of the game while the player is moving around etc.
+/// </summary>
+public class GameController : ControllerBase {
+    
+    /// <summary>
+    /// Grab the cursor, we only want our cross drawn.
+    /// </summary>
     public override CursorState RequestedCursorState => CursorState.Grabbed;
 
+    /// <summary>
+    /// The first person handler of the player. It is to be updated when the root game controller is active.
+    /// </summary>
     public FPHandler FPH { get; set; }
+
+    /// <summary>
+    /// The chat to be displayed when called for.
+    /// </summary>
     public ChatController Chat { get; set; }
 
-    public MainController(FPHandler fph, ChatController chat) {
+    public GameController(FPHandler fph, ChatController chat) {
         FPH = fph;
         Chat = chat;
     }

@@ -70,7 +70,6 @@ public class Buffer<T> : IDisposable where T : struct {
         }
 
         GL.BindBuffer(Target, Handle);
-        Console.WriteLine($"Written {length * Marshal.SizeOf<T>()} bytes");
 
         //checks whether the buffer has already been initalized
         //or if reallocation is necessary

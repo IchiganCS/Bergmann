@@ -35,6 +35,10 @@ public abstract class ControllerBase : IInputHandler {
     /// </summary>
     public bool IsOnTop { get; set; } = false;
 
+    /// <summary>
+    /// Window is responsible to make this property the current cursor state if this is on top of the stack.
+    /// Of course, when tabbing and so on, this is not enforced. For normal handling though, this is the current state.
+    /// </summary>
     public abstract CursorState RequestedCursorState { get; }
 
 

@@ -1,3 +1,5 @@
+using Bergmann.Shared.Networking;
+using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -29,7 +31,7 @@ public class FPHandler : IInputHandler {
 
     public Vector3 Position { get; set; }
 
-    
+
     /// <summary>
     /// The angles of rotation around the axes. The x component specifies the rotation around 
     /// the x axis, the y component around the y axis.
@@ -103,6 +105,11 @@ public class FPHandler : IInputHandler {
     /// <param name="args">The values used to update.</param>
     public void HandleInput(UpdateArgs args) {
         RotateCamera(args.MouseState.Delta);
-        FlyingMovement(args.DeltaTime, args.KeyboardState);            
+        FlyingMovement(args.DeltaTime, args.KeyboardState);
+
+        if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
+            Hubs.World.SendAsync(Names.DestroyBlock, Position, Forward);
+        }
+
     }
 }

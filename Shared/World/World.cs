@@ -5,8 +5,7 @@ namespace Bergmann.Shared.World;
 public class World {
 
     /// <summary>
-    /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded. To observer the dictionary, register on
-    /// <see cref="OnChunkLoading"/>
+    /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded.
     /// </summary>
     public Dictionary<long, Chunk> Chunks { get; set; }
 
@@ -19,7 +18,7 @@ public class World {
             return;
 
         Vector3i offset = Chunk.ComputeOffset(key);
-        if (offset.Y < 0 || offset.Y > 32)
+        if (offset.Y < 0 || offset.Y > 16)
             return;
 
         Chunk newChunk = new() { Key = key };
@@ -90,15 +89,17 @@ public class World {
     }
 
     /// <summary>
-    /// Cast a ray from origin in the direction of destination. Returns whether there has been a hit through an out param
-    /// and if that value is true, the hit face and position of that block is returned. Since this logically needs to be distance
-    /// limited, the limit is currently that the position of the hit can only be 5 away from origin.
+    /// Cast a ray from origin in the direction of destination. Returns whether there has been a hit and if that value 
+    /// is true, the hit face and position of that block is returned. Since this logically needs to be distance
+    /// limited, the limit is <paramref name="distance"/>.
     /// </summary>
     /// <param name="origin">The origin of the ray. If origin lies in a block, that same block is returned</param>
     /// <param name="direction">The direction shot from origin</param>
-    /// <param name="hasHit">Sets a boolean whether there has been a hit.</param>
-    /// <returns></returns>
-    public (Vector3i, Block.Face) Raycast(Vector3 origin, Vector3 direction, out bool hasHit, float distance = 5) {
+    /// <param name="distance">The distance when to end the raycast.</param>
+    /// <param name="hitBlock">The position of the block hit by the raycast.</param>
+    /// <param name="hitFace">The hit face of the block.</param>
+    /// <returns>Whether there was a hit in <paramref name="distance"/>.</returns>
+    public bool Raycast(Vector3 origin, Vector3 direction, out Vector3i hitBlock, out Block.Face hitFace, float distance = 5) {
         //this method works like this:
         //We use the Block.GetFaceFromHit method to walk through each face that lies along direction.
         //We truly walk along every block - quite elegant.
@@ -111,9 +112,9 @@ public class World {
         directionDelta.NormalizeFast();
         directionDelta /= 100f;
 
-        int i = 0;
+        int i = (int)distance * 10;
         while((position - origin).LengthSquared < distance * distance) {
-            i++;
+            i--;
 
             Vector3i flooredPosition = new(
                 (int)Math.Floor(position.X),
@@ -122,22 +123,23 @@ public class World {
             
             Block current = GetBlockAt(flooredPosition);
             if (current != 0) {
-                hasHit = true;
-                return (flooredPosition, Block.GetFaceFromHit(position - flooredPosition, direction, out _));
+                hitBlock = flooredPosition;
+                hitFace = Block.GetFaceFromHit(position - flooredPosition, direction, out _);
+                return true;
             }
 
             _ = Block.GetFaceFromHit(position - flooredPosition, -direction, out Vector3 hit);
 
-            if (i > 50) {
+            if (i <= 0) {
                 Logger.Warn("Something went wrong, returning no hit");
-                hasHit = false;
-                return (new(0, 0, 0), Block.Face.Front);
+                break;
             }
 
             position = hit + flooredPosition + directionDelta;
         }
-        
-        hasHit = false;
-        return (new(0, 0, 0), Block.Face.Front);
+
+        hitFace = Block.Face.Front;
+        hitBlock = (0, 0, 0);
+        return false;
     }
 }

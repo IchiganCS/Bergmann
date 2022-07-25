@@ -1,8 +1,7 @@
 using System.Collections.Concurrent;
-using Bergmann.Shared;
+using Bergmann.Shared.Networking;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
@@ -19,45 +18,22 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     private ConcurrentDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
 
-    /// <summary>
-    /// The connection to a WorldHub of a server.
-    /// </summary>
-    /// <value></value>
-    private HubConnection Hub { get; set; }
 
     /// <summary>
-    /// Constructs a world renderer for the <see cref="World.Instance"/>. It loads <see cref="ChunkRenderer"/> for
-    /// every already instantiated chunk.
+    /// Constructs a world renderer for the <see cref="World.Instance"/>. It subscribes to updates from the world hub
+    /// for chunk receiving and updating. It currently doesn't support loading chunks on startup, it is recommended to
+    /// call this method before working on chunks.
     /// </summary>
     public WorldRenderer() {
         ChunkRenderers = new();
-        var builder = new HubConnectionBuilder()
-            .WithUrl(Client.ServerAddress + "WorldHub")
-            .AddMessagePackProtocol()
-            .WithAutomaticReconnect();
-        
 
-        Hub = builder.Build();
-
-        Hub.On<(int[][][], long)>("ReceiveChunk", x => {
-            GlThread.Invoke(() => NewChunkRenderer(new Chunk() { Blocks = x.Item1, Key = x.Item2 }));
+        Hubs.World.On<Chunk>(Names.ReceiveChunk, chunk => {
+            ChunkRenderer n = new(chunk);
+            ChunkRenderers.AddOrUpdate(chunk.Key, n, (a, b) => n);
         });
-
-        Hub.StartAsync();
     }
 
-    /// <summary>
-    /// Load a new chunk renderer for a given chunk and dispose of the old one.
-    /// </summary>
-    /// <param name="newChunk">The chunk in whose renderer's generation we're interested in</param>
-    private void NewChunkRenderer(Chunk newChunk) {
-        if (ChunkRenderers.ContainsKey(newChunk.Key))
-            return;
-
-        ChunkRenderer n = new(newChunk);
-
-        ChunkRenderers.AddOrUpdate(newChunk.Key, n, (a, b) => b);
-    }
+    // Both of these attributes are yet to be implemented properly.
 
     private ConcurrentBag<long> KeysToHandle { get; set; } = new();
 
@@ -67,7 +43,7 @@ public class WorldRenderer : IDisposable, IRenderer {
                 continue;
 
             KeysToHandle.Add(key);
-            Hub.SendAsync("RequestChunk", key);
+            Hubs.World.SendAsync(Names.RequestChunk, key);
         }
     }
 

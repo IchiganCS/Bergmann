@@ -2,10 +2,8 @@ using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
-using Bergmann.Shared;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -36,11 +34,9 @@ public class Window : GameWindow {
     private UICollection ChatItems { get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
-    private (Vector3i, Block.Face)? RayCast { get; set; }
     private bool DebugViewEnabled { get; set; } = false;
     private bool WireFrameEnabled { get; set; } = false;
 
-    public HubConnection Hub { get; set; }
     public ControllerStack ControllerStack { get; set; }
     public FPHandler Fph { get; set; }
 
@@ -104,7 +100,7 @@ public class Window : GameWindow {
     }
 
     private void MakeControllers() {
-        ChatController cont = new(x => Hub.SendAsync("SendMessage", "ich", x));
+        ChatController cont = new(x => Hubs.Chat.SendAsync("SendMessage", "ich", x));
         ChatItems = new(null);
         ChatItems.OtherRenderers.Add((new ChatRenderer(cont), true));
 
@@ -124,7 +120,7 @@ public class Window : GameWindow {
         Fph = new FPHandler() {
             Position = (30, 34, 30)
         };
-        MainController root = new(Fph, cont);
+        GameController root = new(Fph, cont);
         ControllerStack = new(root);
     }
 
@@ -133,6 +129,7 @@ public class Window : GameWindow {
 
         MakeControllers();
         MakeProgram();
+        Hubs.InitializeWithLink("http://localhost:61377");
 
 
         BlockInfo.ReadFromJson("Blocks.json");
@@ -151,20 +148,9 @@ public class Window : GameWindow {
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
 
-
-        var hub = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5000/ChatHub")
-            .AddMessagePackProtocol()
-            .WithAutomaticReconnect();
-
-        hub.Services.AddLogging();
-        Hub = hub.Build();
-
-        Hub.On<string, string>("PrintMsg", (x, y) => {
+        Hubs.Chat.On<string, string>("PrintMsg", (x, y) => {
             Console.WriteLine($"{x} wrote {y}");
         });
-
-        Hub.StartAsync();
 
 
         WorldRenderer = new();
@@ -236,32 +222,16 @@ public class Window : GameWindow {
             DebugViewEnabled = !DebugViewEnabled;
 
 
-        // var (pos, face) = World.Instance.Raycast(Fph.Position, Fph.Forward, out bool hit);
-        // if (hit) {
-        //     RayCast = (pos, face);
-
-        //     if (MouseState.IsButtonPressed(MouseButton.Left))
-        //         World.Instance.SetBlockAt(RayCast.Value.Item1, 0);
-        //     else if (MouseState.IsButtonPressed(MouseButton.Right))
-        //         World.Instance.SetBlockAt(Block.FaceToVector[(int)RayCast.Value.Item2] + RayCast.Value.Item1, 1);
-        // }
-        // else
-        //     RayCast = null;
-
-
         UpdateArgs updateArgs = new((float)args.Time);
         ControllerStack.Execute(updateArgs);
         List<long> items = World.GetNearChunks(Fph.Position, 6);
-        using (Stopwatch stop = new("hi")) {
-            Task.Run(() => WorldRenderer.AddChunks(items));
-        }
+        Task.Run(() => WorldRenderer.AddChunks(items));
     }
 
 
 
     protected override void OnRenderFrame(FrameEventArgs args) {
-        using (Stopwatch stopwatch = new("Queue work"))
-            GlThread.DoAll();
+        GlThread.DoAll();
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 

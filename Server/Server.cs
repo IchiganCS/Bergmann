@@ -1,5 +1,6 @@
 using Bergmann.Server.Hubs;
 using Bergmann.Shared;
+using Bergmann.Shared.Networking;
 using MessagePack;
 using Microsoft.AspNetCore.ResponseCompression;
 
@@ -13,7 +14,9 @@ public class Server {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         builder.Services.AddSignalR()
             .AddMessagePackProtocol(options => {
-                options.SerializerOptions = MessagePackSerializerOptions.Standard
+                options.SerializerOptions = 
+                    MessagePackSerializerOptions.Standard
+                    .WithResolver(new CustomResolver())
                     .WithSecurity(MessagePackSecurity.UntrustedData);
             });
         builder.Services.AddResponseCompression(opts => {
@@ -25,9 +28,8 @@ public class Server {
         WebApplication app = builder.Build();
 
         app.UseRouting();
-        app.MapHub<ChatHub>("/ChatHub");
-        app.MapHub<WorldHub>("/WorldHub");
-        app.MapHub<LoginHub>("/LoginHub");
+        app.MapHub<ChatHub>("/" + Names.ChatHub);
+        app.MapHub<WorldHub>("/" + Names.WorldHub);
 
 
         app.Run();

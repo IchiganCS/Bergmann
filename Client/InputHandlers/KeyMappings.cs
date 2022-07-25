@@ -12,4 +12,6 @@ public static class KeyMappings {
     public static Keys Boost { get; set; } = Keys.LeftShift;
 
     public static Keys ChatToggle { get; set; } = Keys.Enter;
+
+    public static MouseButton BlockDestruction { get; set; } = MouseButton.Left;
 }

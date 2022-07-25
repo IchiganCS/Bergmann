@@ -15,8 +15,22 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// with multiple threads. Check the docs to find out.
 /// </summary>
 public class ChunkRenderer : IDisposable, IRenderer {
+
+    /// <summary>
+    /// The backed chunk. It is rendered.
+    /// </summary>
     private Chunk Chunk { get; set; }
+
+    /// <summary>
+    /// A buffer for all vertices on the gpu. It isn't guaranteed to be up to date or even be initialized on time.
+    /// Therefore, it's nullable.
+    /// </summary>
     private Buffer<Vertex>? VertexBuffer { get; set; }
+
+    /// <summary>
+    /// A buffer for all indices on the gpu. It isn't guaranteed to be up to date or even be initialized on time.
+    /// Therefore, it's nullable.
+    /// </summary>
     private Buffer<uint>? IndexBuffer { get; set; }
 
     /// <summary>
@@ -24,7 +38,13 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// a thread doesn't hold a lock! Who needs that if we know that our code will work?!
     /// </summary>
     private static Semaphore _Lock = new(1, 1);
+    /// <summary>
+    /// The index array. Should only be accessed with <see cref="_Lock"/> held.
+    /// </summary>
     private static uint[] _IndexArray = new uint[40000];
+    /// <summary>
+    /// The vertex array. Should only be accessed with <see cref="_Lock"/> held.
+    /// </summary>
     private static Vertex[] _VertexArray = new Vertex[30000];
 
     /// <summary>
@@ -46,6 +66,10 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
             foreach (Block.Face face in Block.AllFaces) {
 
+                //TODO: what if buffers overflow?
+                //further possible improvement: make multiple large arrays to enable working with more than one thread at the same time.
+                //possibly required for faster updates since currently locked to one frame per update.
+
                 if (!Chunk.HasNeighborAt(block, face)) {
                     Vector3[] ps = Block.Positions[(int)face];
 
@@ -64,6 +88,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
             }
         }
 
+        //Write the buffers on the gl thread. Only then release the lock (hence only one update per frame is possible for now)
         GlThread.Invoke(() => {
             VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
             IndexBuffer ??= new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1);
@@ -88,7 +113,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
 
     /// <summary>
     /// Binds all buffers automatically and renders this chunk. The texture stack and the corresponding 
-    /// program need to be bound though. This method only will render something if an update has been queued.
+    /// program need to be bound though. This method only will render something if an update had been queued before.
     /// </summary>
     public void Render() {
         if (VertexBuffer is not null && IndexBuffer is not null &&

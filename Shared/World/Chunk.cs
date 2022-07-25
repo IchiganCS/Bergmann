@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -28,7 +26,6 @@ public class Chunk {
     /// to world space.
     /// </summary>
     /// <value></value>
-    [JsonIgnoreAttribute]
     public Vector3i Offset {
         get => ComputeOffset(Key);
         set => Key = ComputeKey(value);
@@ -73,6 +70,13 @@ public class Chunk {
 
     public Chunk() {
         Blocks = new int[CHUNK_SIZE][][];
+    }
+
+    /// <summary>
+    /// Generates the given terrain from the given key, currently. Is mandatory to be called before use to initialize
+    /// <see cref="Blocks"/> properly.
+    /// </summary>
+    public void GenerateBlocks() {        
         for (int i = 0; i < CHUNK_SIZE; i++) {
             Blocks[i] = new int[CHUNK_SIZE][];
             for (int j = 0; j < CHUNK_SIZE; j++) {
@@ -89,7 +93,7 @@ public class Chunk {
     /// </summary>
     /// <returns>A list filled in no particular order in chunk space</returns>
     public List<Vector3i> EveryBlock() {
-        List<Vector3i> ls = new();
+        List<Vector3i> ls = new(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
         for (int i = 0; i < CHUNK_SIZE; i++)
             for (int j = 0; j < CHUNK_SIZE; j++)
                 for (int k = 0; k < CHUNK_SIZE; k++)
