@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
+using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
@@ -16,7 +16,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    private ConcurrentDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
+    private SortedDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
 
 
     /// <summary>
@@ -28,42 +28,78 @@ public class WorldRenderer : IDisposable, IRenderer {
         ChunkRenderers = new();
 
         Hubs.World.On<Chunk>(Names.ReceiveChunk, chunk => {
-            if (ChunkRenderers.ContainsKey(chunk.Key)) {
-                Task.Run(() => ChunkRenderers[chunk.Key].Update(chunk));
-            }
-            else {
-                ChunkRenderer renderer = new();
-                Task.Run(() => renderer.Update(chunk));
-                ChunkRenderers.AddOrUpdate(chunk.Key, renderer, (a, b) => renderer);
+            lock (ChunkRenderers) {
+                if (ChunkRenderers.ContainsKey(chunk.Key)) {
+                    Task.Run(() => ChunkRenderers[chunk.Key].Update(chunk));
+                }
+                else {
+                    ChunkRenderer renderer = new();
+                    Task.Run(() => renderer.Update(chunk));
+                    ChunkRenderers.Add(chunk.Key, renderer);
+                }
             }
         });
     }
 
-    // Both of these attributes are yet to be implemented properly.
+    private Timer? LoadTimer { get; set; }
+    private Timer? DropTimer { get; set; }
+    public int LoadDistance { get; set; } = 6;
+    public int DropDistance { get; set; } = 8;
+    private IEnumerable<long> PreviousLoadedChunks { get; set; } = new long[0] { };
 
-    private ConcurrentBag<long> KeysToHandle { get; set; } = new();
 
-    public void AddChunks(IEnumerable<long> keys) {
-        foreach (long key in keys) {
-            if (KeysToHandle.Contains(key) || ChunkRenderers.ContainsKey(key))
-                continue;
+    /// <summary>
+    /// Generates timers to load and drop chunks in the given intervals using <see cref="LoadDistance"/> and 
+    /// <see cref="DropDistance"/>. <paramref name="getPosition"/> is a function to get the current position of the player.
+    /// </summary>
+    /// <param name="getPosition">A function which always returns the correct position of the player.</param>
+    /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
+    /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
+    public void SubscribeToPositionUpdate(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000) {
 
-            KeysToHandle.Add(key);
-            Hubs.World.SendAsync(Names.RequestChunk, key);
-        }
+        LoadTimer = new(x => {
+            IEnumerable<long> chunks = World.GetNearChunks(getPosition(), LoadDistance);
+            IEnumerable<long> diff = chunks.Where(x => !PreviousLoadedChunks.Contains(x)).ToArray();
+            PreviousLoadedChunks = chunks;
+
+            foreach (long key in diff) {
+                if (!ChunkRenderers.ContainsKey(key))
+                    Hubs.World.SendAsync(Names.RequestChunk, key);
+            }
+        }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
+
+        DropTimer = new(x => {
+            lock (ChunkRenderers) {
+                foreach (ChunkRenderer chunkRenderer in ChunkRenderers.Values.ToArray()) {
+                    if ((Chunk.ComputeOffset(chunkRenderer.ChunkKey) - getPosition()).LengthFast > DropDistance * 16) {
+                        chunkRenderer.Dispose();
+                        ChunkRenderers.Remove(chunkRenderer.ChunkKey);
+                    }
+                }
+            }
+        }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
     }
+
 
     /// <summary>
     /// Calls <see cref="ChunkRenderer.Render"/> for each chunk renderer held
     /// </summary>
     public void Render() {
-        foreach (ChunkRenderer cr in ChunkRenderers.Values)
-            cr?.Render();
+        lock (ChunkRenderers) {
+            foreach (ChunkRenderer cr in ChunkRenderers.Values.ToArray())
+                cr?.Render();
+        }
     }
 
-
+    /// <summary>
+    /// Disposes of all held chunk renderers and clears all renderers.
+    /// </summary>
     public void Dispose() {
-        foreach (ChunkRenderer cr in ChunkRenderers.Values)
-            cr.Dispose();
+        lock (ChunkRenderers) {
+            foreach (ChunkRenderer cr in ChunkRenderers.Values)
+                cr.Dispose();
+
+            ChunkRenderers.Clear();
+        }
     }
 }

@@ -31,7 +31,7 @@ public class World {
     /// </summary>
     /// <param name="position">The position from which to calculate</param>
     /// <param name="distance">The distance in world chunk space, the number of chunks</param>
-    public static List<long> GetNearChunks(Vector3 position, int distance) {
+    public static IEnumerable<long> GetNearChunks(Vector3 position, int distance) {
 
         // this stores all offsets
         List<Vector3i> chunksInRange = new();
@@ -56,7 +56,7 @@ public class World {
             }
         }
 
-        return chunksInRange.Select(x => Chunk.ComputeKey(x)).ToList();
+        return chunksInRange.Select(x => Chunk.ComputeKey(x));
     }
 
 

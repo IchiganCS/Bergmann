@@ -32,6 +32,8 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// </summary>
     private bool Renderable { get; set; } = false;
 
+    public long ChunkKey { get; private set; }
+
 
     /// <summary>
     /// A lock that allows one thread. We can't use a <see cref="Monitor"/> since it uses weird things as denying operation if
@@ -55,6 +57,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     /// <param name="chunk">The chunk to be used for updating. It is used to fill appropriate buffers.</param>
     public void Update(Chunk chunk) {
         _Lock.WaitOne();
+        ChunkKey = chunk.Key;
         List<Vector3i> blocks = chunk.EveryBlock();
 
         int currentIndex = 0;

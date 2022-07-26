@@ -1,4 +1,5 @@
 using Bergmann.Client.InputHandlers;
+using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -21,7 +22,7 @@ public class ChatController : ControllerBase {
     /// A list of all commands exectuable by the chat. If a message with <see cref="CommandPrefix"/> is sent,
     /// a fitting command is searched for and executed.
     /// </summary>
-    public List<Command> Commands { get; set; } = new();
+    public IList<Command> Commands { get; set; } = new List<Command>();
 
     /// <summary>
     /// If the entered text is no command, but a normal text message, this action is executed with the input string as an argument.
@@ -66,6 +67,13 @@ public class ChatController : ControllerBase {
             InputField.SetText("");
             ShouldPop = true;
         }));
+
+
+    
+        Hubs.Chat.On<string, string>("PrintMsg", (x, y) => {
+            Console.WriteLine($"{x} wrote {y}");
+        });
+
     }
 
     /// <summary>

@@ -1,5 +1,3 @@
-using OpenTK.Mathematics;
-
 namespace Bergmann.Client.Graphics.Renderers;
 
 /// <summary>

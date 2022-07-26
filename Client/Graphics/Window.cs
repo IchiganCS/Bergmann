@@ -8,7 +8,6 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 using Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -30,15 +29,15 @@ public class Window : GameWindow {
     private Program UIProgram { get; set; }
 
     private UICollection FixedUIItems { get; set; }
-    private UICollection DebugItems { get; set; }
+    private DebugRenderer DebugRenderer { get; set; }
     private UICollection ChatItems { get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
-    private bool DebugViewEnabled { get; set; } = false;
     private bool WireFrameEnabled { get; set; } = false;
 
     public ControllerStack ControllerStack { get; set; }
     public FPHandler Fph { get; set; }
+    public GameController Controller { get; set; }
 
     private void MakeProgram() {
         if (BlockProgram is not null)
@@ -109,10 +108,6 @@ public class Window : GameWindow {
             Execute = x => WireFrameEnabled = !WireFrameEnabled,
         });
         cont.Commands.Add(new() {
-            Name = "debug",
-            Execute = x => DebugViewEnabled = !DebugViewEnabled,
-        });
-        cont.Commands.Add(new() {
             Name = "recompile",
             Execute = x => MakeProgram(),
         });
@@ -120,8 +115,8 @@ public class Window : GameWindow {
         Fph = new FPHandler() {
             Position = (30, 34, 30)
         };
-        GameController root = new(Fph, cont);
-        ControllerStack = new(root);
+        Controller = new(Fph, cont);
+        ControllerStack = new(Controller);
     }
 
     protected override void OnLoad() {
@@ -147,13 +142,9 @@ public class Window : GameWindow {
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
 
-        Hubs.Chat.On<string, string>("PrintMsg", (x, y) => {
-            Console.WriteLine($"{x} wrote {y}");
-        });
-
 
         WorldRenderer = new();
-
+        WorldRenderer.SubscribeToPositionUpdate(() => Fph.Position);
 
         Texture UIElems = new Texture(TextureTarget.Texture2DArray);
         UIElems.Reserve(100, 100, 1);
@@ -164,7 +155,6 @@ public class Window : GameWindow {
 
 
         FixedUIItems = new(UIElems);
-        DebugItems = new(null);
 
         BoxRenderer cross = new(1) {
             AbsoluteAnchorOffset = (0, 0),
@@ -175,20 +165,7 @@ public class Window : GameWindow {
         cross.ApplyTexture(0);
         FixedUIItems.ImageRenderers.Add((cross, true));
 
-        TextRenderer posText = new() {
-            AbsoluteAnchorOffset = (30, -30),
-            PercentageAnchorOffset = (0, 1),
-            RelativeAnchor = (0, 1),
-            Dimension = (-1, 70)
-        };
-        DebugItems.OtherRenderers.Add((posText, true));
-        TextRenderer blockText = new() {
-            AbsoluteAnchorOffset = (30, -120),
-            PercentageAnchorOffset = (0, 1),
-            RelativeAnchor = (0, 1),
-            Dimension = (-1, 70)
-        };
-        DebugItems.OtherRenderers.Add((blockText, true));
+        DebugRenderer = new(() => Fph.Position, () => 40);
     }
 
     protected override void OnUnload() {
@@ -199,7 +176,7 @@ public class Window : GameWindow {
         BlockRenderer.Dispose();
         TextRenderer.Delete();
         FixedUIItems.Dispose();
-        DebugItems.Dispose();
+        DebugRenderer.Dispose();
     }
 
     protected override void OnFocusedChanged(FocusedChangedEventArgs e) {
@@ -217,14 +194,8 @@ public class Window : GameWindow {
         CursorState = ControllerStack.Top.RequestedCursorState;
 
 
-        if (KeyboardState.IsKeyPressed(Keys.F1))
-            DebugViewEnabled = !DebugViewEnabled;
-
-
         UpdateArgs updateArgs = new((float)args.Time);
         ControllerStack.Execute(updateArgs);
-        List<long> items = World.GetNearChunks(Fph.Position, 6);
-        Task.Run(() => WorldRenderer.AddChunks(items));
     }
 
 
@@ -252,24 +223,12 @@ public class Window : GameWindow {
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-        // if (DebugViewEnabled) {
-        //     (DebugItems.OtherRenderers[0].Item1 as TextRenderer)!.SetText(
-        //         $"Pos: ({Fph.Position.X:0.00}, {Fph.Position.Y:0.00}, {Fph.Position.Z:0.00})");
-
-        //     if (RayCast is not null) {
-        //         DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, true);
-        //         (DebugItems.OtherRenderers[1].Item1 as TextRenderer)!.SetText(
-        //             $"Block: {World.Instance.GetBlockAt(RayCast.Value.Item1).Info.Name}, {RayCast.Value.Item2}");
-        //     }
-        //     else
-        //         DebugItems.OtherRenderers[1] = (DebugItems.OtherRenderers[1].Item1, false);
-        //     DebugItems.Render();
-        // }
-
         ChatItems.Render();
-
-
         FixedUIItems.Render();
+
+        if (Controller.DebugViewEnabled) {
+            DebugRenderer.Render();
+        }
 
         Context.SwapBuffers();
     }
