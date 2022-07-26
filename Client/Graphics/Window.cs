@@ -129,7 +129,6 @@ public class Window : GameWindow {
 
         MakeControllers();
         MakeProgram();
-        Hubs.InitializeWithLink("http://localhost:61377");
 
 
         BlockInfo.ReadFromJson("Blocks.json");

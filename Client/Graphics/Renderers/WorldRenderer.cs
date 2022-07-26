@@ -28,8 +28,14 @@ public class WorldRenderer : IDisposable, IRenderer {
         ChunkRenderers = new();
 
         Hubs.World.On<Chunk>(Names.ReceiveChunk, chunk => {
-            ChunkRenderer n = new(chunk);
-            ChunkRenderers.AddOrUpdate(chunk.Key, n, (a, b) => n);
+            if (ChunkRenderers.ContainsKey(chunk.Key)) {
+                Task.Run(() => ChunkRenderers[chunk.Key].Update(chunk));
+            }
+            else {
+                ChunkRenderer renderer = new();
+                Task.Run(() => renderer.Update(chunk));
+                ChunkRenderers.AddOrUpdate(chunk.Key, renderer, (a, b) => renderer);
+            }
         });
     }
 
