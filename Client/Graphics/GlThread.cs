@@ -25,7 +25,6 @@ public static class GlThread {
     /// Executes all actions. Must be on the gl thread or some functionality in random components might not work.
     /// </summary>
     public static void DoAll() {
-        Logger.Info($"Doing {Queue.Count} tasks");
         while (Queue.TryDequeue(out Action? act))
             act?.Invoke();
     }

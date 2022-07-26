@@ -59,7 +59,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
         int currentVertex = 0;
 
         foreach (Vector3i block in blocks) {
-            BlockInfo bi = ((Block)Chunk.Blocks[block.X][block.Y][block.Z]).Info;
+            BlockInfo bi = ((Block)Chunk.Blocks[block.X, block.Y, block.Z]).Info;
 
             if (bi.ID == 0)
                 return;

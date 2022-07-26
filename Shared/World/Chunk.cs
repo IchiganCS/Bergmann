@@ -19,7 +19,7 @@ public class Chunk {
     /// The blocks this chunk holds. It is always size (<see cref="CHUNK_SIZE"/>), size, size in its dimensions.
     /// </summary>
     /// <value></value>
-    public int[][][] Blocks { get; set; }
+    public int[,,] Blocks { get; set; }
 
     /// <summary>
     /// Since Blocks has coordinates relative to this chunk's origin, we need a way to transform it
@@ -69,20 +69,18 @@ public class Chunk {
     }
 
     public Chunk() {
-        Blocks = new int[CHUNK_SIZE][][];
+        Blocks = new int[CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE];
     }
 
     /// <summary>
     /// Generates the given terrain from the given key, currently. Is mandatory to be called before use to initialize
     /// <see cref="Blocks"/> properly.
     /// </summary>
-    public void GenerateBlocks() {        
+    public void GenerateBlocks() {
         for (int i = 0; i < CHUNK_SIZE; i++) {
-            Blocks[i] = new int[CHUNK_SIZE][];
             for (int j = 0; j < CHUNK_SIZE; j++) {
-                Blocks[i][j] = new int[CHUNK_SIZE];
                 for (int k = 0; k < CHUNK_SIZE; k++)
-                    Blocks[i][j][k] = (k % 2) + 1;
+                    Blocks[i, j, k] = (k % 2) + 1;
             }
         }
     }
@@ -97,7 +95,7 @@ public class Chunk {
         for (int i = 0; i < CHUNK_SIZE; i++)
             for (int j = 0; j < CHUNK_SIZE; j++)
                 for (int k = 0; k < CHUNK_SIZE; k++)
-                    if (Blocks[i][j][k] != 0)
+                    if (Blocks[i, j, k] != 0)
                         ls.Add(new(i, j, k));
 
         return ls;
@@ -117,8 +115,8 @@ public class Chunk {
             y < 0 || y > CHUNK_SIZE - 1 ||
             z < 0 || z > CHUNK_SIZE - 1)
             return false; //TODO
-            
-        return Blocks[x][y][z]!= 0;
+
+        return Blocks[x, y, z] != 0;
     }
 
     /// <summary>
@@ -142,7 +140,7 @@ public class Chunk {
             z < 0 || z > CHUNK_SIZE - 1)
             return 0; //TODO
 
-        return Blocks[x][y][z];
+        return Blocks[x, y, z];
     }
 
     /// <summary>
@@ -165,8 +163,8 @@ public class Chunk {
             z < 0 || z > CHUNK_SIZE - 1)
             return;
 
-        Blocks[x][y][z] = block;
-        OnUpdate?.Invoke(new(){position});
+        Blocks[x, y, z] = block;
+        OnUpdate?.Invoke(new() { position });
     }
 
     /// <summary>

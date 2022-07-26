@@ -72,7 +72,7 @@ public class CustomResolver : IFormatterResolver {
             for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
                     for (int z = 0; z < 16; z++)
-                        result.Blocks[x][y][z] = reader.ReadInt32();
+                        result.Blocks[x, y, z] = reader.ReadInt32();
 
             result.Key = reader.ReadInt64();
             return result;
@@ -82,7 +82,7 @@ public class CustomResolver : IFormatterResolver {
             for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
                     for (int z = 0; z < 16; z++)
-                        writer.WriteInt32(value.Blocks[x][y][z]);
+                        writer.WriteInt32(value.Blocks[x, y, z]);
 
             writer.WriteInt64(value.Key);
         }

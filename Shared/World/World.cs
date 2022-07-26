@@ -22,6 +22,7 @@ public class World {
             return;
 
         Chunk newChunk = new() { Key = key };
+        newChunk.GenerateBlocks();
         Chunks.Add(key, newChunk);
     }
 
