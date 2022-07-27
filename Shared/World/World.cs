@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -9,8 +10,12 @@ public class World {
     /// </summary>
     public Dictionary<long, Chunk> Chunks { get; set; }
 
+
+    public Generator WorldGen { get; private set; }
+
     public World() {
         Chunks = new();
+        WorldGen = new((int)Random.Shared.NextInt64());
     }
 
     public void LoadChunk(long key) {
@@ -18,11 +23,13 @@ public class World {
             return;
 
         Vector3i offset = Chunk.ComputeOffset(key);
-        if (offset.Y < 0 || offset.Y > 16)
+        if (offset.Y < 0)
             return;
 
-        Chunk newChunk = new() { Key = key };
-        newChunk.GenerateBlocks();
+        Chunk newChunk = new() {
+            Key = key,
+            Blocks = WorldGen.GenerateBlocksForChunk(key),
+        };
         Chunks.Add(key, newChunk);
     }
 
@@ -47,7 +54,7 @@ public class World {
 
                 //the offset of the chunk in world space
                 Vector3i world = offset + current;
-                
+
                 if (world.Y < 0 || ((Vector3i)(world - position)).ManhattanLength > distance * 16
                     || chunksInRange.Contains(world))
                     continue;
@@ -114,14 +121,14 @@ public class World {
         directionDelta /= 100f;
 
         int i = (int)distance * 10;
-        while((position - origin).LengthSquared < distance * distance) {
+        while ((position - origin).LengthSquared < distance * distance) {
             i--;
 
             Vector3i flooredPosition = new(
                 (int)Math.Floor(position.X),
                 (int)Math.Floor(position.Y),
                 (int)Math.Floor(position.Z));
-            
+
             Block current = GetBlockAt(flooredPosition);
             if (current != 0) {
                 hitBlock = flooredPosition;
@@ -142,5 +149,53 @@ public class World {
         hitFace = Block.Face.Front;
         hitBlock = (0, 0, 0);
         return false;
+    }
+
+
+    public class Generator {
+        public int Seed { get; private set; }
+        public Random Random { get; private set; }
+
+        public SortedDictionary<int, Vector2> PerlinVectors { get; private set; }
+
+        public const int LOW_BOUND = 0;
+        public const int TERRAIN_LEVEL = 35;
+
+        public Generator(int seed) {
+            Random = new Random(seed);
+            Seed = seed;
+            PerlinVectors = new();
+        }
+
+
+
+        public int[,,] GenerateBlocksForChunk(long key) {
+            int[,,] result = new int[16, 16, 16];
+            Vector3i offset = Chunk.ComputeOffset(key);
+
+            Vector2[,] perlinVectors = new Vector2[2, 2];
+            for (int x = 0; x < 2; x++) {
+                for (int z = 0; z < 2; z++) {
+                    int seed = ((x * 16 + offset.X) << 16) + (z * 16 + offset.Z);
+                    Random rand = new(seed);
+                    float angle = rand.NextSingle() * 2 * (float)Math.PI;
+                    perlinVectors[x, z] = new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+                }
+            }
+
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    Vector2 closestPerlinVec = perlinVectors[x < 8 ? 0 : 1, z < 8 ? 0 : 1];
+                    float value = Vector2.Dot((new Vector2(x, z) - new Vector2(x < 8 ? 0 : 16, z < 8 ? 0 : 16)), closestPerlinVec);
+                    int maxHeight = TERRAIN_LEVEL + (int)(value * 8);
+                    for (int y = 0; y < 16; y++) {
+                        result[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;
+                    }
+                }
+            }
+
+
+            return result;
+        }
     }
 }

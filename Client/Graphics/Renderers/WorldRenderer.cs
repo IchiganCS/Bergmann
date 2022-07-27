@@ -99,6 +99,7 @@ public class WorldRenderer : IDisposable, IRenderer {
             foreach (ChunkRenderer cr in ChunkRenderers.Values)
                 cr.Dispose();
 
+            PreviousLoadedChunks = new long[0] { };
             ChunkRenderers.Clear();
         }
     }

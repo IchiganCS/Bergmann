@@ -24,6 +24,7 @@ public static class Hubs {
     /// <param name="link">Without any trailing slashes, the full protocol, domain and port, e.g. http://localhost:5000</param>
     public static void InitializeWithLink(string link) {
         Link = link;
+        Logger.Info("Conencting to " + link);
 
         Func<string, HubConnection> buildHub = sr => {
             HubConnection hc = new HubConnectionBuilder()

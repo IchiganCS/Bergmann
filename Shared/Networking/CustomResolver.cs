@@ -68,6 +68,7 @@ public class CustomResolver : IFormatterResolver {
     private class ChunkFormatter : IMessagePackFormatter<Chunk> {
         public Chunk Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
             Chunk result = new();
+            result.Blocks = new int[16, 16, 16];
 
             for (int x = 0; x < 16; x++)
                 for (int y = 0; y < 16; y++)
