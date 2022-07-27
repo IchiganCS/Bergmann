@@ -111,6 +111,19 @@ public class Window : GameWindow {
             Name = "recompile",
             Execute = x => MakeProgram(),
         });
+        cont.Commands.Add(new() {
+            Name = "remake",
+            Execute = x => {
+                Hubs.World.SendAsync("DropWorld");
+                GlThread.Invoke(() => WorldRenderer.Dispose());
+            }
+        });
+        cont.Commands.Add(new() {
+            Name = "connect",
+            Execute = x => {
+                Hubs.InitializeWithLink(x[0]);
+            }
+        });
 
         Fph = new FPHandler() {
             Position = (30, 34, 30)
@@ -165,7 +178,7 @@ public class Window : GameWindow {
         cross.ApplyTexture(0);
         FixedUIItems.ImageRenderers.Add((cross, true));
 
-        DebugRenderer = new(() => Fph.Position, () => 40);
+        DebugRenderer = new();
     }
 
     protected override void OnUnload() {
@@ -227,6 +240,7 @@ public class Window : GameWindow {
         FixedUIItems.Render();
 
         if (Controller.DebugViewEnabled) {
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time);
             DebugRenderer.Render();
         }
 

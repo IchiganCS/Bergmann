@@ -56,7 +56,7 @@ public class Chunk {
     /// Calculates the offset from a given key.
     /// </summary>
     /// <param name="key">The key of the chunk</param>
-    /// <returns>The base offset for the chunk</returns>
+    /// <returns>The base offset for the chunk in world space</returns>
     public static Vector3i ComputeOffset(long key) {
         Span<long> span = stackalloc long[1];
         span[0] = key;
@@ -68,22 +68,11 @@ public class Chunk {
         return result * 16;
     }
 
+
     public Chunk() {
-        Blocks = new int[CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE];
+
     }
 
-    /// <summary>
-    /// Generates the given terrain from the given key, currently. Is mandatory to be called before use to initialize
-    /// <see cref="Blocks"/> properly.
-    /// </summary>
-    public void GenerateBlocks() {
-        for (int i = 0; i < CHUNK_SIZE; i++) {
-            for (int j = 0; j < CHUNK_SIZE; j++) {
-                for (int k = 0; k < CHUNK_SIZE; k++)
-                    Blocks[i, j, k] = (k % 2) + 1;
-            }
-        }
-    }
 
     /// <summary>
     /// Gets a list of every block in the chunk. Since this is a three dimensional pass, this 

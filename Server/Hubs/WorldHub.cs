@@ -35,10 +35,14 @@ public class WorldHub : Hub {
     [HubMethodName(Names.DestroyBlock)]
     public async void DestroyBlock(Vector3 position, Vector3 direction) {
         if (Data.World.Raycast(position, direction, out Vector3i blockPos, out _)) {
-            Console.WriteLine("Destruction requested");
             long key = Chunk.ComputeKey(blockPos);
             Data.World.SetBlockAt(blockPos, 0);
             await Clients.All.SendAsync(Names.ReceiveChunk, Data.World.Chunks[key]);
         }
+    }
+
+
+    public void DropWorld() {
+        Data.World.Chunks.Clear();
     }
 }

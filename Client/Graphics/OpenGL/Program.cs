@@ -121,6 +121,9 @@ public class Program : IDisposable {
         else if (item is Vector3 vector3)
             GL.Uniform3(pos, ref vector3);
 
+        else if (item is Vector4 vector4)
+            GL.Uniform4(pos, ref vector4);
+
         else if (item is Vector2i vector2i)
             GL.Uniform2(pos, ref vector2i);
 
