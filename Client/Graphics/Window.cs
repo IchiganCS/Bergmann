@@ -2,6 +2,7 @@ using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared.Networking;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Graphics.OpenGL;
@@ -99,7 +100,7 @@ public class Window : GameWindow {
     }
 
     private void MakeControllers() {
-        ChatController cont = new(x => Hubs.Chat.SendAsync("SendMessage", "ich", x));
+        ChatController cont = new(x => Hubs.Chat?.SendAsync(Names.SendMessage, "ich", x));
         ChatItems = new(null);
         ChatItems.OtherRenderers.Add((new ChatRenderer(cont), true));
 
@@ -114,7 +115,7 @@ public class Window : GameWindow {
         cont.Commands.Add(new() {
             Name = "remake",
             Execute = x => {
-                Hubs.World.SendAsync("DropWorld");
+                Hubs.World?.SendAsync(Names.DropWorld);
                 GlThread.Invoke(() => WorldRenderer.Dispose());
             }
         });

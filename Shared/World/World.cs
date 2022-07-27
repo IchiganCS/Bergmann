@@ -41,9 +41,9 @@ public class World {
     public static IEnumerable<long> GetNearChunks(Vector3 position, int distance) {
 
         // this stores all offsets
-        List<Vector3i> chunksInRange = new();
-
-        chunksInRange.Add((Vector3i)position);
+        List<Vector3i> chunksInRange = new() {
+            (Vector3i)position
+        };
 
         for (int i = 0; i < chunksInRange.Count; i++) {
             //pop the highest element

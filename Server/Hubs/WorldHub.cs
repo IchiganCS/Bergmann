@@ -41,7 +41,7 @@ public class WorldHub : Hub {
         }
     }
 
-
+    [HubMethodName(Names.DropWorld)]
     public void DropWorld() {
         Data.World.Chunks.Clear();
     }
