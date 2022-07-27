@@ -16,7 +16,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    private SortedDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
+    internal SortedDictionary<long, ChunkRenderer> ChunkRenderers { get; private set; }
 
 
     /// <summary>
@@ -27,7 +27,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     public WorldRenderer() {
         ChunkRenderers = new();
 
-        Hubs.World.On<Chunk>(Names.ReceiveChunk, chunk => {
+        Hubs.World?.On<Chunk>(Names.ReceiveChunk, chunk => {
             lock (ChunkRenderers) {
                 if (ChunkRenderers.ContainsKey(chunk.Key)) {
                     Task.Run(() => ChunkRenderers[chunk.Key].Update(chunk));
@@ -45,7 +45,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     private Timer? DropTimer { get; set; }
     public int LoadDistance { get; set; } = 6;
     public int DropDistance { get; set; } = 8;
-    private IEnumerable<long> PreviousLoadedChunks { get; set; } = new long[0] { };
+    private IEnumerable<long> PreviousLoadedChunks { get; set; } = Array.Empty<long>();
 
 
     /// <summary>
@@ -64,7 +64,7 @@ public class WorldRenderer : IDisposable, IRenderer {
 
             foreach (long key in diff) {
                 if (!ChunkRenderers.ContainsKey(key))
-                    Hubs.World.SendAsync(Names.RequestChunk, key);
+                    Hubs.World?.SendAsync(Names.RequestChunk, key);
             }
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
@@ -99,7 +99,7 @@ public class WorldRenderer : IDisposable, IRenderer {
             foreach (ChunkRenderer cr in ChunkRenderers.Values)
                 cr.Dispose();
 
-            PreviousLoadedChunks = new long[0] { };
+            PreviousLoadedChunks = Array.Empty<long>();
             ChunkRenderers.Clear();
         }
     }

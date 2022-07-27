@@ -241,7 +241,7 @@ public class Window : GameWindow {
         FixedUIItems.Render();
 
         if (Controller.DebugViewEnabled) {
-            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time);
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, WorldRenderer.ChunkRenderers.Count);
             DebugRenderer.Render();
         }
 

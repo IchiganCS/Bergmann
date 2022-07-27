@@ -1,4 +1,5 @@
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared.Networking;
 using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -70,7 +71,7 @@ public class ChatController : ControllerBase {
 
 
     
-        Hubs.Chat.On<string, string>("PrintMsg", (x, y) => {
+        Hubs.Chat?.On<string, string>(Names.ReceiveMessage, (x, y) => {
             Console.WriteLine($"{x} wrote {y}");
         });
 
@@ -103,6 +104,6 @@ public class ChatController : ControllerBase {
         /// <summary>
         /// Arguments for a command are specified through spaces between words.
         /// </summary>
-        public Action<string[]> Execute { get; set; } = default!;
+        public Action<string[]>? Execute { get; set; }
     }
 }

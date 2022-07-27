@@ -17,4 +17,5 @@ public abstract class Names {
 
     public const string SendMessage = nameof(SendMessage);
     public const string DropWorld = nameof(DropWorld);
+    public const string ReceiveMessage = nameof(ReceiveMessage);
 }
