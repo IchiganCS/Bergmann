@@ -36,6 +36,12 @@ public class DebugRenderer : IUIRenderer {
                 Dimension = (-1, 70)
             });
         }
+        Diagrams.Add(new DiagramRenderer() {
+            AbsoluteAnchorOffset = (300, -110),
+            RelativeAnchor = (0, 1),
+            PercentageAnchorOffset = (0, 1),
+            Dimension = (500, 70)
+        });
 
         UpdateEmpty();
     }
@@ -55,6 +61,7 @@ public class DebugRenderer : IUIRenderer {
         Texts[(int)Identifiers.Position].SetText($"Pos:    ({position.X:0.00}, {position.Y:0.00}, {position.Z:0.00})");
         Texts[(int)Identifiers.FPS].SetText($"Fps:    {fps:0.00}");
         Texts[(int)Identifiers.Chunks].SetText($"Chunks: {chunksLoaded} loaded");
+        Diagrams[0].TickAndAddDataPoint(.5f);
     }
 
     /// <summary>
@@ -69,6 +76,8 @@ public class DebugRenderer : IUIRenderer {
     /// </summary>
     public void Render() {
         foreach (IRenderer ren in Texts)
+            ren.Render();
+        foreach (IRenderer ren in Diagrams)
             ren.Render();
     }
 
