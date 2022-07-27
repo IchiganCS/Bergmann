@@ -56,7 +56,7 @@ public class ChatController : ControllerBase {
 
                 foreach (Command cmd in Commands) {
                     if (cmd.Name.ToLower() == command.ToLower())
-                        cmd.Execute(args);
+                        cmd.Execute?.Invoke(args);
                 }
 
                 if (!Commands.Any(x => x.Name == command))
@@ -67,10 +67,11 @@ public class ChatController : ControllerBase {
 
             InputField.SetText("");
             ShouldPop = true;
-        }));
+        }
+        ));
 
 
-    
+
         Hubs.Chat?.On<string, string>(Names.ReceiveMessage, (x, y) => {
             Console.WriteLine($"{x} wrote {y}");
         });
