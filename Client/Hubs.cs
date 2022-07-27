@@ -11,12 +11,11 @@ namespace Bergmann.Client;
 /// A unified place of the client to load all hubs. Each hub is resolved
 /// using the strings given in <see cref="Names"/>.
 /// </summary>
-#pragma warning disable 8618
 public static class Hubs {
-    public static HubConnection World { get; private set; }
-    public static HubConnection Chat { get; private set; }
+    public static HubConnection? World { get; private set; }
+    public static HubConnection? Chat { get; private set; }
 
-    public static string Link { get; private set; }
+    public static string? Link { get; private set; }
 
     /// <summary>
     /// Builds all hubs in the collection on the specified link
@@ -25,12 +24,12 @@ public static class Hubs {
     public static void InitializeWithLink(string link) {
         Link = link;
 
-        Func<string, HubConnection> buildHub = sr => {
+        static HubConnection buildHub(string hubName) {
             HubConnection hc = new HubConnectionBuilder()
-                .WithUrl(Link + "/" + sr)
+                .WithUrl($"{Link}/{hubName}")
                 .WithAutomaticReconnect()
                 .AddMessagePackProtocol(options => {
-                    options.SerializerOptions = 
+                    options.SerializerOptions =
                         MessagePackSerializerOptions.Standard
                         .WithResolver(new CustomResolver())
                         .WithSecurity(MessagePackSecurity.UntrustedData);
@@ -38,7 +37,7 @@ public static class Hubs {
                 .Build();
             hc.StartAsync();
             return hc;
-        };
+        }
 
         World = buildHub(Names.WorldHub);
         Chat = buildHub(Names.ChatHub);

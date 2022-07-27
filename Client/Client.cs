@@ -9,7 +9,7 @@ public class Client {
     public static void Main(string[] args) {
         Logger.Info("Starting client...");
 
-        string link = "http://localhost:61377";
+        string link = "http://localhost:5000";
         Hubs.InitializeWithLink(link);
         Logger.Info($"Trying connection with {link}");
 

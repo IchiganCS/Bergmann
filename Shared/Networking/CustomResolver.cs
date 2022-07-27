@@ -31,7 +31,7 @@ public class CustomResolver : IFormatterResolver {
     }
 
     /// <summary>
-    /// Serializs a Vector3 by OpenTK. Since the serialization options are limited to writing ints, and not floats, 
+    /// Serializs a <see cref="Vector3"/> by OpenTK. Since the serialization options are limited to writing ints, and not floats, 
     /// those are reinterpreted first. This shouldn't be a costly operation since it is not real conversion and purely
     /// happens on the stack.
     /// </summary>
@@ -62,7 +62,7 @@ public class CustomResolver : IFormatterResolver {
     }
 
     /// <summary>
-    /// Serializes a Chunk. This is subject to change if the chunk definition changes. Currently, all blocks a are written in a specific manner,
+    /// Serializes a <see cref="Chunk"/>. This is subject to change if the chunk definition changes. Currently, all blocks a are written in a specific manner,
     /// then the key, which is the offset, is written too. There might be some room for improvements using streams, although only a little?
     /// </summary>
     private class ChunkFormatter : IMessagePackFormatter<Chunk> {

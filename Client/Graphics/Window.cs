@@ -146,7 +146,7 @@ public class Window : GameWindow {
         WorldRenderer = new();
         WorldRenderer.SubscribeToPositionUpdate(() => Fph.Position);
 
-        Texture UIElems = new Texture(TextureTarget.Texture2DArray);
+        Texture UIElems = new(TextureTarget.Texture2DArray);
         UIElems.Reserve(100, 100, 1);
 
         using Image<Rgba32> img = Image<Rgba32>.Load(
