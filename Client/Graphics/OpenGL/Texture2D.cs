@@ -6,8 +6,19 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
+/// <summary>
+/// Represents any 2d texture. It can be refilled for better performance.
+/// </summary>
 public class Texture2D : TextureBase {
+
+    /// <summary>
+    /// The width of the texture. It can only be set once.
+    /// </summary>
     public int Width { get; private set; }
+
+    /// <summary>
+    /// The height of the texture. It can only be set once.
+    /// </summary>
     public int Height { get; private set; }
 
     /// <summary>
@@ -18,6 +29,12 @@ public class Texture2D : TextureBase {
     }
 
 
+
+    /// <summary>
+    /// Writes an image to the texture. If this action is performed to overwrite an already exisisting texture,
+    /// make sure the dimensions align. Otherwise, generate a new texture.
+    /// </summary>
+    /// <param name="image">The image to be written.</param>
     public void Write(Image<Rgba32> image) {
         if (Width > 0 && Height > 0 && (image.Width != Width || image.Height != Height))
             Logger.Warn("Supplied image doesn't fit the previously supplied dimensions");

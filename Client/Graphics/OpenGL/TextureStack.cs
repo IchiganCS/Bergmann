@@ -6,6 +6,10 @@ using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
+
+/// <summary>
+/// Represents a stack of texture which can be bound to a `sampler2Darray` in shaders. It therefore internally is a Texture2DArray.
+/// </summary>
 public class TextureStack : TextureBase {
 
     /// <summary>
@@ -13,17 +17,29 @@ public class TextureStack : TextureBase {
     /// </summary>
     public bool IsReserved { get; private set; }
 
+    /// <summary>
+    /// The width of all textures. It can only be set once.
+    /// </summary>
     public int Width { get; private set; }
+    /// <summary>
+    /// The height of all textures. It can only be set once.
+    /// </summary>
     public int Height { get; private set; }
+
+    /// <summary>
+    /// The depth of the stack, the layer count. It can only be set once.
+    /// </summary>
     public int Depth{ get; private set; }
 
+    /// <summary>
+    /// Generates a new texture stack with sensible default parameters.
+    /// </summary>
     public TextureStack() : base(TextureTarget.Texture2DArray) {
         IsReserved = false;
     }
 
     /// <summary>
-    /// Fills the texture. If no image was reserved, it acts as if it is the only texture ever to be written.
-    /// If multiple calls to perform consecutive writes are to be expeceted, you have to <see cref="Reserve"/> the memory first.
+    /// Fills the texture. If no image was reserved, the action will fail.
     /// </summary>
     /// <param name="image">Unaltered image by ImageSharp.</param>
     /// <param name="level">The level (index) of an array of 2d images.</param>

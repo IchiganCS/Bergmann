@@ -1,6 +1,4 @@
 using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 

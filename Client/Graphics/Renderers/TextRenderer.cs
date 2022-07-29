@@ -28,17 +28,17 @@ public class TextRenderer : UIRenderer {
     /// All the chars that can be rendered by the text renderer. If the used char is not known, OpenGl defaults to "a".
     /// Then you can just add it.
     /// </summary>
-    private const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(^%&$){}[]+=-?_*/.#:;\\<>|äöüÄÖÜß!'\"";
+    public const string CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789, @(^%&$){}[]+=-?_*/.#:;\\<>|äöüÄÖÜß!'\"";
 
     /// <summary>
     /// Returns a new letter stack which can be used for fast rendering in shaders.
-    /// The texture's type is a 2d array. The layers identifier is given by their index in <see cref="CHARS"/>
+    /// The layers identifier is given by their index in <see cref="CHARS"/>
     /// </summary>
     /// <param name="font">The font which is used to write the letters into the textures</param>
     /// <param name="size">The size of each layer (quadratic) in pixels. If the letter is not quadratic, the image
     /// is resized without keeping the same aspect ratio, 
     /// so that the texture can be unstretched and it gives the correct image</param>
-    /// <returns>A Texture2DArray. The caller needs to dispose of it</returns>
+    /// <returns>A texture stack. The caller needs to dispose of it</returns>
     private static TextureStack MakeLetterStack(Font font, int size = 50) {
         TextureStack stack = new();
         stack.Reserve(size, size, CHARS.Length);
@@ -116,7 +116,8 @@ public class TextRenderer : UIRenderer {
 
     /// <summary>
     /// Renders a given text into the box renderer. The x component of <see cref="BoxRenderer.Dimension"/> is discarded to 
-    /// fit the text
+    /// fit the text. Each letter is given a box around it and a layer int the stack. For each letter, we therefore achieve 4 vertices.
+    /// Plus 4 if a cursor is supplied.
     /// </summary>
     /// <param name="text">The text to be rendered</param>
     /// <param name="cursor">The position of the cursor to be rendered. If less than zero, then ignored</param>
@@ -192,7 +193,7 @@ public class TextRenderer : UIRenderer {
     }
 
     /// <summary>
-    /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to texture unit
+    /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to the texture stack slot.
     /// </summary>
     public override void Render() {
         DebugFontStack.Bind();
