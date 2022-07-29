@@ -6,7 +6,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// <summary>
 /// A view to display some debug information. It just unites some text renderers.
 /// </summary>
-public class DebugRenderer : IUIRenderer {
+public class DebugRenderer : UIRenderer {
     /// <summary>
     /// The list of text renderers. They are vertically appended from the top left corner.
     /// </summary>
@@ -65,27 +65,20 @@ public class DebugRenderer : IUIRenderer {
     }
 
     /// <summary>
-    /// Always returns false since there is no interaction with the the ui. Could be added though.
-    /// </summary>
-    public bool PointInShape(Vector2 point, Vector2 size) {
-        return false; //disable all interaction with debug renderer for now.
-    }
-
-    /// <summary>
     /// Renders all text renderers.
     /// </summary>
-    public void Render() {
+    public override void Render() {
         foreach (IRenderer ren in Texts)
             ren.Render();
-        foreach (IRenderer ren in Diagrams)
-            ren.Render();
+        //foreach (IRenderer ren in Diagrams)
+            //ren.Render();
     }
 
 
     /// <summary>
     /// Disposes all renderers used for rendering the debug view.
     /// </summary>
-    public void Dispose() {
+    public override void Dispose() {
         foreach (IRenderer ren in Texts)
             ren.Dispose();
     }

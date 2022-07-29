@@ -29,9 +29,10 @@ public class Window : GameWindow {
     private Program BlockProgram { get; set; }
     private Program UIProgram { get; set; }
 
-    private UICollection FixedUIItems { get; set; }
+    private BoxRenderer CrossRenderer { get; set; }
+    private Texture2D CrossTexture { get; set; }
     private DebugRenderer DebugRenderer { get; set; }
-    private UICollection ChatItems { get; set; }
+    private ChatRenderer ChatRenderer { get; set; }
     private WorldRenderer WorldRenderer { get; set; }
 
     private bool WireFrameEnabled { get; set; } = false;
@@ -92,7 +93,10 @@ public class Window : GameWindow {
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             UIProgram.SetUniform("windowsize", new Vector2i(Size.X, Size.Y));
-            UIProgram.SetUniform("text", 0);
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.ActiveTexture(TextureUnit.Texture1);
+            UIProgram.SetUniform("textStack", 0);
+            UIProgram.SetUniform("textureUni", 1);
         };
 
         VertexShader.Dispose();
@@ -101,8 +105,7 @@ public class Window : GameWindow {
 
     private void MakeControllers() {
         ChatController cont = new(x => Hubs.Chat?.SendAsync(Names.SendMessage, "ich", x));
-        ChatItems = new(null);
-        ChatItems.OtherRenderers.Add((new ChatRenderer(cont), true));
+        ChatRenderer = new ChatRenderer(cont);
 
         cont.Commands.Add(new() {
             Name = "wireframe",
@@ -160,24 +163,19 @@ public class Window : GameWindow {
         WorldRenderer = new();
         WorldRenderer.SubscribeToPositionUpdate(() => Fph.Position);
 
-        Texture UIElems = new(TextureTarget.Texture2DArray);
-        UIElems.Reserve(100, 100, 1);
-
         using Image<Rgba32> img = Image<Rgba32>.Load(
             ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
-        UIElems.Write(img, 0);
+        CrossTexture = new();
+        CrossTexture.Write(img);
 
 
-        FixedUIItems = new(UIElems);
-
-        BoxRenderer cross = new(1) {
+        CrossRenderer = new() {
             AbsoluteAnchorOffset = (0, 0),
             PercentageAnchorOffset = (0.5f, 0.5f),
             RelativeAnchor = (0.5f, 0.5f),
             Dimension = (100, 100)
         };
-        cross.ApplyTexture(0);
-        FixedUIItems.ImageRenderers.Add((cross, true));
+        CrossRenderer.ApplyLayout();
 
         DebugRenderer = new();
     }
@@ -189,7 +187,6 @@ public class Window : GameWindow {
         UIVertex.CloseVAO();
         BlockRenderer.Dispose();
         TextRenderer.Delete();
-        FixedUIItems.Dispose();
         DebugRenderer.Dispose();
     }
 
@@ -237,8 +234,9 @@ public class Window : GameWindow {
         Program.Active = UIProgram;
         GlLogger.WriteGLError();
 
-        ChatItems.Render();
-        FixedUIItems.Render();
+        ChatRenderer.Render();
+        CrossTexture.Bind();
+        CrossRenderer.Render();
 
         if (Controller.DebugViewEnabled) {
             DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, WorldRenderer.ChunkRenderers.Count);

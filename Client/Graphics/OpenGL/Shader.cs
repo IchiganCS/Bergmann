@@ -8,7 +8,7 @@ public class Shader : IDisposable {
     /// <summary>
     /// The handle for the OpenGl object shader
     /// </summary>
-    public int Handle { get; set; }
+    public int Handle { get; private set; }
     /// <summary>
     /// The type of the shaders supported by OpenGl
     /// </summary>

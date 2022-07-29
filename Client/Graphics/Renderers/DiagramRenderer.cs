@@ -17,9 +17,7 @@ public class DiagramRenderer : BoxRenderer {
         TickInterval = tickInterval;
         TicksToShow = ticksToShow;
         //TickTimer = new(x => Tick(), null, TickInterval, TickInterval);
-        tex = new(TextureTarget.Texture2DArray);
-        tex.Reserve(500, 70, 1);//TODO
-        ApplyTexture(0);
+        tex = new();
     }
 
     /// <summary>
@@ -38,7 +36,7 @@ public class DiagramRenderer : BoxRenderer {
     public int TicksToShow { get; set; } = 100;
     private readonly Timer TickTimer;
 
-    private readonly Texture tex;
+    private readonly Texture2D tex;
 
     public void TickAndAddDataPoint(float value) {
         DataPoints.Add(value);
@@ -85,7 +83,7 @@ public class DiagramRenderer : BoxRenderer {
                 ));
         }
 
-        tex.Write(image, 0);
+        tex.Write(image);
     }
 
 
@@ -93,7 +91,6 @@ public class DiagramRenderer : BoxRenderer {
     /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to texture unit
     /// </summary>
     public override void Render() {
-        GL.ActiveTexture(TextureUnit.Texture0);
         tex.Bind();
         GlLogger.WriteGLError();
         base.Render();

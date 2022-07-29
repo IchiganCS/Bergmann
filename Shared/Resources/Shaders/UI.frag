@@ -2,12 +2,18 @@
 
 in vec3 texCoord;
 
-uniform sampler2DArray text;
+uniform sampler2DArray textStack;
+uniform sampler2D textureUni;
+uniform bool useStack;
 
 out vec4 fragColor;
 
 void main() 
 {
-    vec4 texColor = texture(text, texCoord);
-    fragColor = texColor;
+    if (useStack) {
+        fragColor = texture(textStack, texCoord);
+    }
+    else {
+        fragColor = texture(textureUni, texCoord.xy);
+    }
 }

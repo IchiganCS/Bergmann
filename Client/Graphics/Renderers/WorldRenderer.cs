@@ -30,7 +30,12 @@ public class WorldRenderer : IDisposable, IRenderer {
         Hubs.World?.On<Chunk>(Names.ReceiveChunk, chunk => {
             lock (ChunkRenderers) {
                 if (ChunkRenderers.ContainsKey(chunk.Key)) {
-                    Task.Run(() => ChunkRenderers[chunk.Key].Update(chunk));
+                    Task.Run(() => {
+                        bool res = ChunkRenderers.TryGetValue(chunk.Key, out ChunkRenderer? ch);
+                        
+                        if (res)
+                            ch?.Update(chunk);
+                    });
                 }
                 else {
                     ChunkRenderer renderer = new();

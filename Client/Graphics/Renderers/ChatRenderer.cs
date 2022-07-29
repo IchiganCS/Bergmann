@@ -1,11 +1,9 @@
 using Bergmann.Client.Controllers;
-using Bergmann.Client.InputHandlers;
-using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
 
-public class ChatRenderer : IUIRenderer {
+public class ChatRenderer : UIRenderer {
     public ChatController Chat { get; private set; }
     private TextRenderer InputRenderer { get; set; }
 
@@ -20,16 +18,14 @@ public class ChatRenderer : IUIRenderer {
         InputRenderer.HookTextField(chat.InputField);
     }
 
-    public bool PointInShape(Vector2 point, Vector2 size)
-        => InputRenderer.PointInShape(point, size);
 
-    public void Render() {
+    public override void Render() {
         if (Chat.IsActive)
             InputRenderer.Render();
     }
 
 
-    public void Dispose() {
+    public override void Dispose() {
 
     }
 }

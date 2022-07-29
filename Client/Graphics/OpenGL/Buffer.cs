@@ -9,12 +9,10 @@ namespace Bergmann.Client.Graphics.OpenGL;
 /// </summary>
 public class Buffer<T> : IDisposable where T : struct {
 
-    public static int ActiveBuffer { get; set; } = 0;
-
     /// <summary>
     /// The handle to the OpenGL buffer object
     /// </summary>
-    public int Handle { get; set; }
+    public int Handle { get; private set; }
 
 
     /// <summary>
@@ -63,6 +61,11 @@ public class Buffer<T> : IDisposable where T : struct {
     /// <param name="items">The new items to be written into the buffer</param>
     /// <param name="reallocate">Tells the object whether to reallocate memory if the given items don't fit in the reserved space.</param>
     public void Fill(T[] items, bool reallocate = false, int length = -1) {
+        if (Handle == -1) {
+            Logger.Warn("The buffer was already disposed");
+            return;
+        }
+
         length = length < 0 ? items.Length : length;
         if (length > Reserved && Reserved > 0 && !reallocate) {
             Logger.Warn("Can't write this many items into the buffer. Aborting");
@@ -101,6 +104,8 @@ public class Buffer<T> : IDisposable where T : struct {
     public void Dispose() {
         GL.DeleteBuffer(Handle);
         Handle = -1;
+        Length = -1;
+        Reserved = -1;
     }
 
 }

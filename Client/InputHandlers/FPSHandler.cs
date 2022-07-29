@@ -19,7 +19,7 @@ public class FPHandler : IInputHandler {
     /// <summary>
     /// Clamps the angle of the x rotation to this angle. Given in radians
     /// </summary>
-    public float ClampAngle { get; set; } = 85f / 180f * (float)Math.PI;
+    public float ClampAngle { get; set; } = 89f / 180f * (float)Math.PI;
     /// <summary>
     /// The sensitvity of the mouse
     /// </summary>
@@ -108,7 +108,7 @@ public class FPHandler : IInputHandler {
         FlyingMovement(args.DeltaTime, args.KeyboardState);
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            Hubs.World.SendAsync(Names.DestroyBlock, Position, Forward);
+            Hubs.World!.SendAsync(Names.DestroyBlock, Position, Forward);
         }
 
     }

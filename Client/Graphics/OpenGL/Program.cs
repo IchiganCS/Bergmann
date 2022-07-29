@@ -39,7 +39,7 @@ public class Program : IDisposable {
     /// <summary>
     /// The handle to the specific program handle by OpenGL
     /// </summary>
-    public int Handle { get; set; }
+    public int Handle { get; private set; }
     /// <summary>
     /// Whether the program is already compiled. When the program is compiled, there are no more changes allowed.
     /// </summary>
@@ -127,12 +127,20 @@ public class Program : IDisposable {
         else if (item is Vector2i vector2i)
             GL.Uniform2(pos, ref vector2i);
 
+        else if (item is Vector2 vector2)
+            GL.Uniform2(pos, ref vector2);
+
         else if (item is int int1)
             GL.Uniform1(pos, int1);
 
+        else if (item is bool bool1)
+            GL.Uniform1(pos, bool1 ? 1 : 0);
+
         else
-            Logger.Warn($"Couldn't bind uniform {name} for type {typeof(T).ToString()}. Unsupported type?");
+            Logger.Warn($"Couldn't bind uniform {name} for type {typeof(T)}. Unsupported type?");
     }
+
+    
     /// <summary>
     /// Wraps all necessary calls for <see cref="SetUniform"/> needed to fill an array of uniforms. See that function for more detail.
     /// </summary>

@@ -6,11 +6,17 @@ namespace Bergmann.Client.Graphics.OpenGL;
 
 public struct UIVertex {
     /// <summary>
-    /// The first value 
+    /// A percentage (to the the window size) offset to the vertex.
     /// </summary>
     public Vector2 Percent;
+    /// <summary>
+    /// An absolute offset in pixel size to teh vertex.
+    /// </summary>
     public Vector2 Absolute;
 
+    /// <summary>
+    /// A 3d value of a texture coordinate. The z component is discarded if this ui vertex disabled texture stack access.
+    /// </summary>
     public Vector3 TexCoord;
 
 

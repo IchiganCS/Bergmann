@@ -15,9 +15,9 @@ public static class ResourceManager {
                 return _Root;
 
             //_Root = Environment.GetEnvironmentVariable("ResourceDirectory") ?? Environment.CurrentDirectory;
-            _Root = Path.Combine(Environment.CurrentDirectory, "Resources/");
+            _Root = Path.Combine(Environment.CurrentDirectory, "Shared/Resources/");
             if (!Directory.Exists(_Root)) {
-                _Root = Path.Combine("../../../../", _Root);
+                _Root = Path.Combine("../../../../Shared/Resources/", _Root);
                 if (!Directory.Exists(_Root)) {
                     Logger.Warn("Couldn't find resources directory");
                     return "";

@@ -1,6 +1,7 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.InputHandlers;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using Shared;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -16,11 +17,11 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextHandler"/>, 
 /// it renders the cursor automatically.
 /// </summary>
-public class TextRenderer : BoxRenderer {
+public class TextRenderer : UIRenderer {
 #pragma warning disable CS8618
     private static FontCollection FontCollection { get; set; } = new();
     private static Font DebugFont { get; set; }
-    private static Texture DebugFontStack { get; set; }
+    private static TextureStack DebugFontStack { get; set; }
 #pragma warning restore CS8618
 
     /// <summary>
@@ -38,8 +39,8 @@ public class TextRenderer : BoxRenderer {
     /// is resized without keeping the same aspect ratio, 
     /// so that the texture can be unstretched and it gives the correct image</param>
     /// <returns>A Texture2DArray. The caller needs to dispose of it</returns>
-    private static Texture MakeLetterStack(Font font, int size = 50) {
-        Texture stack = new(TextureTarget.Texture2DArray);
+    private static TextureStack MakeLetterStack(Font font, int size = 50) {
+        TextureStack stack = new();
         stack.Reserve(size, size, CHARS.Length);
 
 
@@ -73,6 +74,46 @@ public class TextRenderer : BoxRenderer {
         DebugFontStack = MakeLetterStack(DebugFont, 100);
     }
 
+
+
+
+
+        /// <summary>
+    /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. 
+    /// Take a look at it to see the options you have for the layout
+    /// of boxes. Since each box can be separated into different textures, this buffer can hold 4 * num_of_cuts.
+    /// </summary>
+    private Buffer<UIVertex>? Vertices { get; set; }
+
+    /// <summary>
+    /// The indices for the vertices.
+    /// </summary>
+    private Buffer<uint>? Indices { get; set; }
+
+
+    /// <summary>
+    /// Ensures that buffers are large enought to hold sections many items.
+    /// Regenerates if necessary.
+    /// </summary>
+    /// <param name="sections">The number of sections for the box renderer</param>
+    private void EnsureBufferCapacity(int sections) {
+        if (Vertices is null || Indices is null) {
+            Vertices?.Dispose();
+            Indices?.Dispose();
+
+            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
+            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
+        }
+
+        else if (Vertices.Reserved < sections * 4 || Indices.Reserved < sections * 6) {
+            Vertices.Dispose();
+            Indices.Dispose();
+
+            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
+            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
+        }
+    }
+
     /// <summary>
     /// Renders a given text into the box renderer. The x component of <see cref="BoxRenderer.Dimension"/> is discarded to 
     /// fit the text
@@ -87,23 +128,57 @@ public class TextRenderer : BoxRenderer {
         float widthOfOne = Dimension.Y * 0.7f;
         float entireWidth = widthOfOne * text.Length;
         Dimension = new(entireWidth, Dimension.Y);
-        ApplyTexture(text.Select((c, i) => {
-            //make overlapping sections on the box renderer for the cursor
-            float width = 1f / text.Length;
-            float cursorWidth = width;
-            float cursorOffset = -0.5f * width;
 
-            int charLayer = CHARS.IndexOf(c);
 
-            if (i != cursor && i != cursor + 1)
-                return (0, width, charLayer);
+        Vector2 anchorOffset = -RelativeAnchor * Dimension;
 
-            else if (i == cursor)
-                return (cursorOffset, cursorWidth, charLayer);
+        EnsureBufferCapacity(text.Length);
 
-            else
-                return (-cursorWidth - cursorOffset, width, charLayer);
-        }));
+        List<UIVertex> vertices = new();
+        List<uint> indices = new();
+
+        //the index to use for the next box
+        uint indexToUse = 0;
+
+        for (int i = 0; i < text.Length; i++) {
+            char ch = text[i];
+            int layer = CHARS.IndexOf(ch);
+            float coveredSpace = i * widthOfOne;
+            float spaceThisPass = widthOfOne;
+            float cursorOffset = 0f;
+
+            if (i == cursor)
+                cursorOffset = -0.5f * widthOfOne;
+            if (i > cursor && cursor > 0)
+                cursorOffset = -1f * widthOfOne;
+
+            vertices.AddRange(new UIVertex[4] {
+                new() {
+                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(coveredSpace + cursorOffset, 0),
+                    Percent = PercentageAnchorOffset,
+                    TexCoord = new(0, 0, layer)},
+                new() {
+                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass + coveredSpace + cursorOffset, 0),
+                    Percent = PercentageAnchorOffset,
+                    TexCoord = new(1, 0, layer)},
+                new() {
+                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(coveredSpace + cursorOffset, Dimension.Y),
+                    Percent = PercentageAnchorOffset,
+                    TexCoord = new(0, 1, layer)},
+                new() {
+                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass + coveredSpace + cursorOffset, Dimension.Y),
+                    Percent = PercentageAnchorOffset,
+                    TexCoord = new(1, 1, layer)}});
+
+            indices.AddRange(new uint[6] {
+                indexToUse + 0, indexToUse + 1, indexToUse + 3,
+                indexToUse + 0, indexToUse + 2, indexToUse + 3
+            });
+            indexToUse += 4;
+        }
+
+        Vertices?.Fill(vertices.ToArray());
+        Indices?.Fill(indices.ToArray());
     }
 
     /// <summary>
@@ -120,12 +195,23 @@ public class TextRenderer : BoxRenderer {
     /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to texture unit
     /// </summary>
     public override void Render() {
-        GL.ActiveTexture(TextureUnit.Texture0);
         DebugFontStack.Bind();
+        Program.Active!.SetUniform("useStack", true);
+
+        Vertices?.Bind();
+        UIVertex.UseVAO();
+        Indices?.Bind();
         GlLogger.WriteGLError();
-        base.Render();
+
+        GL.DrawElements(PrimitiveType.Triangles, Indices!.Length, DrawElementsType.UnsignedInt, 0);
+        GlLogger.WriteGLError();
     }
 
+
+    public override void Dispose() {
+        Vertices?.Dispose();
+        Indices?.Dispose();
+    }
 
     public static void Delete() {
         DebugFontStack.Dispose();

@@ -20,11 +20,11 @@ public static class BlockRenderer {
     /// It can be bound and every block can find its appropriate textures if the layer specified in <see cref="BlockInfo"/> is used as the texture coordiante's
     /// z component.
     /// </summary>
-    public static Texture TextureStack { get; set; }
+    public static TextureStack TextureStack { get; set; }
     #pragma warning restore CS8618
 
     public static void MakeTextureStack(string filename) {
-        TextureStack = new(TextureTarget.Texture2DArray);
+        TextureStack = new();
 
 
         using JsonDocument doc = JsonDocument.Parse(
