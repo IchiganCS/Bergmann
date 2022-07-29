@@ -1,5 +1,4 @@
 ﻿using Bergmann.Client.Graphics.OpenGL;
-using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;

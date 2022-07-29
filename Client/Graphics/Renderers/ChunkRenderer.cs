@@ -119,7 +119,7 @@ public class ChunkRenderer : IDisposable, IRenderer {
     public void Render() {
         if (Renderable) {
             VertexBuffer!.Bind();
-            Vertex.UseVAO();
+            Vertex.BindVAO();
             IndexBuffer!.Bind();
             GlLogger.WriteGLError();
 

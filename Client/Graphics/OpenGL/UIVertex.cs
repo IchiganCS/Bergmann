@@ -41,7 +41,7 @@ public struct UIVertex {
     /// <summary>
     /// Binds the VAO specific to this class using the currently bound array buffer
     /// </summary>
-    public static void UseVAO() {
+    public static void BindVAO() {
         if (Handle == 0)
             InitVAO();
 

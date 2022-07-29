@@ -200,7 +200,7 @@ public class TextRenderer : UIRenderer {
         Program.Active!.SetUniform("useStack", true);
 
         Vertices?.Bind();
-        UIVertex.UseVAO();
+        UIVertex.BindVAO();
         Indices?.Bind();
         GlLogger.WriteGLError();
 

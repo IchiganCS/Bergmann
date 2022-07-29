@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared;
-using OpenTK.Graphics.OpenGL;
 using Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -14,6 +13,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// It could also be added to Block.cs but let's keep shared clean of any graphical issues.
 /// </summary>
 public static class BlockRenderer {
+
     #pragma warning disable CS8618
     /// <summary>
     /// The texture stack is a 2d array of textures, compiled out of a supplied json file in <see cref="MakeTextureStack"/>.
@@ -32,12 +32,12 @@ public static class BlockRenderer {
 
         JsonSerializerOptions options = new() {
             Converters = {
-                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-                }
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            }
         };
 
-        JsonElement arrayNode = doc.RootElement.GetProperty("Textures");
 
+        JsonElement arrayNode = doc.RootElement.GetProperty("Textures");
 
 
         int size = doc.RootElement.GetProperty("Size").GetInt32();
@@ -49,8 +49,8 @@ public static class BlockRenderer {
                 using Image<Rgba32> tex = texture.CloneAs<Rgba32>();
                 TextureStack.Write(tex, x.GetProperty("Layer").GetInt32());
                 GlLogger.WriteGLError();
-            } catch (Exception) {
-                Logger.Warn($"Couldn't load texture from json file {filename} with {x.ToString()}");
+            } catch (Exception e) {
+                Logger.Warn($"Couldn't load texture from json file {filename} with {x}. \nException: {e}");
             }
         }
     }

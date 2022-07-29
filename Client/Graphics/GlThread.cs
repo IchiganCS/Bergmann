@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using Bergmann.Shared;
 
 namespace Bergmann.Client.Graphics;
 

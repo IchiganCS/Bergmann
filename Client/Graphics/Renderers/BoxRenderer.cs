@@ -72,7 +72,7 @@ public class BoxRenderer : UIRenderer {
     /// </summary>
     public override void Render() {
         Vertices.Bind();
-        UIVertex.UseVAO();
+        UIVertex.BindVAO();
         Indices.Bind();
         Program.Active?.SetUniform("useStack", false);
         GlLogger.WriteGLError();

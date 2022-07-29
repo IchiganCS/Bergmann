@@ -32,8 +32,8 @@ public abstract class UIRenderer : IRenderer {
     /// <param name="point">The point in the geometry. For UI, the z component is ignored</param>
     /// <param name="size">This value is the currently active window size and only required for UI rendering.</param>
     public bool PointInShape(Vector2 point, Vector2 size) { 
-        Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
-        Vector2 pctOffset = new(size.X * PercentageAnchorOffset.X, size.Y * PercentageAnchorOffset.Y);
+        Vector2 anchorOffset = -RelativeAnchor * Dimension;
+        Vector2 pctOffset = size * PercentageAnchorOffset;
 
         Vector2 startPoint = anchorOffset + AbsoluteAnchorOffset + pctOffset;
 
