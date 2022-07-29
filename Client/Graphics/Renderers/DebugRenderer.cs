@@ -42,6 +42,7 @@ public class DebugRenderer : UIRenderer {
             PercentageAnchorOffset = (0, 1),
             Dimension = (500, 70)
         });
+        Diagrams[0].ApplyLayout();
 
         UpdateEmpty();
     }
@@ -70,8 +71,8 @@ public class DebugRenderer : UIRenderer {
     public override void Render() {
         foreach (IRenderer ren in Texts)
             ren.Render();
-        //foreach (IRenderer ren in Diagrams)
-            //ren.Render();
+        foreach (IRenderer ren in Diagrams)
+            ren.Render();
     }
 
 
