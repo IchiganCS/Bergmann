@@ -62,7 +62,7 @@ public class DebugRenderer : UIRenderer {
         Texts[(int)Identifiers.Position].SetText($"Pos:    ({position.X:0.00}, {position.Y:0.00}, {position.Z:0.00})");
         Texts[(int)Identifiers.FPS].SetText($"Fps:    {fps:0.00}");
         Texts[(int)Identifiers.Chunks].SetText($"Chunks: {chunksLoaded} loaded");
-        Diagrams[0].TickAndAddDataPoint(.5f);
+        Diagrams[0].TickAndAddDataPoint(fps / 80f);
     }
 
     /// <summary>

@@ -11,7 +11,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// See <see cref="BoxRenderer"/> for additional details of positioning this box.
 /// </summary>
 public class DiagramRenderer : BoxRenderer {
-    public DiagramRenderer(int tickInterval = 500, int ticksToShow = 50) {
+    public DiagramRenderer(int tickInterval = 500, int ticksToShow = 300) {
         TickInterval = tickInterval;
         TicksToShow = ticksToShow;
         //TickTimer = new(x => Tick(), null, TickInterval, TickInterval);
@@ -31,7 +31,7 @@ public class DiagramRenderer : BoxRenderer {
     /// <summary>
     /// How many ticks shall be displayed?
     /// </summary>
-    public int TicksToShow { get; set; } = 100;
+    public int TicksToShow { get; set; }
     private readonly Timer TickTimer;
 
     private readonly Texture2D tex;
@@ -48,6 +48,7 @@ public class DiagramRenderer : BoxRenderer {
     public void SetDataPoints(IList<float> dataPoints) {
         DataPoints = dataPoints;
     }
+
     /// <summary>
     /// Adds a new data point.
     /// </summary>
@@ -58,7 +59,7 @@ public class DiagramRenderer : BoxRenderer {
 
 
     /// <summary>
-    /// Advances the 
+    /// Renders all boxes to the texture. This method only renders given 
     /// </summary>
     private void Tick() {
         float widthOfTick = Dimension.X / TicksToShow;
@@ -67,33 +68,22 @@ public class DiagramRenderer : BoxRenderer {
         Image<Rgba32> image = new((int)Dimension.X, (int)Dimension.Y, new Rgba32(0, 0, 0));
 
         //the diagram starts at the right and is rolled over with every tick
-        foreach (float value in DataPoints) {
+        foreach (float value in DataPoints.ToArray().Reverse()) {
             if (remainingSpace < 0)
                 break;
 
-            float valueToDraw = value < 0 ? 0 : (value > 1 ? 1 : value); //Better is Math.Clamp
-            image.Mutate(x => x.FillPolygon(Color.White,
-                new PointF(0, Dimension.Y - remainingSpace),
-                new PointF(valueToDraw * Dimension.X, Dimension.Y - remainingSpace),
-                new PointF(0, Dimension.Y - remainingSpace - widthOfTick),
-                new PointF(valueToDraw * Dimension.X, Dimension.Y - remainingSpace - widthOfTick)
-                ));
+            float valueToDraw = Math.Clamp(value, 0, 1);
 
-            // A working solution seems to be:
-            // Only OpenGL handles (0, 0) as bottom left, for most of image processing, (0, 0) refers to top(!) left.
-
-            // image.Mutate(x => x.Fill(Color.White,
-            //     new RectangleF(
-            //         new PointF(Dimension.X - remainingSpace, (1 - valueToDraw) * Dimension.Y),
-            //         new SizeF(widthOfTick, valueToDraw * Dimension.Y))
-            // ));
-
-            // it also seems nice to have a little bit of space between each bar.
-            // stated above: The diagram starts at the right. Currently, it starts left.
-            // ALTERNATIVELY: this fps display on the bottom right seems very interesting: https://i.ytimg.com/vi/Zza-iOlSlfQ/maxresdefault.jpg
+            image.Mutate(x => x.Fill(Color.White,
+                new RectangleF(
+                    new PointF(remainingSpace - widthOfTick, (1 - valueToDraw) * Dimension.Y),
+                    new SizeF(widthOfTick, valueToDraw * Dimension.Y))
+            ));
 
             remainingSpace -= widthOfTick;
         }
+        while (DataPoints.Count > 2 * TicksToShow)
+            DataPoints = DataPoints.TakeLast(TicksToShow).ToList();
 
         tex.Write(image);
     }
