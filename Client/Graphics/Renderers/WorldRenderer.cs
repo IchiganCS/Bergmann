@@ -49,7 +49,7 @@ public class WorldRenderer : IDisposable, IRenderer {
     private Timer? LoadTimer { get; set; }
     private Timer? DropTimer { get; set; }
     public int LoadDistance { get; set; } = 6;
-    public int DropDistance { get; set; } = 8;
+    public int DropDistance { get; set; } = 20;
     private IEnumerable<long> PreviousLoadedChunks { get; set; } = Array.Empty<long>();
 
 

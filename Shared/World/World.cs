@@ -154,7 +154,6 @@ public class World {
 
     public class Generator {
         public int Seed { get; private set; }
-        public Random Random { get; private set; }
 
         public SortedDictionary<int, Vector2> PerlinVectors { get; private set; }
 
@@ -162,7 +161,6 @@ public class World {
         public const int TERRAIN_LEVEL = 35;
 
         public Generator(int seed) {
-            Random = new Random(seed);
             Seed = seed;
             PerlinVectors = new();
         }
@@ -179,7 +177,7 @@ public class World {
             (Vector2, Vector2)[,] perlinVectors = new (Vector2, Vector2)[2, 2];
             for (int x = 0; x < 2; x++) {
                 for (int z = 0; z < 2; z++) {
-                    int seed = ((x * 16 + offset.X) << 16) + (z * 16 + offset.Z);
+                    int seed = (Seed + x * 16 + offset.X, Seed + z * 16 + offset.Z).GetHashCode();
                     Random rand = new(seed);
                     float angle = rand.NextSingle() * 2 * (float)Math.PI;
                     perlinVectors[x, z] = (((float)Math.Sin(angle), (float)Math.Cos(angle)), (x * 16, z * 16));

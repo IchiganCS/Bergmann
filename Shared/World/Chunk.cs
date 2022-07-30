@@ -65,14 +65,17 @@ public class Chunk {
     /// </summary>
     /// <param name="key">The key of the chunk</param>
     /// <returns>The base offset for the chunk in world space</returns>
-    public static Vector3i ComputeOffset(long key) {
+    public static unsafe Vector3i ComputeOffset(long key) {
         Vector3i result = new();
         ushort bitmask = ushort.MaxValue;
-        result.Z = (int)(key & bitmask);
+        result.Z = (ushort)(key & bitmask);
+        result.Z = *(short*)&result.Z;
         key >>= sizeof(ushort) * 8;
-        result.Y = (int)(key & bitmask);
+        result.Y = (ushort)(key & bitmask);
+        result.Y = *(short*)&result.Y;
         key >>= sizeof(ushort) * 8;
-        result.X = (int)(key & bitmask);
+        result.X = (ushort)(key & bitmask);
+        result.X = *(short*)&result.X;
         return result * 16;
     }
 
