@@ -44,6 +44,10 @@ public class Chunk {
     /// <param name="position">Any block position; the returned key is the key to the chunk which holds position</param>
     /// <returns>The key to the chunk</returns>
     public static unsafe long ComputeKey(Vector3i position) {
+        //the key is a long, separated into four shorts.
+        //the first short, highest value, is unused.
+        //the second highest short stores x, the third highest y
+        //and the lowermost short stores z. Span<short> seems to be too slow.
         var (x, y, z) = position / 16;
         if (x * 16 > position.X)
             x++;
@@ -68,14 +72,15 @@ public class Chunk {
     public static unsafe Vector3i ComputeOffset(long key) {
         Vector3i result = new();
         ushort bitmask = ushort.MaxValue;
-        result.Z = (ushort)(key & bitmask);
-        result.Z = *(short*)&result.Z;
+        ushort temp;
+        temp = (ushort)(key & bitmask);
+        result.Z = *(short*)&temp;
         key >>= sizeof(ushort) * 8;
-        result.Y = (ushort)(key & bitmask);
-        result.Y = *(short*)&result.Y;
+        temp = (ushort)(key & bitmask);
+        result.Y = *(short*)&temp;
         key >>= sizeof(ushort) * 8;
-        result.X = (ushort)(key & bitmask);
-        result.X = *(short*)&result.X;
+        temp = (ushort)(key & bitmask);
+        result.X = *(short*)&temp;
         return result * 16;
     }
 
