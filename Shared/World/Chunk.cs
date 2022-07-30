@@ -50,17 +50,22 @@ public class Chunk {
         //and the lowermost short stores z. Span<short> seems to be too slow.
         var (x, y, z) = position / 16;
         if (x * 16 > position.X)
-            x++;
+            x--;
         if (y * 16 > position.Y)
-            y++;
+            y--;
         if (z * 16 > position.Z)
-            z++;
+            z--;
         long res = 0;
-        res |= *(ushort*)&x;
+        short temp;
+
+        temp = (short)x;
+        res |= *(ushort*)&temp;
         res <<= sizeof(ushort) * 8;
-        res |= *(ushort*)&y;
+        temp = (short)y;
+        res |= *(ushort*)&temp;
         res <<= sizeof(ushort) * 8;
-        res |= *(ushort*)&z;
+        temp = (short)z;
+        res |= *(ushort*)&temp;
         return res;
     }
 
@@ -73,12 +78,15 @@ public class Chunk {
         Vector3i result = new();
         ushort bitmask = ushort.MaxValue;
         ushort temp;
+
         temp = (ushort)(key & bitmask);
         result.Z = *(short*)&temp;
         key >>= sizeof(ushort) * 8;
+
         temp = (ushort)(key & bitmask);
         result.Y = *(short*)&temp;
         key >>= sizeof(ushort) * 8;
+
         temp = (ushort)(key & bitmask);
         result.X = *(short*)&temp;
         return result * 16;
