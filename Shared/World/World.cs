@@ -155,15 +155,28 @@ public class World {
 
     public class Generator {
         public int Seed { get; private set; }
+        private INoise<Vector2> ChunkNoise { get; set; }
+        private INoise<Vector2> MountainNoise { get; set; }
 
-        public SortedDictionary<int, Vector2> PerlinVectors { get; private set; }
 
         public const int LOW_BOUND = 0;
         public const int TERRAIN_LEVEL = 35;
 
         public Generator(int seed) {
             Seed = seed;
-            PerlinVectors = new();
+
+            ChunkNoise = new Perlin2D(pos => {
+                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
+                Random rand = new(seed);
+                float angle = rand.NextSingle() * 2 * (float)Math.PI;
+                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
+            }, 16f);
+            MountainNoise = new Perlin2D(pos => {
+                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
+                Random rand = new(seed);
+                float angle = rand.NextSingle() * 2 * (float)Math.PI + 0.1f;
+                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
+            }, 16f * 10);
         }
 
 
@@ -174,16 +187,10 @@ public class World {
             Vector3i offset = Chunk.ComputeOffset(key);
 
 
-            INoise<Vector2> heightNoise = new Perlin2D(pos => {
-                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
-                Random rand = new(seed);
-                float angle = rand.NextSingle() * 2 * (float)Math.PI;
-                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
-            }, 16f);
 
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    float maxHeight = TERRAIN_LEVEL + heightNoise.Sample(new Vector2(x, z) + offset.Xz) * 8;
+                    float maxHeight = TERRAIN_LEVEL + ChunkNoise.Sample(new Vector2(x, z) + offset.Xz) * 4 + MountainNoise.Sample(new Vector2(x, z) + offset.Xz) * 50;
 
                     for (int y = 0; y < 16; y++) {
                         result[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;

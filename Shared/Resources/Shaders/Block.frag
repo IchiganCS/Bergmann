@@ -10,7 +10,7 @@ out vec4 fragColor;
 
 void main() 
 {
-    float d = clamp(length(position) / 16.0, 0, 0.7);
+    float d = clamp(length(position) / 16.0, 0, 0.55);
     vec4 texColor = texture(stack, texCoord);
     fragColor = texColor * (1 - d);
     fragColor.a = texColor.a; //don't reduce alpha value, otherwise transparency could occur

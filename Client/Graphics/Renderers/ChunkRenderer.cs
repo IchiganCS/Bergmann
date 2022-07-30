@@ -93,6 +93,12 @@ public class ChunkRenderer : IDisposable, IRenderer {
             }
         }
 
+        if (currentIndex == 0) {
+            //only air
+            _Lock.Release();
+            return;
+        }
+
         //Write the buffers on the gl thread. Only then release the lock (hence only one update per frame is possible for now)
         GlThread.Invoke(() => {
             VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
