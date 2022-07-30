@@ -14,18 +14,24 @@ public static class ResourceManager {
             if (_Root is not null)
                 return _Root;
 
-            //_Root = Environment.GetEnvironmentVariable("ResourceDirectory") ?? Environment.CurrentDirectory;
-            _Root = Path.Combine(Environment.CurrentDirectory, "Shared/Resources/");
-            if (!Directory.Exists(_Root)) {
-                _Root = Path.Combine("../../../../Shared/Resources/", _Root);
-                if (!Directory.Exists(_Root)) {
-                    Logger.Warn("Couldn't find resources directory");
-                    return "";
-                }
+            //_Root = Environment.GetEnvironmentVariable("ResourceDirectory") ?? Environment.CurrentDirectory
+            if (Directory.Exists(_Root = Path.Combine(Environment.CurrentDirectory, "Shared/Resources/"))) {
+                return _Root;
             }
-            return _Root;
+            if (Directory.Exists(_Root = Path.Combine("../../../../Shared/Resources/", _Root))) {
+                return _Root;
+            }
+            if (Directory.Exists(_Root = Path.Combine(Environment.CurrentDirectory, "Resources/"))) {
+                return _Root;
+            }
+            else {
+                Logger.Warn("Couldn't find resources directory");
+                _Root = ""; //means working directory
+                return _Root;
+            }
         }
     }
+
 
     public static string FullPath(Type type, string name) {
         return Path.Combine(Root, type.ToString(), name);
