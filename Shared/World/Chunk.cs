@@ -43,13 +43,21 @@ public class Chunk {
     /// </summary>
     /// <param name="position">Any block position; the returned key is the key to the chunk which holds position</param>
     /// <returns>The key to the chunk</returns>
-    public static long ComputeKey(Vector3i position) {
-        Span<short> span = stackalloc short[4];
-        var (x, y, z) = (Vector3)position / 16f;
-        span[0] = (short)Math.Floor(x);
-        span[1] = (short)Math.Floor(y);
-        span[2] = (short)Math.Floor(z);
-        return MemoryMarshal.Cast<short, long>(span)[0];
+    public static unsafe long ComputeKey(Vector3i position) {
+        var (x, y, z) = position / 16;
+        if (x * 16 > position.X)
+            x++;
+        if (y * 16 > position.Y)
+            y++;
+        if (z * 16 > position.Z)
+            z++;
+        long res = 0;
+        res |= *(ushort*)&x;
+        res <<= sizeof(ushort) * 8;
+        res |= *(ushort*)&y;
+        res <<= sizeof(ushort) * 8;
+        res |= *(ushort*)&z;
+        return res;
     }
 
     /// <summary>
@@ -58,13 +66,13 @@ public class Chunk {
     /// <param name="key">The key of the chunk</param>
     /// <returns>The base offset for the chunk in world space</returns>
     public static Vector3i ComputeOffset(long key) {
-        Span<long> span = stackalloc long[1];
-        span[0] = key;
-        Span<short> shorts = MemoryMarshal.Cast<long, short>(span);
         Vector3i result = new();
-        result.X = shorts[0];
-        result.Y = shorts[1];
-        result.Z = shorts[2];
+        ushort bitmask = ushort.MaxValue;
+        result.Z = (int)(key & bitmask);
+        key >>= sizeof(ushort) * 8;
+        result.Y = (int)(key & bitmask);
+        key >>= sizeof(ushort) * 8;
+        result.X = (int)(key & bitmask);
         return result * 16;
     }
 
