@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Bergmann.Shared.Noise;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -173,53 +174,16 @@ public class World {
             Vector3i offset = Chunk.ComputeOffset(key);
 
 
-            //first perlin, second offset.
-            (Vector2, Vector2)[,] perlinVectors = new (Vector2, Vector2)[2, 2];
-            for (int x = 0; x < 2; x++) {
-                for (int z = 0; z < 2; z++) {
-                    int seed = (Seed + x * 16 + offset.X, Seed + z * 16 + offset.Z).GetHashCode();
-                    Random rand = new(seed);
-                    float angle = rand.NextSingle() * 2 * (float)Math.PI;
-                    perlinVectors[x, z] = (((float)Math.Sin(angle), (float)Math.Cos(angle)), (x * 16, z * 16));
-                }
-            }
-
-            //calculates the perlin value at the given point using the previously calculated perlin vectors.
-            float ValueAt(Vector2 point) {
-                float SmootherStep(float val) {
-                    //https://en.wikipedia.org/wiki/Smoothstep#Variations
-                    if (val < 0)
-                        return 0;
-                    if (val > 1)
-                        return 1;
-
-                    return val * val * val * (val * (val * 6 - 15) + 10);
-                }
-
-                //this value is used to interpolate between the different dot products.
-                Vector2 quad = point / 16f;
-
-                float[] twoInterps = new float[2];
-                for (int i = 0; i < 2; i++) {
-                    Vector2 p1 = perlinVectors[i, 0].Item1;
-                    Vector2 p2 = perlinVectors[i, 1].Item1;
-
-                    Vector2 po1 = perlinVectors[i, 0].Item2;
-                    Vector2 po2 = perlinVectors[i, 1].Item2;
-
-                    float v1 = Vector2.Dot((point - po1) / 16f, p1);
-                    float v2 = Vector2.Dot((point - po2) / 16f, p2);
-
-                    twoInterps[i] = v1 + SmootherStep(quad.Y) * (v2 - v1);
-                }
-
-                return twoInterps[0] + SmootherStep(quad.X) * (twoInterps[1] - twoInterps[0]);
-            }
+            INoise<Vector2> heightNoise = new Perlin2D(pos => {
+                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
+                Random rand = new(seed);
+                float angle = rand.NextSingle() * 2 * (float)Math.PI;
+                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
+            }, 16f);
 
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    float maxHeight = TERRAIN_LEVEL + ValueAt((x, z)) * 8;
-
+                    float maxHeight = TERRAIN_LEVEL + heightNoise.Sample(new Vector2(x, z) + offset.Xz) * 8;
 
                     for (int y = 0; y < 16; y++) {
                         result[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;
