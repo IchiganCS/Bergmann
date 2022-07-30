@@ -170,24 +170,59 @@ public class World {
 
 
         public int[,,] GenerateBlocksForChunk(long key) {
+            // https://en.wikipedia.org/wiki/Perlin_noise
             int[,,] result = new int[16, 16, 16];
             Vector3i offset = Chunk.ComputeOffset(key);
 
-            Vector2[,] perlinVectors = new Vector2[2, 2];
+
+            //first perlin, second offset.
+            (Vector2, Vector2)[,] perlinVectors = new (Vector2, Vector2)[2, 2];
             for (int x = 0; x < 2; x++) {
                 for (int z = 0; z < 2; z++) {
                     int seed = ((x * 16 + offset.X) << 16) + (z * 16 + offset.Z);
                     Random rand = new(seed);
                     float angle = rand.NextSingle() * 2 * (float)Math.PI;
-                    perlinVectors[x, z] = new Vector2((float)Math.Sin(angle), (float)Math.Cos(angle));
+                    perlinVectors[x, z] = (((float)Math.Sin(angle), (float)Math.Cos(angle)), (x * 16, z * 16));
                 }
+            }
+
+            //calculates the perlin value at the given point using the previously calculated perlin vectors.
+            float ValueAt(Vector2 point) {
+                float SmootherStep(float val) {
+                    //https://en.wikipedia.org/wiki/Smoothstep#Variations
+                    if (val < 0)
+                        return 0;
+                    if (val > 1)
+                        return 1;
+
+                    return val * val * val * (val * (val * 6 - 15) + 10);
+                }
+
+                //this value is used to interpolate between the different dot products.
+                Vector2 quad = point / 16f;
+
+                float[] twoInterps = new float[2];
+                for (int i = 0; i < 2; i++) {
+                    Vector2 p1 = perlinVectors[i, 0].Item1;
+                    Vector2 p2 = perlinVectors[i, 1].Item1;
+
+                    Vector2 po1 = perlinVectors[i, 0].Item2;
+                    Vector2 po2 = perlinVectors[i, 1].Item2;
+
+                    float v1 = Vector2.Dot((point - po1) / 16f, p1);
+                    float v2 = Vector2.Dot((point - po2) / 16f, p2);
+
+                    twoInterps[i] = v1 + SmootherStep(quad.Y) * (v2 - v1);
+                }
+
+                return twoInterps[0] + SmootherStep(quad.X) * (twoInterps[1] - twoInterps[0]);
             }
 
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    Vector2 closestPerlinVec = perlinVectors[x < 8 ? 0 : 1, z < 8 ? 0 : 1];
-                    float value = Vector2.Dot((new Vector2(x, z) - new Vector2(x < 8 ? 0 : 16, z < 8 ? 0 : 16)), closestPerlinVec);
-                    int maxHeight = TERRAIN_LEVEL + (int)(value * 8);
+                    float maxHeight = TERRAIN_LEVEL + ValueAt((x, z)) * 8;
+
+
                     for (int y = 0; y < 16; y++) {
                         result[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;
                     }

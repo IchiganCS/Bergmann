@@ -77,7 +77,7 @@ public class WorldRenderer : IDisposable, IRenderer {
             lock (ChunkRenderers) {
                 foreach (ChunkRenderer chunkRenderer in ChunkRenderers.Values.ToArray()) {
                     if ((Chunk.ComputeOffset(chunkRenderer.ChunkKey) - getPosition()).LengthFast > DropDistance * 16) {
-                        chunkRenderer.Dispose();
+                        GlThread.Invoke(chunkRenderer.Dispose);
                         ChunkRenderers.Remove(chunkRenderer.ChunkKey);
                     }
                 }

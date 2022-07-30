@@ -102,6 +102,10 @@ public class Buffer<T> : IDisposable where T : struct {
     }
 
     public void Dispose() {
+        if (Handle <= 0) {
+            Logger.Warn("Tried to dispose already disposed buffer");
+            return;
+        }
         GL.DeleteBuffer(Handle);
         Handle = -1;
         Length = -1;
