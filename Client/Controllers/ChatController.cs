@@ -27,6 +27,7 @@ public class ChatController : ControllerBase {
 
     /// <summary>
     /// If the entered text is no command, but a normal text message, this action is executed with the input string as an argument.
+    /// This action is also called if the message is empty.
     /// </summary>
     public Action<string> NonCommandAction { get; set; }
 

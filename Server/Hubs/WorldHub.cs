@@ -8,15 +8,17 @@ namespace Bergmann.Server.Hubs;
 /// <summary>
 /// A synchronization place for the world the server holds. It may get a lot more functionality eventually 
 /// and currently operates exclusively on <see cref="Data.World"/>. Each method name has to be annotated with
-/// <see cref="HubMethodNameAttribute"/> and bound to the given entry in <see cref="Names"/>. See the already existing to methods.
+/// <see cref="HubMethodNameAttribute"/> and bound to the given entry in <see cref="Names"/>. 
+/// See the already existing examples.
 /// </summary>
 public class WorldHub : Hub {
 
 
     /// <summary>
-    /// Called from each callee - the server responds with an appropriate call to <see cref="Names.ReceiveChunk"/>.
+    /// Called from each callee - the server responds with an appropriate call to <see cref="Names.ReceiveChunk"/> if
+    /// deemed possible. If a key can't loaded and not generated, then no response will follow.
     /// </summary>
-    /// <param name="key">The key of the chunk to be loaded</param>
+    /// <param name="key">The key of the chunk to be loaded.</param>
     [HubMethodName(Names.RequestChunk)]
     public async void RequestChunk(long key) {
         bool loaded = Data.World.TryLoadChunk(key, out Chunk? chunk);

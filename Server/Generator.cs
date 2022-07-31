@@ -4,15 +4,43 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Server;
 
+
+/// <summary>
+/// A class that can generate any chunk in a world.
+/// It can of course be inherited and made more complex.
+/// </summary>
 public class Generator {
+
+    /// <summary>
+    /// The seed of the world so that any world generation with the same seed yields the same result.
+    /// </summary>
+    /// <value></value>
     public int Seed { get; private set; }
+
+    /// <summary>
+    /// A noise to make a chunk a little more noisy.
+    /// </summary>
     private INoise<Vector2> ChunkNoise { get; set; }
+
+    /// <summary>
+    /// A big noise: Very heavy and slow, a very noticable influence. It can model mountains.
+    /// </summary>
     private INoise<Vector2> MountainNoise { get; set; }
 
-
+    /// <summary>
+    /// The lowest bound. If a block is below this value, it is not considered.
+    /// </summary>
     public const int LOW_BOUND = 0;
+
+    /// <summary>
+    /// The average terrain level.
+    /// </summary>
     public const int TERRAIN_LEVEL = 35;
 
+    /// <summary>
+    /// Makes a new generator with a given seed.
+    /// </summary>
+    /// <param name="seed">The seed of the world.</param>
     public Generator(int seed) {
         Seed = seed;
 
@@ -31,7 +59,11 @@ public class Generator {
     }
 
 
-
+    /// <summary>
+    /// Generates a new chunk.
+    /// </summary>
+    /// <param name="key">The key of the chunk to be generated.</param>
+    /// <returns>The finished chunk. null if there was any error or invalid request.</returns>
     public Chunk? GenerateChunk(long key) {
         Chunk result = new();
 
@@ -39,14 +71,17 @@ public class Generator {
         int[,,] blocks = new int[16, 16, 16];
         Vector3i offset = Chunk.ComputeOffset(key);
         
-        if (offset.Y < 0)
+        if (offset.Y < LOW_BOUND)
             return null;
 
 
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                float maxHeight = TERRAIN_LEVEL + ChunkNoise.Sample(new Vector2(x, z) + offset.Xz) * 4 + MountainNoise.Sample(new Vector2(x, z) + offset.Xz) * 50;
+                Vector2 samplePos = new Vector2(x, z) + offset.Xz;
+                float maxHeight = TERRAIN_LEVEL 
+                    + ChunkNoise.Sample(samplePos) * 4 
+                    + MountainNoise.Sample(samplePos) * 50;
 
                 for (int y = 0; y < 16; y++) {
                     blocks[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;

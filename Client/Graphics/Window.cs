@@ -104,7 +104,12 @@ public class Window : GameWindow {
     }
 
     private void MakeControllers() {
-        ChatController cont = new(x => Hubs.Chat?.SendAsync(Names.SendMessage, "ich", x));
+        ChatController cont = new(x => {
+            if (string.IsNullOrWhiteSpace(x))
+                return;
+                
+            Hubs.Chat?.SendAsync(Names.SendMessage, "ich", x);
+        });
         ChatRenderer = new ChatRenderer(cont);
 
         cont.Commands.Add(new() {
