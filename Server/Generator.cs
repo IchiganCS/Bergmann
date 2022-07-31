@@ -84,7 +84,8 @@ public class Generator {
                     + MountainNoise.Sample(samplePos) * 50;
 
                 for (int y = 0; y < 16; y++) {
-                    blocks[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;
+                    int currentY = offset.Y + y;
+                    blocks[x, y, z] = maxHeight > currentY ? (currentY > TERRAIN_LEVEL ? 1 : 2) : 0;
                 }
             }
         }

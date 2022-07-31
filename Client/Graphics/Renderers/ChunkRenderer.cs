@@ -82,25 +82,30 @@ public class ChunkRenderer : IDisposable, IRenderer {
                     Vector3[] ps = Block.Positions[(int)face];
                     int layer = info.GetLayerFromFace(face);
                     Vector3 globalPosition = blockPosition + chunk.Offset;
+                    Vector3 normal = Block.FaceToVector[(int)face];
 
                     _VertexArray[currentVertex + 0] = new() { 
                         Position = ps[0] + globalPosition, 
-                        TexCoord = new(1, 0, layer) 
+                        TexCoord = new(1, 0, layer),
+                        Normal = normal,
                     };
 
                     _VertexArray[currentVertex + 1] = new() { 
                         Position = ps[1] + globalPosition, 
-                        TexCoord = new(1, 1, layer) 
+                        TexCoord = new(1, 1, layer),
+                        Normal = normal, 
                     };
 
                     _VertexArray[currentVertex + 2] = new() { 
                         Position = ps[2] + globalPosition, 
-                        TexCoord = new(0, 1, layer) 
+                        TexCoord = new(0, 1, layer),
+                        Normal = normal, 
                     };
 
                     _VertexArray[currentVertex + 3] = new() { 
                         Position = ps[3] + globalPosition, 
-                        TexCoord = new(0, 0, layer) 
+                        TexCoord = new(0, 0, layer),
+                        Normal = normal, 
                     };
 
                     _IndexArray[currentIndex++] = (uint)currentVertex + 0;
