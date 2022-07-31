@@ -16,7 +16,12 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// The key is the <see cref="Chunk.Key"/> which is unique and fast. Make sure that when items are removed
     /// or overwritten, they are properly disposed of.
     /// </summary>
-    internal SortedDictionary<long, ChunkRenderer> ChunkRenderers { get; private set; }
+    private SortedDictionary<long, ChunkRenderer> ChunkRenderers { get; set; }
+
+    /// <summary>
+    /// The count of loaded chunks.
+    /// </summary>
+    public int ChunkCount => ChunkRenderers.Count;
 
 
     /// <summary>
@@ -34,7 +39,7 @@ public class WorldRenderer : IDisposable, IRenderer {
                         bool res = ChunkRenderers.TryGetValue(chunk.Key, out ChunkRenderer? ch);
                         
                         if (res)
-                            ch?.Update(chunk);
+                            Task.Run(() => ch?.Update(chunk));
                     });
                 }
                 else {
@@ -46,11 +51,36 @@ public class WorldRenderer : IDisposable, IRenderer {
         });
     }
 
+
+    /// <summary>
+    /// The timer responsible to load chunks. It checks against a given position whether any chunks are in <see cref="LoadDistance"/>
+    /// and are not loaded. If that is the case, those chunks are requested from the server.
+    /// </summary>
     private Timer? LoadTimer { get; set; }
+
+    /// <summary>
+    /// The timer responsible to drop chunks. If a chunk distance exceeds <see cref="DropDistance"/> but is still loaded,
+    /// it is dropped.
+    /// </summary>
     private Timer? DropTimer { get; set; }
+
+    /// <summary>
+    /// The distance of chunks which shall be ensured to be loaded. Can be set dynamically.
+    /// </summary>
     public int LoadDistance { get; set; } = 6;
+
+    /// <summary>
+    /// The maximal distance at which chunks should be kept in memory. If they exceed this distance, they are dropped.
+    /// </summary>
     public int DropDistance { get; set; } = 20;
-    private IEnumerable<long> PreviousLoadedChunks { get; set; } = Array.Empty<long>();
+
+
+    /// <summary>
+    /// A helper variable: It caches all chunks which were requested in the previous frame to stop flooding the server
+    /// and processing the same chunk multiple times.
+    /// </summary>
+    /// <typeparam name="long">The keys of the chunks</typeparam>
+    private IEnumerable<long> PreviouslyRequestedChunks { get; set; } = Array.Empty<long>();
 
 
     /// <summary>
@@ -64,9 +94,10 @@ public class WorldRenderer : IDisposable, IRenderer {
 
         LoadTimer = new(x => {
             IEnumerable<long> chunks = World.GetNearChunks(getPosition(), LoadDistance);
-            IEnumerable<long> diff = chunks.Where(x => !PreviousLoadedChunks.Contains(x)).ToArray();
-            PreviousLoadedChunks = chunks;
+            IEnumerable<long> diff = chunks.Where(x => !PreviouslyRequestedChunks.Contains(x)).ToArray();
+            PreviouslyRequestedChunks = chunks;
 
+            //only request those chunks which weren't requested in the last frame
             foreach (long key in diff) {
                 if (!ChunkRenderers.ContainsKey(key))
                     Hubs.World?.SendAsync(Names.RequestChunk, key);
@@ -74,11 +105,17 @@ public class WorldRenderer : IDisposable, IRenderer {
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
-            lock (ChunkRenderers) {
-                foreach (ChunkRenderer chunkRenderer in ChunkRenderers.Values.ToArray()) {
-                    if ((Chunk.ComputeOffset(chunkRenderer.ChunkKey) - getPosition()).LengthFast > DropDistance * 16) {
-                        GlThread.Invoke(chunkRenderer.Dispose);
+            ChunkRenderer[] renderers;
+
+            lock (ChunkRenderers)
+                renderers = ChunkRenderers.Values.ToArray();
+
+            foreach (ChunkRenderer chunkRenderer in renderers) {
+                if ((Chunk.ComputeOffset(chunkRenderer.ChunkKey) - getPosition()).LengthFast > DropDistance * 16) {
+
+                    lock (ChunkRenderers) {
                         ChunkRenderers.Remove(chunkRenderer.ChunkKey);
+                        GlThread.Invoke(chunkRenderer.Dispose);
                     }
                 }
             }
@@ -91,20 +128,21 @@ public class WorldRenderer : IDisposable, IRenderer {
     /// </summary>
     public void Render() {
         lock (ChunkRenderers) {
-            foreach (ChunkRenderer cr in ChunkRenderers.Values.ToArray())
-                cr?.Render();
+            foreach (ChunkRenderer cr in ChunkRenderers.Values) {
+                cr.Render();
+            }
         }
     }
 
     /// <summary>
-    /// Disposes of all held chunk renderers and clears all renderers.
+    /// Disposes of all held chunk renderers and clears the list.
     /// </summary>
     public void Dispose() {
         lock (ChunkRenderers) {
             foreach (ChunkRenderer cr in ChunkRenderers.Values)
                 cr.Dispose();
 
-            PreviousLoadedChunks = Array.Empty<long>();
+            PreviouslyRequestedChunks = Array.Empty<long>();
             ChunkRenderers.Clear();
         }
     }

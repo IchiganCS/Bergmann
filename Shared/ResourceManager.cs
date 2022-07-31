@@ -1,6 +1,4 @@
-using Bergmann.Shared;
-
-namespace Shared;
+namespace Bergmann.Shared;
 
 public static class ResourceManager {
 

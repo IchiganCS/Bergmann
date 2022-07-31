@@ -1,8 +1,8 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using Shared;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;

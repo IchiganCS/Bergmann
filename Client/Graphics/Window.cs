@@ -2,6 +2,7 @@ using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.World;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -9,7 +10,6 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -244,7 +244,7 @@ public class Window : GameWindow {
         CrossRenderer.Render();
 
         if (Controller.DebugViewEnabled) {
-            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, WorldRenderer.ChunkRenderers.Count);
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, WorldRenderer.ChunkCount);
             DebugRenderer.Render();
         }
 
