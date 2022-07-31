@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using Bergmann.Client.Graphics;
 using Bergmann.Shared;
+using Bergmann.Shared.Networking;
 using OpenTK.Windowing.Desktop;
 
 namespace Bergmann.Client;
@@ -9,9 +9,8 @@ public class Client {
     public static void Main(string[] args) {
         Logger.Info("Starting client...");
 
-        string link = "http://localhost:5000";
+        string link = $"http://localhost:{Names.DefaultPort}";
         Hubs.InitializeWithLink(link);
-        Logger.Info($"Trying connection with {link}");
 
 
         GameWindowSettings gwSet = GameWindowSettings.Default;

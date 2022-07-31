@@ -18,9 +18,10 @@ public static class Hubs {
     public static string? Link { get; private set; }
 
     /// <summary>
-    /// Builds all hubs in the collection on the specified link
+    /// Builds all hubs in the collection on the specified link.
     /// </summary>
-    /// <param name="link">Without any trailing slashes, the full protocol, domain and port, e.g. http://localhost:5000</param>
+    /// <param name="link">Without any trailing slashes, the full protocol, domain and port,
+    /// e.g. http://localhost:23156</param>
     public static void InitializeWithLink(string link) {
         Link = link;
         Logger.Info("Connecting to " + link);

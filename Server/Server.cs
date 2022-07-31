@@ -24,6 +24,8 @@ public class Server {
                 new[] { "application/octet-stream" });
 
         });
+        
+        builder.WebHost.UseUrls($"http://*:{Names.DefaultPort}");
 
         WebApplication app = builder.Build();
 
