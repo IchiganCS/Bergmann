@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-using Bergmann.Shared.Noise;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Shared.World;
@@ -9,29 +7,37 @@ public class World {
     /// <summary>
     /// Uses the Key for each Chunk. Look up <see cref="Chunk.Key"/>. Stores each chunk currently loaded.
     /// </summary>
-    public Dictionary<long, Chunk> Chunks { get; set; }
+    public Dictionary<long, Chunk> Chunks { get; private set; }
 
-
-    public Generator WorldGen { get; private set; }
-
+    /// <summary>
+    /// Constructs a new world. Initializes completely new instance.
+    /// </summary>
     public World() {
         Chunks = new();
-        WorldGen = new((int)Random.Shared.NextInt64());
     }
 
-    public void LoadChunk(long key) {
-        if (Chunks.ContainsKey(key))
-            return;
+    /// <summary>
+    /// Tries to load a chunk which was already generated. It can't generate a new chunk.
+    /// </summary>
+    /// <param name="key">The key of the chunk to load.</param>
+    /// <param name="chunk">The chunk that was loaded.</param>
+    /// <returns>True if the chunk is now loaded. False otherwise.</returns>
+    public bool TryLoadChunk(long key, out Chunk? chunk) {
+        if (Chunks.ContainsKey(key)) {
+            chunk = Chunks[key];
+            return true;
+        }
 
-        Vector3i offset = Chunk.ComputeOffset(key);
-        if (offset.Y < 0)
-            return;
+        chunk = null;
+        return false;
+    }
 
-        Chunk newChunk = new() {
-            Key = key,
-            Blocks = WorldGen.GenerateBlocksForChunk(key),
-        };
-        Chunks.Add(key, newChunk);
+    /// <summary>
+    /// Adds/replaces a chunk. The key of the chunk is read to get where to set it.
+    /// </summary>
+    /// <param name="chunk">A fully initialized chunk.</param>
+    public void SetChunk(Chunk chunk) {
+        Chunks[chunk.Key] = chunk;
     }
 
     /// <summary>
@@ -69,16 +75,10 @@ public class World {
 
 
     /// <summary>
-    /// Gets the chunk for the given <see cref="Chunk.Key"/>.
+    /// Gets a block in the world at the given position.
     /// </summary>
-    /// <param name="key">The key as given by <see cref="Chunk.ComputeKey"/></param>
-    /// <returns>The chunk, null if the chunk is not loaded</returns>
-    public Chunk? GetChunk(long key) {
-        if (Chunks.ContainsKey(key))
-            return Chunks[key];
-        return null;
-    }
-
+    /// <param name="position">The position in world space.</param>
+    /// <returns>The block. 0 if the block is not found or loaded.</returns>
     public Block GetBlockAt(Vector3i position) {
         long key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
@@ -87,7 +87,12 @@ public class World {
         Chunk chunk = Chunks[key];
         return chunk.GetBlockWorld(position);
     }
-
+    
+    /// <summary>
+    /// Sets a block in the world. This action does nothing if the chunk where the position lies in is not loaded.
+    /// </summary>
+    /// <param name="position">The position in world space.</param>
+    /// <param name="block">The block to be set.</param>
     public void SetBlockAt(Vector3i position, Block block) {
         long key = Chunk.ComputeKey(position);
         if (!Chunks.ContainsKey(key))
@@ -152,54 +157,4 @@ public class World {
         return false;
     }
 
-
-    public class Generator {
-        public int Seed { get; private set; }
-        private INoise<Vector2> ChunkNoise { get; set; }
-        private INoise<Vector2> MountainNoise { get; set; }
-
-
-        public const int LOW_BOUND = 0;
-        public const int TERRAIN_LEVEL = 35;
-
-        public Generator(int seed) {
-            Seed = seed;
-
-            ChunkNoise = new Perlin2D(pos => {
-                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
-                Random rand = new(seed);
-                float angle = rand.NextSingle() * 2 * (float)Math.PI;
-                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
-            }, 16f);
-            MountainNoise = new Perlin2D(pos => {
-                int seed = (Seed + (int)pos.X << 16, Seed + (int)pos.Y << 16).GetHashCode();
-                Random rand = new(seed);
-                float angle = rand.NextSingle() * 2 * (float)Math.PI + 0.1f;
-                return ((float)Math.Sin(angle), (float)Math.Cos(angle));
-            }, 16f * 10);
-        }
-
-
-
-        public int[,,] GenerateBlocksForChunk(long key) {
-            // https://en.wikipedia.org/wiki/Perlin_noise
-            int[,,] result = new int[16, 16, 16];
-            Vector3i offset = Chunk.ComputeOffset(key);
-
-
-
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    float maxHeight = TERRAIN_LEVEL + ChunkNoise.Sample(new Vector2(x, z) + offset.Xz) * 4 + MountainNoise.Sample(new Vector2(x, z) + offset.Xz) * 50;
-
-                    for (int y = 0; y < 16; y++) {
-                        result[x, y, z] = maxHeight > offset.Y + y ? 1 : 0;
-                    }
-                }
-            }
-
-
-            return result;
-        }
-    }
 }

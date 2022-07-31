@@ -7,4 +7,5 @@ namespace Bergmann.Server;
 /// </summary>
 public static class Data {
     public static World World { get; set; } = new();
+    public static Generator WorldGen { get; set; } = new(Random.Shared.Next());
 }

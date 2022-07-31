@@ -19,10 +19,23 @@ public class WorldHub : Hub {
     /// <param name="key">The key of the chunk to be loaded</param>
     [HubMethodName(Names.RequestChunk)]
     public async void RequestChunk(long key) {
-        Data.World.LoadChunk(key);
-        if (Data.World.Chunks.ContainsKey(key) && Data.World.Chunks[key].Blocks is not null) {
-            await Clients.Caller.SendAsync(Names.ReceiveChunk, Data.World.Chunks[key]);
+        bool loaded = Data.World.TryLoadChunk(key, out Chunk? chunk);
+
+        if (chunk is null) {
+            //generate the chunk
+            chunk = Data.WorldGen.GenerateChunk(key);
+
+
+            if (chunk is null) {
+                //the chunk could not be generated.
+                return;
+            }
+
+            Data.World.SetChunk(chunk);
         }
+
+        
+        await Clients.Caller.SendAsync(Names.ReceiveChunk, chunk);
     }
 
 

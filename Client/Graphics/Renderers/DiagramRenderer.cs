@@ -9,12 +9,16 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// <summary>
 /// Renders a small rolling diagram without axes on top of a box.
 /// See <see cref="BoxRenderer"/> for additional details of positioning this box.
+/// It renders points in [0, 1] by vertical bars.
 /// </summary>
 public class DiagramRenderer : BoxRenderer {
-    public DiagramRenderer(int tickInterval = 500, int ticksToShow = 300) {
-        TickInterval = tickInterval;
+
+    /// <summary>
+    /// A new diagram renderer.
+    /// </summary>
+    /// <param name="ticksToShow">How many ticks should be display at most.</param>
+    public DiagramRenderer(int ticksToShow = 300) {
         TicksToShow = ticksToShow;
-        //TickTimer = new(x => Tick(), null, TickInterval, TickInterval);
         tex = new();
     }
 
@@ -25,28 +29,22 @@ public class DiagramRenderer : BoxRenderer {
     public IList<float> DataPoints { get; private set; } = new List<float>();
 
     /// <summary>
-    /// When to forward the diagram automatically in milliseconds.
-    /// </summary>
-    public int TickInterval { get; private set; }
-    /// <summary>
     /// How many ticks shall be displayed?
     /// </summary>
     public int TicksToShow { get; set; }
-    private readonly Timer TickTimer;
-
-    private readonly Texture2D tex;
-
-    public void TickAndAddDataPoint(float value) {
-        DataPoints.Add(value);
-        Tick();
-    }
 
     /// <summary>
-    /// Sets all <see cref="DataPoints"/>.
+    /// The texture which stores the diagram.
     /// </summary>
-    /// <param name="dataPoints">The new data points.</param>
-    public void SetDataPoints(IList<float> dataPoints) {
-        DataPoints = dataPoints;
+    private readonly Texture2D tex;
+
+    /// <summary>
+    /// Adds a new data point and instantly remakes the image.
+    /// </summary>
+    /// <param name="value">The value to be added.</param>
+    public void TickAndAddDataPoint(float value) {
+        AddDataPoint(value);
+        Tick();
     }
 
     /// <summary>
@@ -54,12 +52,13 @@ public class DiagramRenderer : BoxRenderer {
     /// </summary>
     /// <param name="value">The float (always between 0 and 1).</param>
     public void AddDataPoint(float value) {
-        DataPoints.Add(value);
+        DataPoints.Add(Math.Clamp(value, 0, 1));
     }
 
 
     /// <summary>
-    /// Renders all boxes to the texture. This method only renders given 
+    /// Renders all boxes to the texture. This method only renders given data points and also
+    /// cuts a few data points if they exceed the necessary amount.
     /// </summary>
     private void Tick() {
         float widthOfTick = Dimension.X / TicksToShow;
@@ -72,12 +71,10 @@ public class DiagramRenderer : BoxRenderer {
             if (remainingSpace < 0)
                 break;
 
-            float valueToDraw = Math.Clamp(value, 0, 1);
-
             image.Mutate(x => x.Fill(Color.White,
                 new RectangleF(
-                    new PointF(remainingSpace - widthOfTick, (1 - valueToDraw) * Dimension.Y),
-                    new SizeF(widthOfTick, valueToDraw * Dimension.Y))
+                    new PointF(remainingSpace - widthOfTick, (1 - value) * Dimension.Y),
+                    new SizeF(widthOfTick, value * Dimension.Y))
             ));
 
             remainingSpace -= widthOfTick;

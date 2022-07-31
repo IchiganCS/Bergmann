@@ -4,8 +4,9 @@ using OpenTK.Mathematics;
 namespace Bergmann.Shared.World;
 
 /// <summary>
-/// This Chunk holds a three dimensional integer array (<see cref="int"/> = <see cref="Block"/>) of height, width and depth of <see cref="Chunk.CHUNK_SIZE"/>.
-/// Chunks exist because handling single blocks is hard to do and inefficient in some ways (rendering for example). However, since this disables single access to blocks,
+/// This Chunk holds a three dimensional integer array (<see cref="int"/> = <see cref="Block"/>) of height, width 
+/// and depth of <see cref="Chunk.CHUNK_SIZE"/>. Chunks exist because handling single blocks is hard to do and inefficient 
+/// in some ways (rendering for example). However, since this disables single access to blocks,
 /// chunks can only be updated overall. They can of course try to retain the advantage of updating only single blocks. 
 /// Effectively, chunks are a constant manager for a number of blocks. 
 /// </summary>
@@ -22,6 +23,12 @@ public class Chunk {
     public int[,,] Blocks { get; set; }
 
     /// <summary>
+    /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
+    /// The key is calculated using <see cref="ComputeKey"/>. The key is a tightly packed array of the offsets in world chunk space as shorts
+    /// </summary>
+    public long Key { get; set; }
+
+    /// <summary>
     /// Since Blocks has coordinates relative to this chunk's origin, we need a way to transform it
     /// to world space.
     /// </summary>
@@ -30,13 +37,6 @@ public class Chunk {
         get => ComputeOffset(Key);
         set => Key = ComputeKey(value);
     }
-
-    /// <summary>
-    /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
-    /// The key is calculated using <see cref="ComputeKey"/>. The key is a tightly packed array of the offsets in world chunk space as shorts
-    /// </summary>
-    public long Key { get; set; }
-
 
     /// <summary>
     /// Calculates the key for a chunk given a position in that chunk.
@@ -93,9 +93,14 @@ public class Chunk {
     }
 
 
+#pragma warning disable CS8618
+    /// <summary>
+    /// Generates a new chunk. Doesn't initialize any values! Blocks is kept null, against recommendation.
+    /// </summary>
     public Chunk() {
-        
+
     }
+#pragma warning restore CS8618
 
 
     /// <summary>
@@ -140,10 +145,11 @@ public class Chunk {
         => GetBlockLocal(position - Offset);
 
     /// <summary>
-    /// Gets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater than 16 don't make sense
+    /// Gets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater 
+    /// than 16 or less than 0 don't make sense.
     /// </summary>
-    /// <param name="position">A vector in chunk space</param>
-    /// <returns>The block at position</returns>
+    /// <param name="position">A vector in chunk space.</param>
+    /// <returns>The block at position. 0 if the position is out of bounds.</returns>
     public Block GetBlockLocal(Vector3i position) {
 
         var (x, y, z) = position;
@@ -151,7 +157,7 @@ public class Chunk {
         if (x < 0 || x > CHUNK_SIZE - 1 ||
             y < 0 || y > CHUNK_SIZE - 1 ||
             z < 0 || z > CHUNK_SIZE - 1)
-            return 0; //TODO
+            return 0;
 
         return Blocks[x, y, z];
     }
@@ -164,7 +170,8 @@ public class Chunk {
         => SetBlockLocal(position - Offset, block);
 
     /// <summary>
-    /// Sets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater than 16 don't make sense
+    /// Sets a block in this chunk at position. Position is understood to be relative to this chunk, e.g. values greater 
+    /// than 16 don't make sense
     /// </summary>
     /// <param name="position">A vector in chunk space</param>
     /// <param name="block">The block to be placed into the chunk</param>
@@ -177,19 +184,5 @@ public class Chunk {
             return;
 
         Blocks[x, y, z] = block;
-        OnUpdate?.Invoke(new() { position });
     }
-
-    /// <summary>
-    /// The delegate which is called when this chunk updates. It may be called unnecessarily sometimes, ensure that your implementation is independent of the number
-    /// of calls
-    /// </summary>
-    /// <param name="positions">The positions of each block that has changed. Either through replacment, deletion or any other update. 
-    /// Only includes those blocks that directly change. If the game logic dictates to update neighboring blocks for example, then those are passed as well.
-    /// If that is not the case, then the callee is responsible to update additional information. The positions are in chunk space.</param>
-    public delegate void UpdateDelegate(List<Vector3i> positions);
-    /// <summary>
-    /// Called whenever any block changes states or the blocks itself change.
-    /// </summary>
-    public event UpdateDelegate OnUpdate = default!;
 }
