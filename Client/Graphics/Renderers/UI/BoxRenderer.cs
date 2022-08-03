@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
 /// Renders a texture on a box. This is a ui class, the box is two dimensional.

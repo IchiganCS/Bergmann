@@ -1,5 +1,5 @@
 using Bergmann.Shared.Noise;
-using Bergmann.Shared.World;
+using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Server;

@@ -1,7 +1,6 @@
-using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Shared.World;
+namespace Bergmann.Shared.Objects;
 
 /// <summary>
 /// This Chunk holds a three dimensional integer array (<see cref="int"/> = <see cref="Block"/>) of height, width 
@@ -93,49 +92,26 @@ public class Chunk {
     }
 
 
-#pragma warning disable CS8618
     /// <summary>
-    /// Generates a new chunk. Doesn't initialize any values! Blocks is kept null, against recommendation.
+    /// Generates a new chunk. The intial values are nonsense, it is necessary to overwrite them.
     /// </summary>
     public Chunk() {
-
+        Key = -1;
+        Blocks = new int[0, 0, 0];
     }
-#pragma warning restore CS8618
 
 
     /// <summary>
-    /// Gets a list of every block in the chunk. Since this is a three dimensional pass, this 
-    /// can be quite expensive.
+    /// Executes an action for every block.
     /// </summary>
-    /// <returns>A list filled in no particular order in chunk space</returns>
-    public List<Vector3i> EveryBlock() {
-        List<Vector3i> ls = new(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
-        for (int i = 0; i < CHUNK_SIZE; i++)
-            for (int j = 0; j < CHUNK_SIZE; j++)
-                for (int k = 0; k < CHUNK_SIZE; k++)
-                    if (Blocks[i, j, k] != 0)
-                        ls.Add(new(i, j, k));
-
-        return ls;
+    /// <param name="action">The first paramter is the local position of the block, the second is the current block</param>
+    public void ForEach(Action<Vector3i, Block> action) {
+        for (int x = 0; x < CHUNK_SIZE; x++)
+            for (int y = 0; y < CHUNK_SIZE; y++)
+                for (int z = 0; z < CHUNK_SIZE; z++)
+                    action((x, y, z), Blocks[x, y, z]);
     }
 
-    /// <summary>
-    /// Checks whether the block has a neighbor. At the chunk edges, false is returned
-    /// </summary>
-    /// <param name="position">The block whose neighbors are checked</param>
-    /// <param name="direction">The direction relative to the block where there is a neighbor</param>
-    /// <returns></returns>
-    public bool HasNeighborAt(Vector3i position, Block.Face direction) {
-        var (x, y, z) = position + Block.FaceToVector[(int)direction];
-
-        //Chunk border
-        if (x < 0 || x > CHUNK_SIZE - 1 ||
-            y < 0 || y > CHUNK_SIZE - 1 ||
-            z < 0 || z > CHUNK_SIZE - 1)
-            return false; //TODO
-
-        return Blocks[x, y, z] != 0;
-    }
 
     /// <summary>
     /// The world wrapper for <see cref="GetBlockLocal"/>. Read its documentation, but replace chunk space by world space, 

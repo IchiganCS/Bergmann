@@ -1,6 +1,6 @@
 using Bergmann.Client.Controllers;
 
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Graphics.Renderers.UI;
 
 
 public class ChatRenderer : UIRenderer {

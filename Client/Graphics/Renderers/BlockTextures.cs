@@ -11,11 +11,11 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// This class does not render a block. Instead, it only holds necessary information, such as the textures.
 /// It could also be added to Block.cs but let's keep shared clean of any graphical issues.
 /// </summary>
-public static class BlockRenderer {
+public static class BlockTextures {
 
     #pragma warning disable CS8618
     /// <summary>
-    /// The texture stack is a 2d array of textures, compiled out of a supplied json file in <see cref="MakeTextureStack"/>.
+    /// The texture stack is a 2d array of textures, compiled out of a supplied json file.
     /// It can be bound and every block can find its appropriate textures if the layer specified in <see cref="BlockInfo"/> is used as the texture coordiante's
     /// z component.
     /// </summary>

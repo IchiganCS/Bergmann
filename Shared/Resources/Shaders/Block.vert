@@ -5,6 +5,7 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inTexCoord;
 layout(location = 2) in vec3 inNormal;
 
+uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -13,7 +14,7 @@ out vec3 texCoord;
 out vec3 normal;
 
 void main() {
-    position = (view * vec4(inPosition, 1.0)).xyz;
+    position = (view * model * vec4(inPosition, 1.0)).xyz;
     texCoord = inTexCoord;
     normal = inNormal;
 

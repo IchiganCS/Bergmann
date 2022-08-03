@@ -1,4 +1,4 @@
-using Bergmann.Shared.World;
+using Bergmann.Shared.Objects;
 
 namespace Bergmann.Server;
 

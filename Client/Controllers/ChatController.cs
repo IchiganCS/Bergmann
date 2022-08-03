@@ -73,7 +73,7 @@ public class ChatController : ControllerBase {
 
 
 
-        Hubs.Chat?.On<string, string>(Names.ReceiveMessage, (x, y) => {
+        Hubs.Chat?.On<string, string>(Names.Client.ReceiveMessage, (x, y) => {
             Console.WriteLine($"{x} wrote {y}");
         });
 

@@ -1,5 +1,6 @@
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Objects;
 using MessagePack;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,17 @@ public static class Hubs {
     public static HubConnection? World { get; private set; }
     public static HubConnection? Chat { get; private set; }
 
+    /// <summary>
+    /// The link used to get the hubs. The server url.
+    /// </summary>
+    /// <value></value>
     public static string? Link { get; private set; }
+
+    /// <summary>
+    /// A boolean whether a connection exists.
+    /// </summary>
+    public static bool ConnectionAlive =>
+        World?.State == HubConnectionState.Connected && Chat?.State == HubConnectionState.Connected;
 
     /// <summary>
     /// Builds all hubs in the collection on the specified link.
@@ -43,5 +54,6 @@ public static class Hubs {
 
         World = buildHub(Names.WorldHub);
         Chat = buildHub(Names.ChatHub);
+
     }
 }

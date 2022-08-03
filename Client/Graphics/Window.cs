@@ -1,10 +1,12 @@
 using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
+using Bergmann.Client.Graphics.Renderers.Passers;
+using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
-using Bergmann.Shared.World;
+using Bergmann.Shared.Objects;
 using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -33,7 +35,7 @@ public class Window : GameWindow {
     private Texture2D CrossTexture { get; set; }
     private DebugRenderer DebugRenderer { get; set; }
     private ChatRenderer ChatRenderer { get; set; }
-    private WorldRenderer WorldRenderer { get; set; }
+    private SolidsPasser Solids { get; set; }
 
     private bool WireFrameEnabled { get; set; } = false;
 
@@ -71,6 +73,7 @@ public class Window : GameWindow {
             projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
             BlockProgram.SetUniform("projection", projMat);
             BlockProgram.SetUniform("view", viewMat);
+            BlockProgram.SetUniform("model", Matrix4.Identity);
             GlLogger.WriteGLError();
         };
 
@@ -108,7 +111,7 @@ public class Window : GameWindow {
             if (string.IsNullOrWhiteSpace(x))
                 return;
                 
-            Hubs.Chat?.SendAsync(Names.SendMessage, "ich", x);
+            Hubs.Chat?.SendAsync(Names.Server.SendMessage, "ich", x);
         });
         ChatRenderer = new ChatRenderer(cont);
 
@@ -123,8 +126,8 @@ public class Window : GameWindow {
         cont.Commands.Add(new() {
             Name = "remake",
             Execute = x => {
-                Hubs.World?.SendAsync(Names.DropWorld);
-                GlThread.Invoke(() => WorldRenderer.Dispose());
+                Hubs.World?.SendAsync(Names.Server.DropWorld);
+                GlThread.Invoke(() => Solids.Dispose());
             }
         });
         cont.Commands.Add(new() {
@@ -149,7 +152,7 @@ public class Window : GameWindow {
 
 
         BlockInfo.ReadFromJson("Blocks.json");
-        BlockRenderer.MakeTextureStack("Textures.json");
+        BlockTextures.MakeTextureStack("Textures.json");
         TextRenderer.Initialize();
 
         GL.ClearColor(0.0f, 0.0f, 1.0f, 0.0f);
@@ -165,11 +168,12 @@ public class Window : GameWindow {
         GL.FrontFace(FrontFaceDirection.Ccw);
 
 
-        WorldRenderer = new();
-        WorldRenderer.SubscribeToPositionUpdate(() => Fph.Position);
+        Solids = new();
+
+        Data.SubscribeToPositionUpdate(() => Fph.Position);
 
         using Image<Rgba32> img = Image<Rgba32>.Load(
-            ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
+                ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
         CrossTexture = new();
         CrossTexture.Write(img);
 
@@ -190,7 +194,7 @@ public class Window : GameWindow {
         UIProgram.Dispose();
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
-        BlockRenderer.Dispose();
+        BlockTextures.Dispose();
         TextRenderer.Delete();
         DebugRenderer.Dispose();
     }
@@ -227,13 +231,13 @@ public class Window : GameWindow {
 
         GL.ActiveTexture(TextureUnit.Texture0);
         GlLogger.WriteGLError();
-        BlockRenderer.TextureStack.Bind();
+        BlockTextures.TextureStack.Bind();
         GlLogger.WriteGLError();
         GL.Uniform1(GL.GetUniformLocation(BlockProgram.Handle, "stack"), 0);
         GlLogger.WriteGLError();
 
 
-        WorldRenderer.Render();
+        Solids.Render();
 
 
         Program.Active = UIProgram;
@@ -244,7 +248,7 @@ public class Window : GameWindow {
         CrossRenderer.Render();
 
         if (Controller.DebugViewEnabled) {
-            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, WorldRenderer.ChunkCount);
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Data.Chunks.Count());
             DebugRenderer.Render();
         }
 

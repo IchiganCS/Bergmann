@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Bergmann.Shared.World;
+namespace Bergmann.Shared.Objects;
 
 public class BlockInfo {
     private static List<BlockInfo> AllInfos { get; set; } = new();
@@ -46,13 +46,13 @@ public class BlockInfo {
     public int FrontLayer { get; set; }
     public int BackLayer { get; set; }
 
-    public int GetLayerFromFace(Block.Face face) {
+    public int GetLayerFromFace(Geometry.Face face) {
         return face switch {
-            Block.Face.Top => TopLayer,
-            Block.Face.Left => LeftLayer,
-            Block.Face.Right => RightLayer,
-            Block.Face.Front => FrontLayer,
-            Block.Face.Back => BackLayer,
+            Geometry.Face.Top => TopLayer,
+            Geometry.Face.Left => LeftLayer,
+            Geometry.Face.Right => RightLayer,
+            Geometry.Face.Front => FrontLayer,
+            Geometry.Face.Back => BackLayer,
             _ => BottomLayer
         };
     }

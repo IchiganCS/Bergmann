@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
 /// A renderer with a special functions useful for ui.
@@ -16,7 +16,8 @@ public abstract class UIRenderer : IRenderer {
     /// </summary>
     public Vector2 PercentageAnchorOffset { get; set; }
     /// <summary>
-    /// Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, (1,0) is anchoring the box on the right
+    /// Defines an anchor for the box. (0,0) means the box's anchor is at the lower left, 
+    /// (1,0) is anchoring the box on the right
     /// </summary>
     public Vector2 RelativeAnchor { get; set; }
     /// <summary>

@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
 /// Renders a small rolling diagram without axes on top of a box.

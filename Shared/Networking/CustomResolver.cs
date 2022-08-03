@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using Bergmann.Shared.World;
+using Bergmann.Shared.Objects;
 using MessagePack;
 using MessagePack.Formatters;
 using MessagePack.Resolvers;
@@ -26,8 +26,12 @@ public class CustomResolver : IFormatterResolver {
             return (IMessagePackFormatter<T>)new ChunkFormatter();
         if (typeof(T) == typeof(Vector3))
             return (IMessagePackFormatter<T>)new Vector3Formatter();
+        if (typeof(T) == typeof(Vector3i))
+            return (IMessagePackFormatter<T>)new Vector3iFormatter();
+        if (typeof(T) == typeof(Block))
+            return (IMessagePackFormatter<T>)new BlockFormatter();
 
-        return BuiltinResolver.Instance.GetFormatter<T>();
+        return StandardResolver.Instance.GetFormatter<T>();
     }
 
     /// <summary>
@@ -60,6 +64,35 @@ public class CustomResolver : IFormatterResolver {
             writer.WriteInt32(ints[2]);
         }
     }
+
+
+    private class Vector3iFormatter : IMessagePackFormatter<Vector3i> {
+        public Vector3i Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
+            return new() {
+                X = reader.ReadInt32(),
+                Y = reader.ReadInt32(),
+                Z = reader.ReadInt32(),
+            };
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Vector3i value, MessagePackSerializerOptions options) {
+            writer.WriteInt32(value.X);
+            writer.WriteInt32(value.Y);
+            writer.WriteInt32(value.Z);
+        }
+    }
+
+    
+    private class BlockFormatter : IMessagePackFormatter<Block> {
+        public Block Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
+            return reader.ReadInt32();
+        }
+
+        public void Serialize(ref MessagePackWriter writer, Block value, MessagePackSerializerOptions options) {
+            writer.WriteInt32(value);
+        }
+    }
+
 
     /// <summary>
     /// Serializes a <see cref="Chunk"/>. This is subject to change if the chunk definition changes. Currently, all blocks a are written in a specific manner,

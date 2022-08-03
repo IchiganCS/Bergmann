@@ -9,7 +9,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
 /// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyTexture"/> method, so there's no need to call it.

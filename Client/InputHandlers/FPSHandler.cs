@@ -108,7 +108,7 @@ public class FPHandler : IInputHandler {
         FlyingMovement(args.DeltaTime, args.KeyboardState);
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            Hubs.World?.SendAsync(Names.DestroyBlock, Position, Forward);
+            Hubs.World?.SendAsync(Names.Server.DestroyBlock, Position, Forward);
         }
 
     }

@@ -1,5 +1,5 @@
 using Bergmann.Shared.Networking;
-using Bergmann.Shared.World;
+using Bergmann.Shared.Objects;
 using Microsoft.AspNetCore.SignalR;
 using OpenTK.Mathematics;
 
@@ -19,9 +19,9 @@ public class WorldHub : Hub {
     /// deemed possible. If a key can't loaded and not generated, then no response will follow.
     /// </summary>
     /// <param name="key">The key of the chunk to be loaded.</param>
-    [HubMethodName(Names.RequestChunk)]
+    [HubMethodName(Names.Server.RequestChunk)]
     public async void RequestChunk(long key) {
-        bool loaded = Data.World.TryLoadChunk(key, out Chunk? chunk);
+        Chunk? chunk = Data.World.Chunks.Get(key);
 
         if (chunk is null) {
             //generate the chunk
@@ -33,11 +33,11 @@ public class WorldHub : Hub {
                 return;
             }
 
-            Data.World.SetChunk(chunk);
+            Data.World.Chunks.Add(chunk);
         }
 
-        
-        await Clients.Caller.SendAsync(Names.ReceiveChunk, chunk);
+
+        await Clients.Caller.SendAsync(Names.Client.ReceiveChunk, chunk);
     }
 
 
@@ -47,17 +47,18 @@ public class WorldHub : Hub {
     /// </summary>
     /// <param name="position">The position of the player while executing the destruction of nature.</param>
     /// <param name="direction">The direction in which the player is looking</param>
-    [HubMethodName(Names.DestroyBlock)]
+    [HubMethodName(Names.Server.DestroyBlock)]
     public async void DestroyBlock(Vector3 position, Vector3 direction) {
-        if (Data.World.Raycast(position, direction, out Vector3i blockPos, out _)) {
+        if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out _)) {
             long key = Chunk.ComputeKey(blockPos);
-            Data.World.SetBlockAt(blockPos, 0);
-            await Clients.All.SendAsync(Names.ReceiveChunk, Data.World.Chunks[key]);
+            Data.World.Chunks.SetBlockAt(blockPos, 0);
+            await Clients.All.SendAsync(Names.Client.ReceiveChunkUpdate, 
+                key, new List<Vector3i>() { blockPos }, new List<Block>() { 0 });
         }
     }
 
-    [HubMethodName(Names.DropWorld)]
+    [HubMethodName(Names.Server.DropWorld)]
     public void DropWorld() {
-        Data.World.Chunks.Clear();
+        Data.World.Clear();
     }
 }
