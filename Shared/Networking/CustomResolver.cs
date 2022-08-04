@@ -10,7 +10,7 @@ namespace Bergmann.Shared;
 /// <summary>
 /// A custom resolver used for serializing and deserializing values in the message pack protocol.
 /// For example of usages, see the building of the app in server. If a type is not part of this, you might as well add it.
-/// It uses a <see cref="BuiltinResolver"/>, if it can't find the specified type.
+/// It uses a <see cref="StandardResolver"/>, if it can't find the specified type.
 /// </summary>
 public class CustomResolver : IFormatterResolver {
 
@@ -68,11 +68,11 @@ public class CustomResolver : IFormatterResolver {
 
     private class Vector3iFormatter : IMessagePackFormatter<Vector3i> {
         public Vector3i Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
-            return new() {
-                X = reader.ReadInt32(),
-                Y = reader.ReadInt32(),
-                Z = reader.ReadInt32(),
-            };
+            return new(
+                reader.ReadInt32(),
+                reader.ReadInt32(),
+                reader.ReadInt32()
+            );
         }
 
         public void Serialize(ref MessagePackWriter writer, Vector3i value, MessagePackSerializerOptions options) {

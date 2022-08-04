@@ -55,5 +55,7 @@ public static class Hubs {
         World = buildHub(Names.WorldHub);
         Chat = buildHub(Names.ChatHub);
 
+        Thread.Sleep(200);
+
     }
 }

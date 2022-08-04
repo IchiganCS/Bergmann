@@ -27,7 +27,7 @@ public static class Geometry {
         return Enumerable.Range(0, 6).Select(x => position + FaceToVector[x]);
     }
 
-    
+
 
     /// <summary>
     /// Apply the transformation to <see cref="FrontPositions"/> given by <see cref="Face"/> to get the transformed side.
@@ -40,7 +40,7 @@ public static class Geometry {
         Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(-MathF.PI / 2) * Matrix4.CreateTranslation(1, 0, 1), //right
         Matrix4.CreateTranslation(-1, 0, 0) * Matrix4.CreateRotationY(MathF.PI / 2) //left
     };
-    
+
     /// <summary>
     /// The face for the front at the world origin
     /// </summary>
@@ -171,42 +171,44 @@ public static class Geometry {
         }
     }
 
-
     /// <summary>
-    /// Gets a list of chunks near a given position.
+    /// Gets a list of chunks near the origin in a given distance. The distance is only measured horizontally, not vertically.
+    /// That means, chunk columns starting at y=0 are returned. No chunks above though.
+    /// The result should be cached, since this can't be made a fast operation.
     /// </summary>
-    /// <param name="position">The position from which to calculate</param>
-    /// <param name="distance">The distance in world chunk space, the number of chunks</param>
-    public static IEnumerable<long> GetNearChunks(Vector3 position, int distance) {
+    /// <param name="distance">The distance in world chunk space.</param>
+    /// <returns>A list of offsets in world space.</returns>
+    public static IEnumerable<Vector3i> GetNearChunkColumns(int distance) {
 
-        // this stores all offsets
-        List<Vector3i> chunksInRange = new() {
-            (Vector3i)position
-        };
+        // because the result is a sphere, we start by first calculating the positive part of the result.
+        // The rest of the vectors are calculated by negating single components.
+        List<Vector3i> positiveOffsets = new();
 
-        for (int i = 0; i < chunksInRange.Count; i++) {
-            //pop the highest element
-            Vector3i current = chunksInRange[i];
 
-            foreach (Geometry.Face face in Geometry.AllFaces) {
-                Vector3i offset = 16 * Geometry.FaceToVector[(int)face];
-
-                //the offset of the chunk in world space
-                Vector3i world = offset + current;
-
-                if (world.Y < 0 || ((Vector3i)(world - position)).ManhattanLength > distance * 16
-                    || chunksInRange.Contains(world))
-                    continue;
-
-                chunksInRange.Add(world);
+        for (int x = 0; x < distance; x++) {
+            for (int z = 0; z < distance; z++) {
+                Vector3i vec = (x, 0, z);
+                if (vec.ManhattanLength <= distance) {
+                    positiveOffsets.Add(vec * 16);
+                }
             }
         }
 
-        return chunksInRange.Select(x => Chunk.ComputeKey(x));
+        //don't include negative offsets
+        return positiveOffsets.SelectMany(pos => new Vector3i[] {
+            pos * (1, 1, 1),
+            pos * (-1, 1, 1),
+            //pos * (1, -1, 1),
+            pos * (1, 1, -1),
+            //pos * (1, -1, -1),
+            pos * (-1, 1, -1),
+            //pos * (-1, -1, 1),
+            //pos * (-1, -1, -1),
+        }).Distinct();
     }
 
 
-    
+
     /// <summary>
     /// Cast a ray from origin in the direction of destination. Returns whether there has been a hit and if that value 
     /// is true, the hit face and position of that block is returned. Since this logically needs to be distance
@@ -221,7 +223,7 @@ public static class Geometry {
     public static bool Raycast(this ChunkCollection collection,
         Vector3 origin, Vector3 direction, out Vector3i hitBlock, out Geometry.Face hitFace, float distance = 5) {
 
-            
+
         //this method works like this:
         //We use the GetFaceFromHit method to walk through each face that lies along direction.
         //We truly walk along every block - quite elegant.

@@ -248,7 +248,7 @@ public class Window : GameWindow {
         CrossRenderer.Render();
 
         if (Controller.DebugViewEnabled) {
-            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Data.Chunks.Count());
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Data.Chunks.Count);
             DebugRenderer.Render();
         }
 

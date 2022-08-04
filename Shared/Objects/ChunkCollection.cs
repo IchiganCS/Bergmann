@@ -14,6 +14,8 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// </summary>
     private SortedList<long, Chunk> Chunks { get; init; }
 
+    public int Count => Chunks.Count;
+
     /// <summary>
     /// Constructs a new chunk collection with no chunks held.
     /// </summary>
@@ -21,17 +23,21 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
         Chunks = new();
     }
 
+
     /// <summary>
     /// Adds a new chunk to the collection. If the chunk is not new, false is returned and the action does nothing.
     /// </summary>
     /// <param name="newChunk">The new chunk to be added</param>
     /// <returns>Whether the collection has been modified in any way.</returns>
     public bool Add(Chunk newChunk) {
-        if (Chunks.ContainsKey(newChunk.Key))
-            return false;
+        lock (Chunks) {
+            if (Chunks.ContainsKey(newChunk.Key))
+                return false;
 
-        Chunks.Add(newChunk.Key, newChunk);
-        OnChunkAdded?.Invoke(newChunk);
+            Chunks.Add(newChunk.Key, newChunk);
+
+            OnChunkAdded?.Invoke(newChunk);
+        }
         return true;
     }
 
@@ -42,11 +48,13 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// <param name="newChunk">The new chunk to be held in the collection.</param>
     /// <returns>Whether any update has been made to the collection.</returns>
     public bool Replace(Chunk newChunk) {
-        if (!Chunks.ContainsKey(newChunk.Key))
-            return false;
+        lock (Chunks) {
+            if (!Chunks.ContainsKey(newChunk.Key))
+                return false;
 
-        Remove(newChunk.Key);
-        Add(newChunk);
+            Remove(newChunk.Key);
+            Add(newChunk);
+        }
         return true;
     }
 
@@ -66,11 +74,13 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// <param name="key">The key of the chunk to be removed.</param>
     /// <returns>Whether a chunk was removed. False if the chunk with the specified key isn't held.</returns>
     public bool Remove(long key) {
-        bool res = Chunks.Remove(key, out Chunk? val);
-        if (res)
-            OnChunkRemoved?.Invoke(val!);
+        lock (Chunks) {
+            bool res = Chunks.Remove(key, out Chunk? val);
+            if (res && val is not null)
+                OnChunkRemoved?.Invoke(val!);
 
-        return res;
+            return res;
+        }
     }
 
     /// <summary>
@@ -78,9 +88,10 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// </summary>
     /// <param name="key">The key of the chunk.</param>
     /// <returns>The chunk which is stored. Can be null if no result was found.</returns>
-    public Chunk? Get(long key) {
-        if (Chunks.ContainsKey(key))
-            return Chunks[key];
+    public Chunk? TryGet(long key) {
+        lock (Chunks)
+            if (Chunks.ContainsKey(key))
+                return Chunks[key];
 
         return null;
     }
@@ -93,7 +104,7 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     public event ChunkAddedDelegate OnChunkAdded = default!;
     public delegate void ChunkAddedDelegate(Chunk newChunk);
 
-    
+
     /// <summary>
     /// When a chunk is only partially changed. The position of the update are also supplied.
     /// </summary>
@@ -109,7 +120,16 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     public delegate void ChunkRemovedDelegate(Chunk oldChunk);
 
 
+    public void ForEach(Action<Chunk> chunkAction) {
+        Chunk[] array;
 
+        lock (Chunks) {
+            array = Chunks.Values.ToArray();
+        }
+
+        for (int i = 0; i < array.Length; i++)
+            chunkAction(array[i]);
+    }
 
     /// <summary>
     /// Enumerates over all held chunks.
@@ -133,7 +153,7 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// <param name="position">The position in world space of the block.</param>
     /// <returns>The block at the given position. 0 (= air) if a chunk with the position is not held.</returns>
     public Block GetBlockAt(Vector3i position) {
-        Chunk? owner = Get(Chunk.ComputeKey(position));
+        Chunk? owner = TryGet(Chunk.ComputeKey(position));
         if (owner is null)
             return 0;
 
@@ -148,7 +168,7 @@ public sealed class ChunkCollection : IEnumerable<Chunk> {
     /// <returns>true if the operation was successful, false if the operation could not be executed.</returns>
     public bool SetBlockAt(Vector3i position, Block block) {
         long key = Chunk.ComputeKey(position);
-        Chunk? owner = Get(key);
+        Chunk? owner = TryGet(key);
         if (owner is null)
             return false;
 

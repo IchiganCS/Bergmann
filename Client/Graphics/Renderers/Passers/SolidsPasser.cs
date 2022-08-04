@@ -9,7 +9,6 @@ namespace Bergmann.Client.Graphics.Renderers.Passers;
 /// Renders solid blocks which are not transparent. They don't have to fill the entire block space.
 /// </summary>
 public class SolidsPasser : IRendererPasser {
-
     /// <summary>
     /// A lock that allows one thread. We can't use a <see cref="Monitor"/> since it uses weird things as denying operation if
     /// a thread doesn't hold a lock! Who needs that if we know that our code will work?!
@@ -26,18 +25,19 @@ public class SolidsPasser : IRendererPasser {
 
 
 
+
     private SortedList<long, SolidsChunkRenderer> Chunkers { get; set; }
 
     private void MakeNewRendererAt(long key) {
         lock (Chunkers) {
             if (Chunkers.ContainsKey(key)) {
                 SolidsChunkRenderer ren = Chunkers[key];
-                Task.Run(() => ren.BuildFor(Data.Chunks.Get(key)!));
+                Task.Run(() => ren.BuildFor(Data.Chunks.TryGet(key)!));
             }
             else {
                 SolidsChunkRenderer ren = new();
                 Chunkers.Add(key, ren);
-                Task.Run(() => ren.BuildFor(Data.Chunks.Get(key)!));
+                Task.Run(() => ren.BuildFor(Data.Chunks.TryGet(key)!));
             }
         }
     }
@@ -173,15 +173,16 @@ public class SolidsPasser : IRendererPasser {
                 return;
             }
 
-            //Write the buffers on the gl thread. Only then release the lock (hence only one update per frame is possible for now)
+            //Write the buffers on the gl thread. Only then release the lock 
+            //(hence only one update per frame is possible for now)
             GlThread.Invoke(() => {
                 VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
                 IndexBuffer ??= new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1);
 
                 IndexBuffer.Fill(_IndexArray, true, currentIndex + 1);
                 VertexBuffer.Fill(_VertexArray, true, currentVertex + 1);
-                IsRenderable = true;
                 _Lock.Release();
+                IsRenderable = true;
             });
         }
 

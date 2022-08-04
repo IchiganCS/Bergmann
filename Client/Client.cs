@@ -11,6 +11,8 @@ public class Client {
 
         string link = $"http://localhost:{Names.DefaultPort}";
         Hubs.InitializeWithLink(link);
+        Data.DropDistance = 40;
+        Data.LoadDistance = 10;
         Data.MakeHubConnections();
 
         GameWindowSettings gwSet = GameWindowSettings.Default;

@@ -21,13 +21,19 @@ public static class Data {
     /// <see cref="Chunks"/>.
     /// </summary>
     public static void MakeHubConnections() {
-        // if (!Hubs.ConnectionAlive) {
-        //     Logger.Warn($"Couldn't establish hub connections for {nameof(Data)}");
-        //     return;
-        // }
+        if (!Hubs.ConnectionAlive) {
+            Logger.Warn($"Couldn't establish hub connections for {nameof(Data)}");
+            return;
+        }
 
 
-        Hubs.World?.On<Chunk>(Names.Client.ReceiveChunk, Chunks.AddOrReplace);
+        Hubs.World?.On<Chunk>(Names.Client.ReceiveChunk, ch => {
+            if (ch is null) {
+                int x = 3;
+            }
+            else
+                Chunks.AddOrReplace(ch);
+        });
         Hubs.World?.On<long, IList<Vector3i>, IList<Block>>(Names.Client.ReceiveChunkUpdate, (ch, pos, bl) => {
             int len = Math.Min(pos.Count, bl.Count);
             for (int i = 0; i < len; i++)
@@ -54,12 +60,22 @@ public static class Data {
     /// <summary>
     /// The distance of chunks which shall be ensured to be loaded. Can be set dynamically.
     /// </summary>
-    public static int LoadDistance { get; set; } = 6;
+    public static int LoadDistance {
+        get => _LoadDistance;
+        set {
+            _LoadDistance = value;
+            LoadOffsets = Geometry.GetNearChunkColumns(value);
+        }
+    }
+    private static int _LoadDistance;
+
+    private static IEnumerable<Vector3i> LoadOffsets { get; set; }
+    private static SortedList<long, long> RequestedColumns { get; set; } = new();
 
     /// <summary>
     /// The maximal distance at which chunks should be kept in memory. If they exceed this distance, they are dropped.
     /// </summary>
-    public static int DropDistance { get; set; } = 20;
+    public static int DropDistance { get; set; }
 
 
     /// <summary>
@@ -80,24 +96,44 @@ public static class Data {
     public static void SubscribeToPositionUpdate(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000) {
 
         LoadTimer = new(x => {
-            IEnumerable<long> chunks = Geometry.GetNearChunks(getPosition(), LoadDistance);
-            IEnumerable<long> diff = chunks.Where(x => !PreviouslyRequestedChunks.Contains(x)).ToArray();
-            PreviouslyRequestedChunks = chunks;
+            lock (RequestedColumns) {
+                Vector3i currentPos = (Vector3i)getPosition();
+                currentPos.Y = 0;
+                IEnumerable<long> chunks = LoadOffsets
+                    .Select(x => x + currentPos)
+                    .Where(x => !RequestedColumns.ContainsKey(Chunk.ComputeKey(x)))
+                    .SelectMany(x => {
+                        int height = 5;
+                        Vector3i[] vecs = new Vector3i[height];
+                        RequestedColumns.TryAdd(Chunk.ComputeKey(x), 1);
+                        for (int i = 0; i < height; i++) {
+                            vecs[i] = new();
+                            vecs[i].X = x.X;
+                            vecs[i].Y = i * 16;
+                            vecs[i].Z = x.Z;
+                        }
+                        return vecs; })
+                    .Select(Chunk.ComputeKey)
+                    .ToArray();
 
-            //only request those chunks which weren't requested in the last frame
-            foreach (long key in diff) {
-                if (Data.Chunks.Get(key) is null)
-                    Hubs.World?.SendAsync(Names.Server.RequestChunk, key);
+                //only request those chunks which weren't requested in the last frame
+                foreach (long key in chunks) {
+                    if (Data.Chunks.TryGet(key) is null) {
+                        Hubs.World?.SendAsync(Names.Server.RequestChunk, key);
+                    }
+                }
             }
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
-            foreach (Chunk chunk in Data.Chunks.ToArray()) {
+            Data.Chunks.ForEach(chunk => {
                 if ((chunk.Offset - getPosition()).LengthFast > DropDistance * 16) {
-
+                    Vector3i offset = chunk.Offset;
+                    offset.Y = 0;
+                    RequestedColumns.Remove(Chunk.ComputeKey(offset));
                     Data.Chunks.Remove(chunk.Key);
                 }
-            }
+            });
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
     }
 }

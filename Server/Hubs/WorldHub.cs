@@ -21,17 +21,13 @@ public class WorldHub : Hub {
     /// <param name="key">The key of the chunk to be loaded.</param>
     [HubMethodName(Names.Server.RequestChunk)]
     public async void RequestChunk(long key) {
-        Chunk? chunk = Data.World.Chunks.Get(key);
+        Chunk? chunk = Data.World.Chunks.TryGet(key);
 
         if (chunk is null) {
-            //generate the chunk
+            //try generating the chunk
             chunk = Data.WorldGen.GenerateChunk(key);
-
-
-            if (chunk is null) {
-                //the chunk could not be generated.
+            if (chunk is null)
                 return;
-            }
 
             Data.World.Chunks.Add(chunk);
         }
