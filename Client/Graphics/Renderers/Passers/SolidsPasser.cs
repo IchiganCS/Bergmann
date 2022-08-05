@@ -10,19 +10,39 @@ namespace Bergmann.Client.Graphics.Renderers.Passers;
 /// </summary>
 public class SolidsPasser : IRendererPasser {
     /// <summary>
-    /// A lock that allows one thread. We can't use a <see cref="Monitor"/> since it uses weird things as denying operation if
-    /// a thread doesn't hold a lock! Who needs that if we know that our code will work?!
+    /// An array of locks. There are <see cref="_Count"/> many. If one thread holds the lock for i-th entry, it may modify the i-th array
+    /// of <see cref="_VertexArrays"/> and <see cref="_IndexArrays"/>.
     /// </summary>
-    private static Semaphore _Lock = new(1, 1);
+    private static SemaphoreSlim[] _Locks;
     /// <summary>
-    /// The index array. Should only be accessed with <see cref="_Lock"/> held.
+    /// The index array. It holds <see cref="_Count"/> many items. One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
     /// </summary>
-    private static uint[] _IndexArray = new uint[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 4];
+    private static uint[][] _IndexArrays;
     /// <summary>
-    /// The vertex array. Should only be accessed with <see cref="_Lock"/> held.
+    /// The index array. It holds <see cref="_Count"/> many items. One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
     /// </summary>
-    private static Vertex[] _VertexArray = new Vertex[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3];
+    private static Vertex[][] _VertexArrays;
 
+    /// <summary>
+    /// How many threads can concurrently work. Keep in mind that these are large arrays, so don't make that number too high.
+    /// </summary>
+    private static int _Count;
+
+    static SolidsPasser() {
+        _Count =  10;
+
+        _Locks = new SemaphoreSlim[_Count];
+        _IndexArrays = new uint[_Count][];
+        _VertexArrays = new Vertex[_Count][];
+
+        // Construct an estimate maximum. These buffers should never overflow and they are very large.
+        // They shouldn't need to be reallocated or garbage collection, that'd be slow
+        for (int i = 0; i < _Count; i++) {
+            _Locks[i] = new(1, 1);
+            _IndexArrays[i] = new uint[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 4 / 2];
+            _VertexArrays[i] = new Vertex[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3];
+        }
+    }
 
 
 
@@ -106,7 +126,22 @@ public class SolidsPasser : IRendererPasser {
             if (chunk is null)
                 return;
 
-            _Lock.WaitOne();
+            int heldLock = -1;
+
+            //look if any lock is free
+            for (int i = 0; i < _Count; i++) {
+                if (_Locks[i].CurrentCount > 0) {
+                    heldLock = i;
+                    break;
+                }
+            }
+
+            //else randomize a lock and just wait for it
+            if (heldLock < 0 || heldLock >= _Count)
+                heldLock = Random.Shared.Next() % _Count;
+
+
+            _Locks[heldLock].Wait();
 
             int currentIndex = 0;
             int currentVertex = 0;
@@ -121,9 +156,6 @@ public class SolidsPasser : IRendererPasser {
 
                 foreach (Geometry.Face face in Geometry.AllFaces) {
 
-                    //TODO: what if buffers overflow?
-                    //further possible improvement: make multiple large arrays to enable working with more than one thread at the same time.
-                    //possibly required for faster updates since currently locked to one frame per update.
 
                     if (chunk.GetBlockWorld(blockPosition + Geometry.FaceToVector[(int)face]) == 0) {
                         Vector3[] ps = Geometry.Positions[(int)face];
@@ -131,36 +163,36 @@ public class SolidsPasser : IRendererPasser {
                         Vector3 globalPosition = blockPosition;
                         Vector3 normal = Geometry.FaceToVector[(int)face];
 
-                        _VertexArray[currentVertex + 0] = new() {
+                        _VertexArrays[heldLock][currentVertex + 0] = new() {
                             Position = ps[0] + globalPosition,
                             TexCoord = new(1, 0, layer),
                             Normal = normal,
                         };
 
-                        _VertexArray[currentVertex + 1] = new() {
+                        _VertexArrays[heldLock][currentVertex + 1] = new() {
                             Position = ps[1] + globalPosition,
                             TexCoord = new(1, 1, layer),
                             Normal = normal,
                         };
 
-                        _VertexArray[currentVertex + 2] = new() {
+                        _VertexArrays[heldLock][currentVertex + 2] = new() {
                             Position = ps[2] + globalPosition,
                             TexCoord = new(0, 1, layer),
                             Normal = normal,
                         };
 
-                        _VertexArray[currentVertex + 3] = new() {
+                        _VertexArrays[heldLock][currentVertex + 3] = new() {
                             Position = ps[3] + globalPosition,
                             TexCoord = new(0, 0, layer),
                             Normal = normal,
                         };
 
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 0;
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 1;
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 2;
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 0;
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 2;
-                        _IndexArray[currentIndex++] = (uint)currentVertex + 3;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 0;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 1;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 2;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 0;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 2;
+                        _IndexArrays[heldLock][currentIndex++] = (uint)currentVertex + 3;
 
                         currentVertex += 4;
                     }
@@ -169,7 +201,7 @@ public class SolidsPasser : IRendererPasser {
 
             if (currentIndex == 0) {
                 //only air, nothing to render
-                _Lock.Release();
+                _Locks[heldLock].Release();
                 return;
             }
 
@@ -179,9 +211,9 @@ public class SolidsPasser : IRendererPasser {
                 VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
                 IndexBuffer ??= new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1);
 
-                IndexBuffer.Fill(_IndexArray, true, currentIndex + 1);
-                VertexBuffer.Fill(_VertexArray, true, currentVertex + 1);
-                _Lock.Release();
+                IndexBuffer.Fill(_IndexArrays[heldLock], true, currentIndex + 1);
+                VertexBuffer.Fill(_VertexArrays[heldLock], true, currentVertex + 1);
+                _Locks[heldLock].Release();
                 IsRenderable = true;
             });
         }
