@@ -122,7 +122,7 @@ public static class Data {
                     .Where(x => !RequestedColumns.ContainsKey(Chunk.ComputeKey(x)))
                     .Select(x => {
                         long key = Chunk.ComputeKey(x);
-                        RequestedColumns.Add(key, key);
+                        RequestedColumns.TryAdd(key, key);
                         return key;
                     })
                     .ToArray();

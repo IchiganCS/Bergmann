@@ -10,8 +10,8 @@ namespace Bergmann.Client.Graphics.Renderers.Passers;
 /// </summary>
 public class SolidsPasser : IRendererPasser {
     /// <summary>
-    /// An array of locks. There are <see cref="_Count"/> many. If one thread holds the lock for i-th entry, it may modify the i-th array
-    /// of <see cref="_VertexArrays"/> and <see cref="_IndexArrays"/>.
+    /// An array of locks. There are <see cref="_Count"/> many. If one thread holds the lock for i-th entry, 
+    /// it may modify the i-th array of <see cref="_VertexArrays"/> and <see cref="_IndexArrays"/>.
     /// </summary>
     private static SemaphoreSlim[] _Locks;
     /// <summary>
@@ -40,7 +40,7 @@ public class SolidsPasser : IRendererPasser {
         for (int i = 0; i < _Count; i++) {
             _Locks[i] = new(1, 1);
             _IndexArrays[i] = new uint[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 4 / 2];
-            _VertexArrays[i] = new Vertex[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3];
+            _VertexArrays[i] = new Vertex[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3 / 2];
         }
     }
 
@@ -104,6 +104,9 @@ public class SolidsPasser : IRendererPasser {
 
 
 
+    /// <summary>
+    /// A helper class to render all solids in a given chunk.
+    /// </summary>
     private class SolidsChunkRenderer {
         /// <summary>
         /// A buffer for all vertices on the gpu. It isn't guaranteed to be up to date or even be initialized on time.
@@ -122,6 +125,10 @@ public class SolidsPasser : IRendererPasser {
         /// </summary>
         private bool IsRenderable { get; set; } = false;
 
+        /// <summary>
+        /// Builds the buffers for a given chunk. Throws away all old buffers. This is quite a costly operation.
+        /// </summary>
+        /// <param name="chunk">The chunk to build the renderer for.</param>
         public void BuildFor(Chunk chunk) {
             if (chunk is null)
                 return;
@@ -219,6 +226,10 @@ public class SolidsPasser : IRendererPasser {
         }
 
 
+        /// <summary>
+        /// Renders the buffer. It may not quite be up to date, depending on when the other threads finish with their execution, 
+        /// but it is guaranteed to either not render anything, or something that was just a little back in time.
+        /// </summary>
         public void Render() {
             if (IsRenderable) {
                 VertexBuffer!.Bind();
