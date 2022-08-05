@@ -28,14 +28,13 @@ public static class Data {
 
 
         Hubs.World?.On<Chunk>(Names.Client.ReceiveChunk, ch => {
-            if (ch is null) {
-                int x = 3;
-            }
-            else
-                Chunks.AddOrReplace(ch);
+            Chunks.AddOrReplace(ch);
         });
         Hubs.World?.On<long, IList<Vector3i>, IList<Block>>(Names.Client.ReceiveChunkUpdate, (ch, pos, bl) => {
             int len = Math.Min(pos.Count, bl.Count);
+            if (len != pos.Count || len != bl.Count) {
+                Logger.Warn($"Lengths didn't match for {Names.Client.ReceiveChunkUpdate}");
+            }
             for (int i = 0; i < len; i++)
                 Chunks.SetBlockAt(pos[i], bl[i]);
         });
@@ -69,7 +68,18 @@ public static class Data {
     }
     private static int _LoadDistance;
 
-    private static IEnumerable<Vector3i> LoadOffsets { get; set; }
+    /// <summary>
+    /// This stores an offset to each chunk column around 0. Add the position to it to see which columns should be requested.
+    /// Since this is solely dependent on the <see cref="LoadDistance"/> and the operation to calculate those offsets is quite expensive,
+    /// the value is cached.
+    /// </summary>
+    private static IEnumerable<Vector3i>? LoadOffsets { get; set; }
+
+    /// <summary>
+    /// A list of those chunk columns which were requested. It stores the lowest chunk of each requested column.
+    /// The key is the key to that chunk, the value is ignored. It updates automatically when new chunk columns are requested and when old
+    /// columns are dropped.
+    /// </summary>
     private static SortedList<long, long> RequestedColumns { get; set; } = new();
 
     /// <summary>
@@ -96,32 +106,30 @@ public static class Data {
     public static void SubscribeToPositionUpdate(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000) {
 
         LoadTimer = new(x => {
+            if (LoadOffsets is null) {
+                // cannot load any chunks if we can't calculate which ones :)
+                Logger.Warn($"Tried to load chunks, but no {nameof(LoadOffsets)} were given.");
+                return;
+            }
+
+            // it contains only chunks which were not previously. It only stores one chunk per column
+            IEnumerable<long> chunks;
             lock (RequestedColumns) {
                 Vector3i currentPos = (Vector3i)getPosition();
                 currentPos.Y = 0;
-                IEnumerable<long> chunks = LoadOffsets
+                chunks = LoadOffsets
                     .Select(x => x + currentPos)
                     .Where(x => !RequestedColumns.ContainsKey(Chunk.ComputeKey(x)))
-                    .SelectMany(x => {
-                        int height = 5;
-                        Vector3i[] vecs = new Vector3i[height];
-                        RequestedColumns.TryAdd(Chunk.ComputeKey(x), 1);
-                        for (int i = 0; i < height; i++) {
-                            vecs[i] = new();
-                            vecs[i].X = x.X;
-                            vecs[i].Y = i * 16;
-                            vecs[i].Z = x.Z;
-                        }
-                        return vecs; })
-                    .Select(Chunk.ComputeKey)
+                    .Select(x => {
+                        long key = Chunk.ComputeKey(x);
+                        RequestedColumns.Add(key, key);
+                        return key;
+                    })
                     .ToArray();
+            }
 
-                //only request those chunks which weren't requested in the last frame
-                foreach (long key in chunks) {
-                    if (Data.Chunks.TryGet(key) is null) {
-                        Hubs.World?.SendAsync(Names.Server.RequestChunk, key);
-                    }
-                }
+            foreach (long key in chunks) {
+                Hubs.World?.SendAsync(Names.Server.RequestChunkColumn, key);
             }
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 

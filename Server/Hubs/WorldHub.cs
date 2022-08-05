@@ -38,6 +38,21 @@ public class WorldHub : Hub {
 
 
     /// <summary>
+    /// Requestes all chunks from a specific column. The response uses the standard <see cref="Names.Client.ReceiveChunk"/>.
+    /// </summary>
+    /// <param name="key">The key to any chunk in the column.</param>
+    [HubMethodName(Names.Server.RequestChunkColumn)]
+    public void RequestChunkColumn(long key) {
+        Vector3i lowestChunk = Chunk.ComputeOffset(key);
+
+        for (int i = 0; i < 5; i++) {
+            lowestChunk.Y = i * 16;
+            RequestChunk(Chunk.ComputeKey(lowestChunk));
+        }
+    }
+
+
+    /// <summary>
     /// A client request to destroy a specific block on a server. It is given by the position of the player 
     /// and the direction to look at.
     /// </summary>
@@ -48,7 +63,7 @@ public class WorldHub : Hub {
         if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out _)) {
             long key = Chunk.ComputeKey(blockPos);
             Data.World.Chunks.SetBlockAt(blockPos, 0);
-            await Clients.All.SendAsync(Names.Client.ReceiveChunkUpdate, 
+            await Clients.All.SendAsync(Names.Client.ReceiveChunkUpdate,
                 key, new List<Vector3i>() { blockPos }, new List<Block>() { 0 });
         }
     }
