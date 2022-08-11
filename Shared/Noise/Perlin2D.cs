@@ -20,7 +20,7 @@ public class Perlin2D : INoise<Vector2> {
     public float SampleRate { get; private set; }
 
     /// <summary>
-    /// The maximal distance of a position to the next vector.
+    /// The maximal distance of a position to the next sample vector.
     /// </summary>
     private float MaxSampleDistance { get; set; }
 
@@ -42,7 +42,7 @@ public class Perlin2D : INoise<Vector2> {
     /// </summary>
     /// <param name="val">The value to be smooth stepped.</param>
     /// <returns>A value in [0, 1].</returns>
-    private float SmootherStep(float val) {
+    private static float SmootherStep(float val) {
         //https://en.wikipedia.org/wiki/Smoothstep#Variations
         if (val < 0)
             return 0;
@@ -52,7 +52,7 @@ public class Perlin2D : INoise<Vector2> {
         return val * val * val * (val * (val * 6 - 15) + 10);
     }
 
-    private float Interpolate(float val1, float val2, float weight) {
+    private static float Interpolate(float val1, float val2, float weight) {
         return val1 + SmootherStep(weight) * (val2 - val1);
     }
 

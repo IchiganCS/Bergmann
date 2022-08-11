@@ -1,3 +1,4 @@
+using Bergmann.Client.Connectors;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
@@ -15,11 +16,13 @@ public class SolidsPasser : IRendererPasser {
     /// </summary>
     private static SemaphoreSlim[] _Locks;
     /// <summary>
-    /// The index array. It holds <see cref="_Count"/> many items. One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
+    /// The index array. It holds <see cref="_Count"/> many items. 
+    /// One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
     /// </summary>
     private static uint[][] _IndexArrays;
     /// <summary>
-    /// The index array. It holds <see cref="_Count"/> many items. One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
+    /// The index array. It holds <see cref="_Count"/> many items. 
+    /// One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
     /// </summary>
     private static Vertex[][] _VertexArrays;
 
@@ -52,12 +55,12 @@ public class SolidsPasser : IRendererPasser {
         lock (Chunkers) {
             if (Chunkers.ContainsKey(key)) {
                 SolidsChunkRenderer ren = Chunkers[key];
-                Task.Run(() => ren.BuildFor(Data.Chunks.TryGet(key)!));
+                Task.Run(() => ren.BuildFor(Connection.Active?.Chunks.TryGet(key)!));
             }
             else {
                 SolidsChunkRenderer ren = new();
                 Chunkers.Add(key, ren);
-                Task.Run(() => ren.BuildFor(Data.Chunks.TryGet(key)!));
+                Task.Run(() => ren.BuildFor(Connection.Active?.Chunks.TryGet(key)!));
             }
         }
     }
@@ -74,15 +77,15 @@ public class SolidsPasser : IRendererPasser {
 
     public SolidsPasser() {
         Chunkers = new();
-        Data.Chunks.OnChunkChanged += (ch, positions) => {
+        Connection.Active!.Chunks.OnChunkChanged += (ch, positions) => {
             MakeNewRendererAt(ch.Key);
         };
 
-        Data.Chunks.OnChunkAdded += ch => {
+        Connection.Active!.Chunks.OnChunkAdded += ch => {
             MakeNewRendererAt(ch.Key);
         };
 
-        Data.Chunks.OnChunkRemoved += ch =>
+        Connection.Active!.Chunks.OnChunkRemoved += ch =>
             DropRendererAt(ch.Key);
     }
 

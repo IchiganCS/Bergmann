@@ -1,3 +1,4 @@
+using Bergmann.Client.Connectors;
 using Bergmann.Client.Graphics;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
@@ -10,10 +11,8 @@ public class Client {
         Logger.Info("Starting client...");
 
         string link = $"http://localhost:{Names.DefaultPort}";
-        Hubs.InitializeWithLink(link);
-        Data.DropDistance = 40;
-        Data.LoadDistance = 10;
-        Data.MakeHubConnections();
+        Connection localhost = new(link);
+        Connection.Active = localhost;
 
         GameWindowSettings gwSet = GameWindowSettings.Default;
         NativeWindowSettings nwSet = NativeWindowSettings.Default;
@@ -32,5 +31,9 @@ public class Client {
         win.Run();
 
         Logger.Info("Exiting client");
+    }
+
+    public static void ConnectTo(string link) {
+
     }
 }

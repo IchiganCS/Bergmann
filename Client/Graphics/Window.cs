@@ -4,6 +4,7 @@ using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.Graphics.Renderers.Passers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Client.Connectors;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
@@ -38,6 +39,7 @@ public class Window : GameWindow {
     private SolidsPasser Solids { get; set; }
 
     private bool WireFrameEnabled { get; set; } = false;
+    private ChunkLoader ChunkLoader { get; set; }
 
     public ControllerStack ControllerStack { get; set; }
     public FPHandler Fph { get; set; }
@@ -111,7 +113,7 @@ public class Window : GameWindow {
             if (string.IsNullOrWhiteSpace(x))
                 return;
                 
-            Hubs.Chat?.SendAsync(Names.Server.SendMessage, "ich", x);
+            Connection.Active?.SendChatMessage("ich", x);
         });
         ChatRenderer = new ChatRenderer(cont);
 
@@ -124,16 +126,9 @@ public class Window : GameWindow {
             Execute = x => MakeProgram(),
         });
         cont.Commands.Add(new() {
-            Name = "remake",
-            Execute = x => {
-                Hubs.World?.SendAsync(Names.Server.DropWorld);
-                GlThread.Invoke(() => Solids.Dispose());
-            }
-        });
-        cont.Commands.Add(new() {
             Name = "connect",
             Execute = x => {
-                Hubs.InitializeWithLink(x[0]);
+                Connection.Active = new(x[0]);
             }
         });
 
@@ -145,8 +140,6 @@ public class Window : GameWindow {
     }
 
     protected override void OnLoad() {
-        VSync = VSyncMode.On;
-
         MakeControllers();
         MakeProgram();
 
@@ -169,8 +162,11 @@ public class Window : GameWindow {
 
 
         Solids = new();
-
-        Data.SubscribeToPositionUpdate(() => Fph.Position);
+        ChunkLoader = new(Connection.Active!);
+        ChunkLoader.SubscribeToPositionUpdate(() => Fph.Position);
+        Connection.OnActiveChanged += hub => {
+            Solids = new();
+        };
 
         using Image<Rgba32> img = Image<Rgba32>.Load(
                 ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
@@ -194,7 +190,7 @@ public class Window : GameWindow {
         UIProgram.Dispose();
         Vertex.CloseVAO();
         UIVertex.CloseVAO();
-        BlockTextures.Dispose();
+        BlockTextures.Delete();
         TextRenderer.Delete();
         DebugRenderer.Dispose();
     }
@@ -230,11 +226,8 @@ public class Window : GameWindow {
 
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        GlLogger.WriteGLError();
         BlockTextures.TextureStack.Bind();
-        GlLogger.WriteGLError();
         GL.Uniform1(GL.GetUniformLocation(BlockProgram.Handle, "stack"), 0);
-        GlLogger.WriteGLError();
 
 
         Solids.Render();
@@ -248,7 +241,7 @@ public class Window : GameWindow {
         CrossRenderer.Render();
 
         if (Controller.DebugViewEnabled) {
-            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Data.Chunks.Count);
+            DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Connection.Active!.Chunks.Count);
             DebugRenderer.Render();
         }
 

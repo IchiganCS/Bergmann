@@ -9,7 +9,6 @@ namespace Bergmann.Client.Graphics.Renderers;
 
 /// <summary>
 /// This class does not render a block. Instead, it only holds necessary information, such as the textures.
-/// It could also be added to Block.cs but let's keep shared clean of any graphical issues.
 /// </summary>
 public static class BlockTextures {
 
@@ -55,7 +54,7 @@ public static class BlockTextures {
     }
 
 
-    public static void Dispose() {
+    public static void Delete() {
         TextureStack.Dispose();
     }
 }

@@ -4,8 +4,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 
 /// <summary>
 /// A renderer for the entire world. Of course, it doesn't render the entire world, but only handles
-/// the rendering of chunks. It holds a set of <see cref="ChunkRenderer"/> which are automatically created
-/// and destroyed when called for. It registers to the events of the <see cref="World"/> class to achieve this.
+/// the different render passes. It holds a set of <see cref="IRendererPasser"/> to achieve this.
 /// </summary>
 public class WorldRenderer : IDisposable, IRenderer {
 

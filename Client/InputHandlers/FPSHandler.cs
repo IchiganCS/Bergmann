@@ -1,3 +1,4 @@
+using Bergmann.Client.Connectors;
 using Bergmann.Shared.Networking;
 using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Mathematics;
@@ -108,7 +109,7 @@ public class FPHandler : IInputHandler {
         FlyingMovement(args.DeltaTime, args.KeyboardState);
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            Hubs.World?.SendAsync(Names.Server.DestroyBlock, Position, Forward);
+            Connection.Active?.DestroyBlock(Position, Forward);
         }
 
     }

@@ -70,13 +70,6 @@ public class ChatController : ControllerBase {
             ShouldPop = true;
         }
         ));
-
-
-
-        Hubs.Chat?.On<string, string>(Names.Client.ReceiveMessage, (x, y) => {
-            Console.WriteLine($"{x} wrote {y}");
-        });
-
     }
 
     /// <summary>

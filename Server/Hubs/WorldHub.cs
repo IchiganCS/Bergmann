@@ -68,8 +68,4 @@ public class WorldHub : Hub {
         }
     }
 
-    [HubMethodName(Names.Server.DropWorld)]
-    public void DropWorld() {
-        Data.World.Clear();
-    }
 }
