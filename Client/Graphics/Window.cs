@@ -183,7 +183,7 @@ public class Window : GameWindow {
 
     private void OnConnect() {
         WorldRenderer = new();
-        Fph.Position = (0, 0, 0);
+        Fph.Position = (0, 40, 0);
         ChunkLoader = new(Connection.Active!);
         ChunkLoader.SubscribeToPositionUpdate(() => Fph.Position);
     }
