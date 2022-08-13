@@ -112,5 +112,9 @@ public class FPHandler : IInputHandler {
             Connection.Active?.DestroyBlock(Position, Forward);
         }
 
+        if (args.MouseState.IsButtonPressed(KeyMappings.BlockPlacement)) {
+            Connection.Active?.PlaceBlock(Position, Forward);
+        }
+
     }
 }

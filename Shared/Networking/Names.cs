@@ -21,6 +21,7 @@ public static class Names {
         public const string RequestChunk = nameof(RequestChunk);
         public const string RequestChunkColumn = nameof(RequestChunkColumn);
         public const string DestroyBlock = nameof(DestroyBlock);
+        public const string PlaceBlock = nameof(PlaceBlock);
         public const string SendMessage = nameof(SendMessage);
     }
 

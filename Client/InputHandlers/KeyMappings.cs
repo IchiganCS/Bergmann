@@ -14,4 +14,5 @@ public static class KeyMappings {
     public static Keys ChatToggle { get; set; } = Keys.Enter;
 
     public static MouseButton BlockDestruction { get; set; } = MouseButton.Left;
+    public static MouseButton BlockPlacement { get; set; } = MouseButton.Right;
 }

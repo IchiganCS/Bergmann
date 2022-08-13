@@ -162,6 +162,7 @@ public class Connection : IDisposable {
             Chunks.AddOrReplace(ch);
         };
     }
+    
 
     public ClientProcedures Client { get; private set; }
 
@@ -177,7 +178,9 @@ public class Connection : IDisposable {
     public void DestroyBlock(Vector3 position, Vector3 forward) {
         WorldHub.SendAsync(Names.Server.DestroyBlock, position, forward);
     }
-
+    public void PlaceBlock(Vector3 position, Vector3 forward) {
+        WorldHub.SendAsync(Names.Server.PlaceBlock, position, forward);
+    }
 
     public void Dispose() {
         WorldHub.DisposeAsync();

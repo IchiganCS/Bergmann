@@ -67,4 +67,18 @@ public class WorldHub : Hub {
         }
     }
 
+
+    [HubMethodName(Names.Server.PlaceBlock)]
+    public void PlaceBlock(Vector3 position, Vector3 direction) {
+        if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out Geometry.Face hitFace)) {
+            blockPos = blockPos + Geometry.FaceToVector[(int)hitFace];
+            if (Data.World.Chunks.GetBlockAt(blockPos) != 0)
+                return;
+
+            long key = Chunk.ComputeKey(blockPos);
+            Data.World.Chunks.SetBlockAt(blockPos, 1);
+            ClientProcedures.SendChunkUpdate(Clients.All)
+                (key, new List<Vector3i>() { blockPos }, new List<Block>() { 1 });
+        }
+    }
 }
