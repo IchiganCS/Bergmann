@@ -12,8 +12,6 @@ public class DebugRenderer : UIRenderer {
     /// </summary>
     private IList<TextRenderer> Texts { get; set; } = new List<TextRenderer>();
 
-    private IList<DiagramRenderer> Diagrams { get; set; } = new List<DiagramRenderer>();
-
     /// <summary>
     /// Gives names to indices used in <see cref="Texts"/> for easy and unique access.
     /// </summary>
@@ -36,13 +34,6 @@ public class DebugRenderer : UIRenderer {
                 Dimension = (-1, 70)
             });
         }
-        Diagrams.Add(new DiagramRenderer() {
-            AbsoluteAnchorOffset = (300, -110),
-            RelativeAnchor = (0, 1),
-            PercentageAnchorOffset = (0, 1),
-            Dimension = (500, 70)
-        });
-        Diagrams[0].ApplyLayout();
 
         UpdateEmpty();
     }
@@ -62,7 +53,6 @@ public class DebugRenderer : UIRenderer {
         Texts[(int)Identifiers.Position].SetText($"Pos:    ({position.X:0.00}, {position.Y:0.00}, {position.Z:0.00})");
         Texts[(int)Identifiers.FPS].SetText($"Fps:    {fps:0.00}");
         Texts[(int)Identifiers.Chunks].SetText($"Chunks: {chunksLoaded} loaded");
-        Diagrams[0].TickAndAddDataPoint(fps / 80f);
     }
 
     /// <summary>
@@ -70,8 +60,6 @@ public class DebugRenderer : UIRenderer {
     /// </summary>
     public override void Render() {
         foreach (IRenderer ren in Texts)
-            ren.Render();
-        foreach (IRenderer ren in Diagrams)
             ren.Render();
     }
 

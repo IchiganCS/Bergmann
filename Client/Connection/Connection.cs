@@ -8,11 +8,21 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Connectors;
 
+/// <summary>
+/// Abstracts all hub connections so that hubs can be completely removed in the entire other code.
+/// A connection is built from a link, hubs are established and whenever a component wants to request an action
+/// from the server, connection shall expose a method for it.
+/// </summary>
+public class Connection : IDisposable {
 
-public class Connection {
-
-
+    /// <summary>
+    /// Backing field for <see cref="Active"/>.
+    /// </summary>
     private static Connection? _Active;
+
+    /// <summary>
+    /// The currently active connection. All components shall work with the currently active connection.
+    /// </summary>
     public static Connection? Active {
         get => _Active;
         set {
@@ -25,25 +35,47 @@ public class Connection {
         }
     }
 
+    /// <summary>
+    /// A world hub, an instance of the class from the server package.
+    /// </summary>
+    private HubConnection WorldHub { get; init; }
+    /// <summary>
+    /// A chat hub, an instance of the class from the server package.
+    /// </summary>
+    private HubConnection ChatHub { get; init; }
 
-    private HubConnection WorldHub { get; set; }
-    private HubConnection ChatHub { get; set; }
-    public ChunkCollection Chunks { get; private set; }
+    /// <summary>
+    /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoader"/>.
+    /// </summary>
+    public ChunkCollection Chunks { get; init; }
 
-    public string Link { get; private set; }
+    /// <summary>
+    /// The link used to establish the connection.
+    /// </summary>
+    /// <value></value>
+    public Uri Link { get; init; }
 
+    /// <summary>
+    /// Whether the connection is currently connected to the server with all hubs.
+    /// </summary>
     public bool IsAlive =>
         WorldHub.State == HubConnectionState.Connected && ChatHub.State == HubConnectionState.Connected;
 
 
     public delegate void ActiveChangedDelegate(Connection newHubs);
+
+    /// <summary>
+    /// Invoked when the currently active connection changed. The new connection is already active when this event is invoked.
+    /// </summary>
     public static event ActiveChangedDelegate OnActiveChanged = default!;
 
-
+    /// <summary>
+    /// Builds a new connection and builds required hubs and other initialization.
+    /// </summary>
     /// <param name="link">Without any trailing slashes, the full protocol, domain and port,
     /// e.g. http://localhost:23156</param>
     public Connection(string link) {
-        Link = link;
+        Link = new(link);
         Logger.Info("Connecting to " + Link);
 
         HubConnection buildHub(string hubName) {
@@ -92,5 +124,11 @@ public class Connection {
 
     public void DestroyBlock(Vector3 position, Vector3 forward) {
         WorldHub.SendAsync(Names.Server.DestroyBlock, position, forward);
+    }
+
+
+    public void Dispose() {
+        WorldHub.DisposeAsync();
+        ChatHub.DisposeAsync();
     }
 }

@@ -1,14 +1,11 @@
 using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Client.Graphics.Renderers.Passers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Client.Connectors;
 using Bergmann.Shared;
-using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
-using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -36,7 +33,7 @@ public class Window : GameWindow {
     private Texture2D CrossTexture { get; set; }
     private DebugRenderer DebugRenderer { get; set; }
     private ChatRenderer ChatRenderer { get; set; }
-    private SolidsPasser Solids { get; set; }
+    private WorldRenderer WorldRenderer { get; set; }
 
     private bool WireFrameEnabled { get; set; } = false;
     private ChunkLoader ChunkLoader { get; set; }
@@ -160,12 +157,11 @@ public class Window : GameWindow {
         GL.CullFace(CullFaceMode.Back);
         GL.FrontFace(FrontFaceDirection.Ccw);
 
+        OnConnect();
 
-        Solids = new();
-        ChunkLoader = new(Connection.Active!);
-        ChunkLoader.SubscribeToPositionUpdate(() => Fph.Position);
-        Connection.OnActiveChanged += hub => {
-            Solids = new();
+        Connection.OnActiveChanged += connection => {
+            OnDisconnect();
+            OnConnect();
         };
 
         using Image<Rgba32> img = Image<Rgba32>.Load(
@@ -183,6 +179,18 @@ public class Window : GameWindow {
         CrossRenderer.ApplyLayout();
 
         DebugRenderer = new();
+    }
+
+    private void OnConnect() {
+        WorldRenderer = new();
+        ChunkLoader = new(Connection.Active!);
+        Fph.Position = (0, 0, 0);
+        ChunkLoader.SubscribeToPositionUpdate(() => Fph.Position);
+    }
+
+    private void OnDisconnect() {
+        WorldRenderer.Dispose();
+        ChunkLoader.Dispose();
     }
 
     protected override void OnUnload() {
@@ -230,7 +238,7 @@ public class Window : GameWindow {
         GL.Uniform1(GL.GetUniformLocation(BlockProgram.Handle, "stack"), 0);
 
 
-        Solids.Render();
+        WorldRenderer.Render();
 
 
         Program.Active = UIProgram;

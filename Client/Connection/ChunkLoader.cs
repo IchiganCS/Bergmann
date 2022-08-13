@@ -5,8 +5,14 @@ using OpenTK.Mathematics;
 namespace Bergmann.Client.Connectors;
 
 
-public class ChunkLoader {
+/// <summary>
+/// Loads chunks from a connection. When supplying the position of a player, it can automate the process.
+/// </summary>
+public class ChunkLoader :IDisposable {
 
+    /// <summary>
+    /// The connection where chunks are loaded and dropped from.
+    /// </summary>
     private Connection Connection { get; set; }
 
     /// <summary>
@@ -104,5 +110,13 @@ public class ChunkLoader {
                 }
             });
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
+    }
+
+    /// <summary>
+    /// Drops the timers.
+    /// </summary>
+    public void Dispose() {
+        LoadTimer?.Dispose();
+        DropTimer?.Dispose();
     }
 }
