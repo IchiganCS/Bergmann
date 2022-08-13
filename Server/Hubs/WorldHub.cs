@@ -20,7 +20,7 @@ public class WorldHub : Hub {
     /// </summary>
     /// <param name="key">The key of the chunk to be loaded.</param>
     [HubMethodName(Names.Server.RequestChunk)]
-    public async void RequestChunk(long key) {
+    public void RequestChunk(long key) {
         Chunk? chunk = Data.World.Chunks.TryGet(key);
 
         if (chunk is null) {
@@ -32,8 +32,7 @@ public class WorldHub : Hub {
             Data.World.Chunks.Add(chunk);
         }
 
-
-        await Clients.Caller.SendAsync(Names.Client.ReceiveChunk, chunk);
+        ClientProcedures.SendChunkReceived(Clients.Caller)(chunk);
     }
 
 
@@ -59,12 +58,12 @@ public class WorldHub : Hub {
     /// <param name="position">The position of the player while executing the destruction of nature.</param>
     /// <param name="direction">The direction in which the player is looking</param>
     [HubMethodName(Names.Server.DestroyBlock)]
-    public async void DestroyBlock(Vector3 position, Vector3 direction) {
+    public void DestroyBlock(Vector3 position, Vector3 direction) {
         if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out _)) {
             long key = Chunk.ComputeKey(blockPos);
             Data.World.Chunks.SetBlockAt(blockPos, 0);
-            await Clients.All.SendAsync(Names.Client.ReceiveChunkUpdate,
-                key, new List<Vector3i>() { blockPos }, new List<Block>() { 0 });
+            ClientProcedures.SendChunkUpdate(Clients.All)
+                (key, new List<Vector3i>() { blockPos }, new List<Block>() { 0 });
         }
     }
 

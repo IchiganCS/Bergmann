@@ -1,3 +1,4 @@
+using System.Reflection;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
@@ -98,20 +99,71 @@ public class Connection : IDisposable {
         ChatHub = buildHub(Names.ChatHub).Result;
 
         Chunks = new();
+        Client = new();
 
-        WorldHub.On<Chunk>(Names.Client.ReceiveChunk, ch => {
-            Chunks.AddOrReplace(ch);
-        });
 
-        WorldHub.On<long, IList<Vector3i>, IList<Block>>(Names.Client.ReceiveChunkUpdate, (ch, pos, bl) => {
+        foreach (var ev in Client.GetType().GetEvents()) {
+            MethodInfo invokeMethod = ev.EventHandlerType!.GetMethod("Invoke")!;
+            PropertyInfo invokeProperty = Client.GetType().GetProperties().First(x => x.PropertyType == ev.EventHandlerType);
+            MethodInfo getInvoker = invokeProperty.GetMethod!;
+            Type[] paramterTypes = invokeMethod.GetParameters().Select(x => x.ParameterType).ToArray();
+
+            switch (ev.Name) {
+                case nameof(ClientProcedures.OnChatMessageReceived):
+                    ChatHub.On<string, string>(ev.Name, 
+                        (a, b) => Client.InvokeChatMessageReceived(a, b));
+                    break;
+                case nameof(ClientProcedures.OnChunkReceived):
+                    WorldHub.On<Chunk>(ev.Name, 
+                        (a) => Client.InvokeChunkReceived(a));
+                    break;
+                case nameof(ClientProcedures.OnChunkUpdate):
+                    WorldHub.On<long, IList<Vector3i>, IList<Block>>(ev.Name, 
+                        (a, b, c) => Client.InvokeChunkUpdate(a, b, c));
+                    break;
+                default:
+
+                    ChatHub.On(ev.Name,
+                        paramterTypes,
+                        (args) => {
+                            return Task.Run(() => {
+                                (getInvoker.Invoke(Client, null) as Delegate)!.DynamicInvoke(args);
+                            });
+                        }
+                    );
+                    WorldHub.On(ev.Name,
+                        paramterTypes,
+                        (args) => {
+                            return Task.Run(() => {
+                                (getInvoker.Invoke(Client, null) as Delegate)!.DynamicInvoke(args);
+                            });
+                        }
+                    );
+                    break;
+            }
+        }
+
+
+        Client.OnChatMessageReceived += (user, message) => {
+            Console.WriteLine($"user {user} wrote {message}");
+        };
+
+
+        Client.OnChunkUpdate += (ch, pos, bl) => {
             int len = Math.Min(pos.Count, bl.Count);
             if (len != pos.Count || len != bl.Count) {
                 Logger.Warn($"Lengths didn't match for {Names.Client.ReceiveChunkUpdate}");
             }
             for (int i = 0; i < len; i++)
                 Chunks.SetBlockAt(pos[i], bl[i]);
-        });
+        };
+
+        Client.OnChunkReceived += ch => {
+            Chunks.AddOrReplace(ch);
+        };
     }
+
+    public ClientProcedures Client { get; private set; }
 
     public void RequestColumns(IEnumerable<long> keys) {
         foreach (long key in keys)
