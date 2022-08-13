@@ -78,9 +78,9 @@ public class Connection : IDisposable {
         Link = new(link);
         Logger.Info("Connecting to " + Link);
 
-        HubConnection buildHub(string hubName) {
+        async Task<HubConnection> buildHub(string hubName) {
             HubConnection hc = new HubConnectionBuilder()
-                .WithUrl($"{Link}/{hubName}")
+                .WithUrl(new Uri(Link, hubName))
                 .WithAutomaticReconnect()
                 .AddMessagePackProtocol(options => {
                     options.SerializerOptions =
@@ -90,12 +90,12 @@ public class Connection : IDisposable {
                 })
                 .Build();
 
-            hc.StartAsync();
+            await hc.StartAsync();
             return hc;
         }
 
-        WorldHub = buildHub(Names.WorldHub);
-        ChatHub = buildHub(Names.ChatHub);
+        WorldHub = buildHub(Names.WorldHub).Result;
+        ChatHub = buildHub(Names.ChatHub).Result;
 
         Chunks = new();
 
