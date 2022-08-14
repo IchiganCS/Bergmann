@@ -97,7 +97,8 @@ public class ChunkLoader :IDisposable {
                     .ToArray();
             }
 
-            Connection.RequestColumns(chunks);
+            foreach (long chunk in chunks)
+                Connection.Server.SendRequestChunkColumn()(chunk);
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {

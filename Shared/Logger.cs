@@ -41,7 +41,10 @@ public static class Logger {
     /// <summary>
     /// Shorthand for calling <see cref="Write"/> with <see cref="Level.Error"/>
     /// </summary>
-    public static void Error(string text, [CallerMemberName] string type = "")
-        => Write(text, Level.Error, type);
+    public static void Error(string text, [CallerMemberName] string type = "") {
+        Console.ForegroundColor = ConsoleColor.DarkRed;
+        Write(text, Level.Error, type);
+        Console.ResetColor();
+    }
 
 }

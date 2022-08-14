@@ -1,17 +1,19 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.RPC;
 using Bergmann.Shared.Objects;
 using Microsoft.AspNetCore.SignalR;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Server.Hubs;
+namespace Bergmann.Server;
 
-/// <summary>
-/// A synchronization place for the world the server holds. It may get a lot more functionality eventually 
-/// and currently operates exclusively on <see cref="Data.World"/>. Each method name has to be annotated with
-/// <see cref="HubMethodNameAttribute"/> and bound to the given entry in <see cref="Names"/>. 
-/// See the already existing examples.
-/// </summary>
-public class WorldHub : Hub {
+[MatchDelegateChecker(typeof(TrueHub))]
+public class TrueHub : Hub {
+    [MatchDelegate(typeof(ServerProcedures.ChatMessageSentDelegate))]
+    [HubMethodName(nameof(ServerProcedures.SendChatMessage))]
+    public void SendMessage(string user, string message) {
+        Console.WriteLine("received message");
+        ClientProcedures.SendMessageReceived(Clients.All)(user, message);
+    }
 
 
     /// <summary>
@@ -19,7 +21,8 @@ public class WorldHub : Hub {
     /// deemed possible. If a key can't loaded and not generated, then no response will follow.
     /// </summary>
     /// <param name="key">The key of the chunk to be loaded.</param>
-    [HubMethodName(Names.Server.RequestChunk)]
+    [MatchDelegate(typeof(ServerProcedures.RequestChunkDelegate))]
+    [HubMethodName(nameof(ServerProcedures.SendRequestChunk))]
     public void RequestChunk(long key) {
         Chunk? chunk = Data.World.Chunks.TryGet(key);
 
@@ -40,7 +43,8 @@ public class WorldHub : Hub {
     /// Requestes all chunks from a specific column. The response uses the standard <see cref="Names.Client.ReceiveChunk"/>.
     /// </summary>
     /// <param name="key">The key to any chunk in the column.</param>
-    [HubMethodName(Names.Server.RequestChunkColumn)]
+    [MatchDelegate(typeof(ServerProcedures.RequestChunkColumnDelegate))]
+    [HubMethodName(nameof(ServerProcedures.SendRequestChunkColumn))]
     public void RequestChunkColumn(long key) {
         Vector3i lowestChunk = Chunk.ComputeOffset(key);
 
@@ -57,7 +61,8 @@ public class WorldHub : Hub {
     /// </summary>
     /// <param name="position">The position of the player while executing the destruction of nature.</param>
     /// <param name="direction">The direction in which the player is looking</param>
-    [HubMethodName(Names.Server.DestroyBlock)]
+    [MatchDelegate(typeof(ServerProcedures.DestroyBlockDelegate))]
+    [HubMethodName(nameof(ServerProcedures.SendDestroyBlock))]
     public void DestroyBlock(Vector3 position, Vector3 direction) {
         if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out _)) {
             long key = Chunk.ComputeKey(blockPos);
@@ -68,7 +73,8 @@ public class WorldHub : Hub {
     }
 
 
-    [HubMethodName(Names.Server.PlaceBlock)]
+    [MatchDelegate(typeof(ServerProcedures.PlaceBlockDelegate))]
+    [HubMethodName(nameof(ServerProcedures.SendPlaceBlock))]
     public void PlaceBlock(Vector3 position, Vector3 direction) {
         if (Data.World.Chunks.Raycast(position, direction, out Vector3i blockPos, out Geometry.Face hitFace)) {
             blockPos = blockPos + Geometry.FaceToVector[(int)hitFace];

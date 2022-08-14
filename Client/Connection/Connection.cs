@@ -1,6 +1,7 @@
 using System.Reflection;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.RPC;
 using Bergmann.Shared.Objects;
 using MessagePack;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -39,11 +40,7 @@ public class Connection : IDisposable {
     /// <summary>
     /// A world hub, an instance of the class from the server package.
     /// </summary>
-    private HubConnection WorldHub { get; init; }
-    /// <summary>
-    /// A chat hub, an instance of the class from the server package.
-    /// </summary>
-    private HubConnection ChatHub { get; init; }
+    private HubConnection Hub { get; init; }
 
     /// <summary>
     /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoader"/>.
@@ -60,7 +57,7 @@ public class Connection : IDisposable {
     /// Whether the connection is currently connected to the server with all hubs.
     /// </summary>
     public bool IsAlive =>
-        WorldHub.State == HubConnectionState.Connected && ChatHub.State == HubConnectionState.Connected;
+        Hub.State == HubConnectionState.Connected;
 
 
     public delegate void ActiveChangedDelegate(Connection newHubs);
@@ -95,11 +92,13 @@ public class Connection : IDisposable {
             return hc;
         }
 
-        WorldHub = buildHub(Names.WorldHub).Result;
-        ChatHub = buildHub(Names.ChatHub).Result;
+        Hub = buildHub(Names.Hub).Result;
 
         Chunks = new();
+
+
         Client = new();
+        Server = new(Hub);
 
 
         foreach (var ev in Client.GetType().GetEvents()) {
@@ -110,20 +109,21 @@ public class Connection : IDisposable {
 
             switch (ev.Name) {
                 case nameof(ClientProcedures.OnChatMessageReceived):
-                    ChatHub.On<string, string>(ev.Name, 
+                    Hub.On<string, string>(ev.Name, 
                         (a, b) => Client.InvokeChatMessageReceived(a, b));
                     break;
                 case nameof(ClientProcedures.OnChunkReceived):
-                    WorldHub.On<Chunk>(ev.Name, 
+                    Hub.On<Chunk>(ev.Name, 
                         (a) => Client.InvokeChunkReceived(a));
                     break;
                 case nameof(ClientProcedures.OnChunkUpdate):
-                    WorldHub.On<long, IList<Vector3i>, IList<Block>>(ev.Name, 
+                    Hub.On<long, IList<Vector3i>, IList<Block>>(ev.Name, 
                         (a, b, c) => Client.InvokeChunkUpdate(a, b, c));
                     break;
                 default:
-
-                    ChatHub.On(ev.Name,
+                    //this is a very slow way since on each request, there are several reflection look ups.
+                    Logger.Warn("Bound method to dynamic invoke - this is very slow and should be optimized");
+                    Hub.On(ev.Name,
                         paramterTypes,
                         (args) => {
                             return Task.Run(() => {
@@ -131,7 +131,7 @@ public class Connection : IDisposable {
                             });
                         }
                     );
-                    WorldHub.On(ev.Name,
+                    Hub.On(ev.Name,
                         paramterTypes,
                         (args) => {
                             return Task.Run(() => {
@@ -164,26 +164,12 @@ public class Connection : IDisposable {
     }
     
 
-    public ClientProcedures Client { get; private set; }
+    public ClientProcedures Client { get; init; }
 
-    public void RequestColumns(IEnumerable<long> keys) {
-        foreach (long key in keys)
-            WorldHub.SendAsync(Names.Server.RequestChunkColumn, key);
-    }
+    public ServerProcedures Server { get; init; }
 
-    public void SendChatMessage(string sender, string message) {
-        ChatHub.SendAsync(Names.Server.SendMessage, sender, message);
-    }
-
-    public void DestroyBlock(Vector3 position, Vector3 forward) {
-        WorldHub.SendAsync(Names.Server.DestroyBlock, position, forward);
-    }
-    public void PlaceBlock(Vector3 position, Vector3 forward) {
-        WorldHub.SendAsync(Names.Server.PlaceBlock, position, forward);
-    }
 
     public void Dispose() {
-        WorldHub.DisposeAsync();
-        ChatHub.DisposeAsync();
+        Hub.DisposeAsync();
     }
 }

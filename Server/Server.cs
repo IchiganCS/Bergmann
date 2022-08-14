@@ -1,4 +1,3 @@
-using Bergmann.Server.Hubs;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using MessagePack;
@@ -30,8 +29,7 @@ public class Server {
         WebApplication app = builder.Build();
 
         app.UseRouting();
-        app.MapHub<ChatHub>("/" + Names.ChatHub);
-        app.MapHub<WorldHub>("/" + Names.WorldHub);
+        app.MapHub<TrueHub>("/" + Names.Hub);
 
 
         app.Run();

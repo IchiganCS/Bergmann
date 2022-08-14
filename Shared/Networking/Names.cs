@@ -13,8 +13,7 @@ public static class Names {
     /// </summary>
     public const int DefaultPort = 23156;
     
-    public const string ChatHub = nameof(ChatHub);
-    public const string WorldHub = nameof(WorldHub);
+    public const string Hub = nameof(Hub);
 
     public static class Server {
 

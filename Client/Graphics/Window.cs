@@ -110,7 +110,7 @@ public class Window : GameWindow {
             if (string.IsNullOrWhiteSpace(x))
                 return;
                 
-            Connection.Active?.SendChatMessage("ich", x);
+            Connection.Active?.Server.SendChatMessage()("ich", x);
         });
         ChatRenderer = new ChatRenderer(cont);
 
