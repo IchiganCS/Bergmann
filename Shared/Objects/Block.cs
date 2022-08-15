@@ -6,6 +6,7 @@ namespace Bergmann.Shared.Objects;
 /// Block is effectively an integer stored in <see cref="Block.Type"/>. Implicit conversions exist.
 /// All information for type can be statically retrieved by methods, e.g. texture coordinates and so on.
 /// </summary>
+[MessagePack.MessagePackObject]
 public struct Block {
     private const int INFO_MASK = 0b111111111111;
 

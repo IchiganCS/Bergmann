@@ -1,4 +1,5 @@
 using Bergmann.Shared;
+using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
@@ -98,7 +99,7 @@ public class ChunkLoader :IDisposable {
             }
 
             foreach (long chunk in chunks)
-                Connection.Server.SendRequestChunkColumn()(chunk);
+                Connection.ClientToServer(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {

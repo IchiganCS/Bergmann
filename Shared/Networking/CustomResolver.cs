@@ -5,7 +5,7 @@ using MessagePack.Formatters;
 using MessagePack.Resolvers;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Shared;
+namespace Bergmann.Shared.Networking.Resolvers;
 
 /// <summary>
 /// A custom resolver used for serializing and deserializing values in the message pack protocol.
@@ -13,6 +13,8 @@ namespace Bergmann.Shared;
 /// It uses a <see cref="StandardResolver"/>, if it can't find the specified type.
 /// </summary>
 public class CustomResolver : IFormatterResolver {
+
+    public static CustomResolver Instance { get; set; } = new();
 
     /// <summary>
     /// Returns an appropriate formatter from the type. Custom types with serialization just built for this project, it returns those,
@@ -22,16 +24,12 @@ public class CustomResolver : IFormatterResolver {
     /// <returns>An object which supports serialization for type <typeparamref name="T"/> as specified by 
     /// <see cref="IMessagePackFormatter{T}"/>.</returns>
     public IMessagePackFormatter<T> GetFormatter<T>() {
-        if (typeof(T) == typeof(Chunk))
-            return (IMessagePackFormatter<T>)new ChunkFormatter();
         if (typeof(T) == typeof(Vector3))
             return (IMessagePackFormatter<T>)new Vector3Formatter();
         if (typeof(T) == typeof(Vector3i))
             return (IMessagePackFormatter<T>)new Vector3iFormatter();
-        if (typeof(T) == typeof(Block))
-            return (IMessagePackFormatter<T>)new BlockFormatter();
 
-        return StandardResolver.Instance.GetFormatter<T>();
+        return null!;
     }
 
     /// <summary>
@@ -121,4 +119,18 @@ public class CustomResolver : IFormatterResolver {
             writer.WriteInt64(value.Key);
         }
     }
+
+    private class ChatMessageFormatter : IMessagePackFormatter<ChatMessage> {
+        public ChatMessage Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
+            return new ChatMessage(reader.ReadString(), reader.ReadString());
+        }
+
+        public void Serialize(ref MessagePackWriter writer, ChatMessage value, MessagePackSerializerOptions options) {
+            writer.WriteString(MemoryMarshal.AsBytes<char>(value.Sender));
+            writer.WriteString(MemoryMarshal.AsBytes<char>(value.Text));
+        }
+        
+    }
+
+
 }

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Bergmann.Shared.Objects;
 
+[MessagePack.MessagePackObject]
 public class BlockInfo {
     private static List<BlockInfo> AllInfos { get; set; } = new();
 

@@ -1,12 +1,13 @@
 using System.Reflection;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
-using Bergmann.Shared.Networking.RPC;
+using Bergmann.Shared.Networking.Resolvers;
 using Bergmann.Shared.Objects;
 using MessagePack;
+using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTK.Mathematics;
+using Microsoft.Extensions.Logging;
 
 namespace Bergmann.Client.Connectors;
 
@@ -41,6 +42,11 @@ public class Connection : IDisposable {
     /// A world hub, an instance of the class from the server package.
     /// </summary>
     private HubConnection Hub { get; init; }
+
+    /// <summary>
+    /// The connection id of the hub. Useful when requesting information from the server.
+    /// </summary>
+    public string ConnectionId => Hub.ConnectionId!;
 
     /// <summary>
     /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoader"/>.
@@ -81,10 +87,19 @@ public class Connection : IDisposable {
                 .WithUrl(new Uri(Link, hubName))
                 .WithAutomaticReconnect()
                 .AddMessagePackProtocol(options => {
+                    StaticCompositeResolver.Instance.Register(
+                        GeneratedResolver.Instance,
+                        CustomResolver.Instance,
+                        StandardResolver.Instance
+                    );
+
                     options.SerializerOptions =
                         MessagePackSerializerOptions.Standard
-                        .WithResolver(new CustomResolver())
+                        .WithResolver(StaticCompositeResolver.Instance)
                         .WithSecurity(MessagePackSecurity.UntrustedData);
+                })
+                .ConfigureLogging(logging => {
+                    logging.AddConsole();
                 })
                 .Build();
 
@@ -96,77 +111,45 @@ public class Connection : IDisposable {
 
         Chunks = new();
 
-
-        Client = new();
-        Server = new(Hub);
-
-
-        foreach (var ev in Client.GetType().GetEvents()) {
-            MethodInfo invokeMethod = ev.EventHandlerType!.GetMethod("Invoke")!;
-            PropertyInfo invokeProperty = Client.GetType().GetProperties().First(x => x.PropertyType == ev.EventHandlerType);
-            MethodInfo getInvoker = invokeProperty.GetMethod!;
-            Type[] paramterTypes = invokeMethod.GetParameters().Select(x => x.ParameterType).ToArray();
-
-            switch (ev.Name) {
-                case nameof(ClientProcedures.OnChatMessageReceived):
-                    Hub.On<string, string>(ev.Name, 
-                        (a, b) => Client.InvokeChatMessageReceived(a, b));
-                    break;
-                case nameof(ClientProcedures.OnChunkReceived):
-                    Hub.On<Chunk>(ev.Name, 
-                        (a) => Client.InvokeChunkReceived(a));
-                    break;
-                case nameof(ClientProcedures.OnChunkUpdate):
-                    Hub.On<long, IList<Vector3i>, IList<Block>>(ev.Name, 
-                        (a, b, c) => Client.InvokeChunkUpdate(a, b, c));
-                    break;
-                default:
-                    //this is a very slow way since on each request, there are several reflection look ups.
-                    Logger.Warn("Bound method to dynamic invoke - this is very slow and should be optimized");
-                    Hub.On(ev.Name,
-                        paramterTypes,
-                        (args) => {
-                            return Task.Run(() => {
-                                (getInvoker.Invoke(Client, null) as Delegate)!.DynamicInvoke(args);
-                            });
-                        }
-                    );
-                    Hub.On(ev.Name,
-                        paramterTypes,
-                        (args) => {
-                            return Task.Run(() => {
-                                (getInvoker.Invoke(Client, null) as Delegate)!.DynamicInvoke(args);
-                            });
-                        }
-                    );
-                    break;
-            }
-        }
-
-
-        Client.OnChatMessageReceived += (user, message) => {
-            Console.WriteLine($"user {user} wrote {message}");
-        };
-
-
-        Client.OnChunkUpdate += (ch, pos, bl) => {
-            int len = Math.Min(pos.Count, bl.Count);
-            if (len != pos.Count || len != bl.Count) {
-                Logger.Warn($"Lengths didn't match for {Names.Client.ReceiveChunkUpdate}");
-            }
-            for (int i = 0; i < len; i++)
-                Chunks.SetBlockAt(pos[i], bl[i]);
-        };
-
-        Client.OnChunkReceived += ch => {
-            Chunks.AddOrReplace(ch);
-        };
+        Hub.On<MessageBox>("ServerToClient", x => HandleServerToClient(x.Message));
     }
-    
 
-    public ClientProcedures Client { get; init; }
+    private Dictionary<Type, IList<object>> ObscureMessageHandlers { get; set; } = new();
+    private IList<IMessageHandler<ChatMessage>> ChatMessageHandlers { get; set; } = new List<IMessageHandler<ChatMessage>>();
 
-    public ServerProcedures Server { get; init; }
+    public void RegisterMessageHandler<T>(IMessageHandler<T> messageHandler) where T : IMessage {
+        if (messageHandler is IMessageHandler<ChatMessage> cm)
+            ChatMessageHandlers.Add(cm);
+        
+        else {
+            if (ObscureMessageHandlers.ContainsKey(typeof(T)))
+                ObscureMessageHandlers[typeof(T)].Add(messageHandler);
+            else
+                ObscureMessageHandlers.Add(typeof(T), new List<object>() { messageHandler });
+        }
+    }
+    private IEnumerable<IMessageHandler<T>> GetMessageHandler<T>() where T : IMessage {
+        if (typeof(T) == typeof(ChatMessage))
+            return (IEnumerable<IMessageHandler<T>>)ChatMessageHandlers;
+
+        else {
+            return ObscureMessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
+        }
+    }
+
+    public async Task ClientToServer(IMessage message) {
+        try {
+
+        await Hub.InvokeAsync("ClientToServer", new MessageBox(message));
+        } catch (Exception e) {
+            Console.WriteLine(e.Message);
+        }
+    }
+
+    private void HandleServerToClient<T>(T message) where T : IMessage{
+        // foreach (IMessageHandler<T> h in GetMessageHandler<T>())
+        //     h.HandleMessage(message);
+    }
 
 
     public void Dispose() {

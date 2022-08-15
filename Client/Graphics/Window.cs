@@ -12,6 +12,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Bergmann.Shared.Networking;
 
 namespace Bergmann.Client.Graphics;
 
@@ -110,7 +111,7 @@ public class Window : GameWindow {
             if (string.IsNullOrWhiteSpace(x))
                 return;
                 
-            Connection.Active?.Server.SendChatMessage()("ich", x);
+            Connection.Active?.ClientToServer(new ChatMessage("ich", x));
         });
         ChatRenderer = new ChatRenderer(cont);
 

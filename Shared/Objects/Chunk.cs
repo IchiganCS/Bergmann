@@ -9,6 +9,7 @@ namespace Bergmann.Shared.Objects;
 /// chunks can only be updated overall. They can of course try to retain the advantage of updating only single blocks. 
 /// Effectively, chunks are a constant manager for a number of blocks. 
 /// </summary>
+[MessagePack.MessagePackObject]
 public class Chunk {
     /// <summary>
     /// It might be wise to *not* change this value. Since it's used for storing in files :)
