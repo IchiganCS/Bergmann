@@ -11,6 +11,8 @@
 #pragma warning disable SA1312 // Variable names should begin with lower-case letter
 #pragma warning disable SA1649 // File name should match first type name
 
+using MessagePack;
+
 namespace Bergmann.Shared.Networking.Resolvers
 {
     public class GeneratedResolver : global::MessagePack.IFormatterResolver
@@ -53,12 +55,12 @@ namespace Bergmann.Shared.Networking.Resolvers
                 { typeof(global::System.Collections.Generic.IList<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>), 1 },
                 { typeof(int[,,]), 2 },
                 { typeof(global::Bergmann.Shared.Networking.IMessage), 3 },
-                { typeof(global::Bergmann.Shared.Networking.ChatMessage), 4 },
-                { typeof(global::Bergmann.Shared.Networking.ChunkColumnRequestMessage), 5 },
-                { typeof(global::Bergmann.Shared.Networking.ChunkUpdateMessage), 6 },
-                { typeof(global::Bergmann.Shared.Networking.DestroyBlockMessage), 7 },
-                { typeof(global::Bergmann.Shared.Networking.MessageBox), 8 },
-                { typeof(global::Bergmann.Shared.Networking.PlaceBlockMessage), 9 },
+                { typeof(global::Bergmann.Shared.Networking.BlockDestructionMessage), 4 },
+                { typeof(global::Bergmann.Shared.Networking.BlockPlacementMessage), 5 },
+                { typeof(global::Bergmann.Shared.Networking.ChatMessage), 6 },
+                { typeof(global::Bergmann.Shared.Networking.ChunkColumnRequestMessage), 7 },
+                { typeof(global::Bergmann.Shared.Networking.ChunkUpdateMessage), 8 },
+                { typeof(global::Bergmann.Shared.Networking.MessageBox), 9 },
                 { typeof(global::Bergmann.Shared.Networking.RawChunkMessage), 10 },
                 { typeof(global::Bergmann.Shared.Objects.Block), 11 },
                 { typeof(global::Bergmann.Shared.Objects.BlockInfo), 12 },
@@ -80,12 +82,12 @@ namespace Bergmann.Shared.Networking.Resolvers
                 case 1: return new global::MessagePack.Formatters.InterfaceListFormatter2<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>();
                 case 2: return new global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<int>();
                 case 3: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.IMessageFormatter();
-                case 4: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChatMessageFormatter();
-                case 5: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChunkColumnRequestMessageFormatter();
-                case 6: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChunkUpdateMessageFormatter();
-                case 7: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.DestroyBlockMessageFormatter();
-                case 8: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.MessageBoxFormatter();
-                case 9: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.PlaceBlockMessageFormatter();
+                case 4: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.BlockDestructionMessageFormatter();
+                case 5: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.BlockPlacementMessageFormatter();
+                case 6: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChatMessageFormatter();
+                case 7: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChunkColumnRequestMessageFormatter();
+                case 8: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ChunkUpdateMessageFormatter();
+                case 9: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.MessageBoxFormatter();
                 case 10: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.RawChunkMessageFormatter();
                 case 11: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockFormatter();
                 case 12: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockInfoFormatter();
@@ -128,15 +130,23 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
 
         public IMessageFormatter()
         {
-            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(2, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(6, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
                 { typeof(global::Bergmann.Shared.Networking.ChatMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
                 { typeof(global::Bergmann.Shared.Networking.ChunkColumnRequestMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
+                { typeof(global::Bergmann.Shared.Networking.BlockPlacementMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(2, 2) },
+                { typeof(global::Bergmann.Shared.Networking.BlockDestructionMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(3, 3) },
+                { typeof(global::Bergmann.Shared.Networking.RawChunkMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(4, 4) },
+                { typeof(global::Bergmann.Shared.Networking.ChunkUpdateMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(5, 5) },
             };
-            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(2)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(6)
             {
                 { 0, 0 },
                 { 1, 1 },
+                { 2, 2 },
+                { 3, 3 },
+                { 4, 4 },
+                { 5, 5 },
             };
         }
 
@@ -150,10 +160,22 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatter<global::Bergmann.Shared.Networking.ChatMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.ChatMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChatMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.ChatMessage)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatter<global::Bergmann.Shared.Networking.ChunkColumnRequestMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.ChunkColumnRequestMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChunkColumnRequestMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.ChunkColumnRequestMessage)value, options);
+                        break;
+                    case 2:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.BlockPlacementMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.BlockPlacementMessage)value, options);
+                        break;
+                    case 3:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.BlockDestructionMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.BlockDestructionMessage)value, options);
+                        break;
+                    case 4:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.RawChunkMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.RawChunkMessage)value, options);
+                        break;
+                    case 5:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChunkUpdateMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.ChunkUpdateMessage)value, options);
                         break;
                     default:
                         break;
@@ -189,10 +211,22 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
             switch (key)
             {
                 case 0:
-                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatter<global::Bergmann.Shared.Networking.ChatMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChatMessage>().Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatter<global::Bergmann.Shared.Networking.ChunkColumnRequestMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChunkColumnRequestMessage>().Deserialize(ref reader, options);
+                    break;
+                case 2:
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.BlockPlacementMessage>().Deserialize(ref reader, options);
+                    break;
+                case 3:
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.BlockDestructionMessage>().Deserialize(ref reader, options);
+                    break;
+                case 4:
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.RawChunkMessage>().Deserialize(ref reader, options);
+                    break;
+                case 5:
+                    result = (global::Bergmann.Shared.Networking.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.ChunkUpdateMessage>().Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -234,6 +268,146 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
 
 namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
 {
+    public sealed class BlockDestructionMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.BlockDestructionMessage>
+    {
+        // Position
+        private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
+        // Forward
+        private static global::System.ReadOnlySpan<byte> GetSpan_Forward() => new byte[1 + 7] { 167, 70, 111, 114, 119, 97, 114, 100 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.BlockDestructionMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Position());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Position, options);
+            writer.WriteRaw(GetSpan_Forward());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Forward, options);
+        }
+
+        public global::Bergmann.Shared.Networking.BlockDestructionMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Position__ = default(global::OpenTK.Mathematics.Vector3);
+            var __Forward__ = default(global::OpenTK.Mathematics.Vector3);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7957695015293251408UL) { goto FAIL; }
+
+                        __Position__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 7:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28273260612448070UL) { goto FAIL; }
+
+                        __Forward__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.BlockDestructionMessage(__Position__, __Forward__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class BlockPlacementMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.BlockPlacementMessage>
+    {
+        // Position
+        private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
+        // Forward
+        private static global::System.ReadOnlySpan<byte> GetSpan_Forward() => new byte[1 + 7] { 167, 70, 111, 114, 119, 97, 114, 100 };
+        // BlockToPlace
+        private static global::System.ReadOnlySpan<byte> GetSpan_BlockToPlace() => new byte[1 + 12] { 172, 66, 108, 111, 99, 107, 84, 111, 80, 108, 97, 99, 101 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.BlockPlacementMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(3);
+            writer.WriteRaw(GetSpan_Position());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Position, options);
+            writer.WriteRaw(GetSpan_Forward());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Forward, options);
+            writer.WriteRaw(GetSpan_BlockToPlace());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Block>(formatterResolver).Serialize(ref writer, value.BlockToPlace, options);
+        }
+
+        public global::Bergmann.Shared.Networking.BlockPlacementMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Position__ = default(global::OpenTK.Mathematics.Vector3);
+            var __Forward__ = default(global::OpenTK.Mathematics.Vector3);
+            var __BlockToPlace__ = default(global::Bergmann.Shared.Objects.Block);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7957695015293251408UL) { goto FAIL; }
+
+                        __Position__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 7:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28273260612448070UL) { goto FAIL; }
+
+                        __Forward__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 12:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_BlockToPlace().Slice(1))) { goto FAIL; }
+
+                        __BlockToPlace__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Block>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.BlockPlacementMessage(__Position__, __Forward__, __BlockToPlace__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
     public sealed class ChatMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.ChatMessage>
     {
         // Sender
@@ -429,71 +603,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
         }
     }
 
-    public sealed class DestroyBlockMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.DestroyBlockMessage>
-    {
-        // Position
-        private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
-        // Forward
-        private static global::System.ReadOnlySpan<byte> GetSpan_Forward() => new byte[1 + 7] { 167, 70, 111, 114, 119, 97, 114, 100 };
-
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.DestroyBlockMessage value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_Position());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Position, options);
-            writer.WriteRaw(GetSpan_Forward());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Forward, options);
-        }
-
-        public global::Bergmann.Shared.Networking.DestroyBlockMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-
-            options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
-            var __Position__ = default(global::OpenTK.Mathematics.Vector3);
-            var __Forward__ = default(global::OpenTK.Mathematics.Vector3);
-
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-                    case 8:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7957695015293251408UL) { goto FAIL; }
-
-                        __Position__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-                    case 7:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28273260612448070UL) { goto FAIL; }
-
-                        __Forward__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-
-                }
-            }
-
-            var ____result = new global::Bergmann.Shared.Networking.DestroyBlockMessage(__Position__, __Forward__);
-            reader.Depth--;
-            return ____result;
-        }
-    }
-
     public sealed class MessageBoxFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.MessageBox>
     {
         // Message
@@ -544,81 +653,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
             }
 
             var ____result = new global::Bergmann.Shared.Networking.MessageBox(__Message__);
-            reader.Depth--;
-            return ____result;
-        }
-    }
-
-    public sealed class PlaceBlockMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.PlaceBlockMessage>
-    {
-        // Position
-        private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
-        // Forward
-        private static global::System.ReadOnlySpan<byte> GetSpan_Forward() => new byte[1 + 7] { 167, 70, 111, 114, 119, 97, 114, 100 };
-        // BlockToPlace
-        private static global::System.ReadOnlySpan<byte> GetSpan_BlockToPlace() => new byte[1 + 12] { 172, 66, 108, 111, 99, 107, 84, 111, 80, 108, 97, 99, 101 };
-
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.PlaceBlockMessage value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(3);
-            writer.WriteRaw(GetSpan_Position());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Position, options);
-            writer.WriteRaw(GetSpan_Forward());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Forward, options);
-            writer.WriteRaw(GetSpan_BlockToPlace());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Block>(formatterResolver).Serialize(ref writer, value.BlockToPlace, options);
-        }
-
-        public global::Bergmann.Shared.Networking.PlaceBlockMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-
-            options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
-            var __Position__ = default(global::OpenTK.Mathematics.Vector3);
-            var __Forward__ = default(global::OpenTK.Mathematics.Vector3);
-            var __BlockToPlace__ = default(global::Bergmann.Shared.Objects.Block);
-
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-                    case 8:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7957695015293251408UL) { goto FAIL; }
-
-                        __Position__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-                    case 7:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28273260612448070UL) { goto FAIL; }
-
-                        __Forward__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-                    case 12:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_BlockToPlace().Slice(1))) { goto FAIL; }
-
-                        __BlockToPlace__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Block>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-
-                }
-            }
-
-            var ____result = new global::Bergmann.Shared.Networking.PlaceBlockMessage(__Position__, __Forward__, __BlockToPlace__);
             reader.Depth--;
             return ____result;
         }

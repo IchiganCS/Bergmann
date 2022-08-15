@@ -120,7 +120,7 @@ public class Connection : IDisposable {
     public void RegisterMessageHandler<T>(IMessageHandler<T> messageHandler) where T : IMessage {
         if (messageHandler is IMessageHandler<ChatMessage> cm)
             ChatMessageHandlers.Add(cm);
-        
+
         else {
             if (ObscureMessageHandlers.ContainsKey(typeof(T)))
                 ObscureMessageHandlers[typeof(T)].Add(messageHandler);
@@ -137,16 +137,13 @@ public class Connection : IDisposable {
         }
     }
 
-    public async Task ClientToServer(IMessage message) {
-        try {
-
-        await Hub.InvokeAsync("ClientToServer", new MessageBox(message));
-        } catch (Exception e) {
-            Console.WriteLine(e.Message);
-        }
+    public async Task ClientToServerAsync(IMessage message) {
+        await Hub.SendAsync("ClientToServer", new MessageBox(message));
     }
 
-    private void HandleServerToClient<T>(T message) where T : IMessage{
+    private void HandleServerToClient<T>(T message) where T : IMessage {
+        if (message is ChatMessage cm)
+            Console.WriteLine($"user {cm.Sender} wrote {cm.Text}");
         // foreach (IMessageHandler<T> h in GetMessageHandler<T>())
         //     h.HandleMessage(message);
     }

@@ -111,7 +111,7 @@ public class Window : GameWindow {
             if (string.IsNullOrWhiteSpace(x))
                 return;
                 
-            Connection.Active?.ClientToServer(new ChatMessage("ich", x));
+            Connection.Active?.ClientToServerAsync(new ChatMessage("ich", x));
         });
         ChatRenderer = new ChatRenderer(cont);
 

@@ -5,7 +5,7 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Server.Handlers;
 
-public class WorldHandler : IMessageHandler<PlaceBlockMessage>, IMessageHandler<DestroyBlockMessage>,
+public class WorldHandler : IMessageHandler<BlockPlacementMessage>, IMessageHandler<BlockDestructionMessage>,
     IMessageHandler<ChunkColumnRequestMessage> {
 
     private async Task SendEntireChunkTo(IClientProxy clients, long key) {
@@ -32,7 +32,7 @@ public class WorldHandler : IMessageHandler<PlaceBlockMessage>, IMessageHandler<
         }
     }
 
-    public async void HandleMessage(PlaceBlockMessage message) {
+    public async void HandleMessage(BlockPlacementMessage message) {
         if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out Geometry.Face hitFace)) {
             blockPos = blockPos + Geometry.FaceToVector[(int)hitFace];
             if (Data.World.Chunks.GetBlockAt(blockPos) != 0)
@@ -44,7 +44,7 @@ public class WorldHandler : IMessageHandler<PlaceBlockMessage>, IMessageHandler<
         }
     }
 
-    public async void HandleMessage(DestroyBlockMessage message) {
+    public async void HandleMessage(BlockDestructionMessage message) {
         if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out _)) {
             long key = Chunk.ComputeKey(blockPos);
             Data.World.Chunks.SetBlockAt(blockPos, 0);
