@@ -1,4 +1,3 @@
-using System.Reflection;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Networking.Resolvers;
@@ -9,7 +8,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Bergmann.Client.Connectors;
+namespace Bergmann.Client;
 
 /// <summary>
 /// Abstracts all hub connections so that hubs can be completely removed in the entire other code.

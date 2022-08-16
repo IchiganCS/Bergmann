@@ -1,4 +1,3 @@
-using Bergmann.Client.Connectors;
 using Bergmann.Client.Graphics;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;

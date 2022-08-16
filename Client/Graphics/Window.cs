@@ -3,7 +3,6 @@ using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
-using Bergmann.Client.Connectors;
 using Bergmann.Shared;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
@@ -12,7 +11,6 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Bergmann.Shared.Networking;
 
 namespace Bergmann.Client.Graphics;
 

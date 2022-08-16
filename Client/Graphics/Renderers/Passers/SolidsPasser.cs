@@ -1,4 +1,3 @@
-using Bergmann.Client.Connectors;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
@@ -77,7 +76,6 @@ public class SolidsPasser : IRendererPasser {
 
     public SolidsPasser() {
         Chunkers = new();
-        Connection.Active!.Chunks.ForEach(x => MakeNewRendererAt(x.Key));
         Connection.Active!.Chunks.OnChunkChanged += (ch, positions) => {
             MakeNewRendererAt(ch.Key);
         };
@@ -88,6 +86,8 @@ public class SolidsPasser : IRendererPasser {
 
         Connection.Active!.Chunks.OnChunkRemoved += ch =>
             DropRendererAt(ch.Key);
+
+        Connection.Active!.Chunks.ForEach(x => MakeNewRendererAt(x.Key));
     }
 
 

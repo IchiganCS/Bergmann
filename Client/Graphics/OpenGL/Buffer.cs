@@ -52,7 +52,6 @@ public class Buffer<T> : IDisposable where T : struct {
         Reserved = count;
         Length = -1;
         Hint = hint;
-        GlLogger.WriteGLError();
     }
 
     /// <summary>
@@ -87,8 +86,6 @@ public class Buffer<T> : IDisposable where T : struct {
 
 
         GL.BufferSubData(Target, IntPtr.Zero, length * Marshal.SizeOf<T>(), items);
-
-        GlLogger.WriteGLError();
 
         Length = length;
     }

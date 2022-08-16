@@ -1,6 +1,3 @@
-using Bergmann.Client.Connectors;
-using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Networking;
 using OpenTK.Windowing.Common;

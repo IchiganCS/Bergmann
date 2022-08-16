@@ -22,7 +22,6 @@ public class BoxRenderer : UIRenderer {
     private Buffer<uint> Indices { get; set; }
 
 
-#pragma warning disable CS8618
     /// <summary>
     /// Constructs an empty box renderer and allocates the buffers.
     /// </summary>
@@ -30,7 +29,6 @@ public class BoxRenderer : UIRenderer {
             Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer,  4);
             Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 6);
     }
-#pragma warning restore CS8618
 
 
 

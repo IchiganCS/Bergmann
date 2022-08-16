@@ -1,6 +1,4 @@
-using Bergmann.Client.Connectors;
 using Bergmann.Shared.Networking;
-using Microsoft.AspNetCore.SignalR.Client;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
