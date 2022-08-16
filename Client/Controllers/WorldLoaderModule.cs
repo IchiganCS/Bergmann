@@ -9,7 +9,9 @@ namespace Bergmann.Client.Controllers;
 /// <summary>
 /// Loads chunks from a connection. When supplying the position of a player, it can automate the process.
 /// </summary>
-public class ChunkLoaderController : IController, IDisposable, IMessageHandler<RawChunkMessage>, IMessageHandler<ChunkUpdateMessage> {
+public class WorldLoaderModule : Module, IDisposable, 
+    IMessageHandler<RawChunkMessage>, 
+    IMessageHandler<ChunkUpdateMessage> {
 
     /// <summary>
     /// The timer responsible to load chunks. It checks against a given position whether any chunks are in <see cref="LoadDistance"/>
@@ -35,8 +37,6 @@ public class ChunkLoaderController : IController, IDisposable, IMessageHandler<R
     }
     private int _LoadDistance;
 
-
-    private bool IsActive { get; set; } = false;
 
     /// <summary>
     /// This stores an offset to each chunk column around 0. Add the position to it to see which columns should be requested.
@@ -65,7 +65,10 @@ public class ChunkLoaderController : IController, IDisposable, IMessageHandler<R
     /// <param name="getPosition">A function which always returns the correct position of the player.</param>
     /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
-    public ChunkLoaderController(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000, int loadDistance = 10, int dropDistance = 40) {
+    public WorldLoaderModule(Func<Vector3> getPosition, 
+        int loadTime = 250, int dropTime = 2000, 
+        int loadDistance = 10, int dropDistance = 40) {
+
         LoadDistance = loadDistance;
         DropDistance = dropDistance;
 
@@ -114,9 +117,6 @@ public class ChunkLoaderController : IController, IDisposable, IMessageHandler<R
     }
 
 
-    /// <summary>
-    /// Drops the timers.
-    /// </summary>
     public void Dispose() {
         LoadTimer?.Dispose();
         DropTimer?.Dispose();
@@ -132,19 +132,15 @@ public class ChunkLoaderController : IController, IDisposable, IMessageHandler<R
         Connection.Active?.Chunks.AddOrReplace(message.Chunk);
     }
 
-    public void OnActivated(ControllerStack stack) {
+    public override void OnActivated(Controller controller) {
         Connection.Active?.RegisterMessageHandler<RawChunkMessage>(this);
         Connection.Active?.RegisterMessageHandler<ChunkUpdateMessage>(this);
-        IsActive = true;
+        base.OnActivated(controller);
     }
 
-    public void OnDeactivated() {
-        IsActive = false;
+    public override void OnDeactivated() {
+        base.OnDeactivated();
         Connection.Active?.DropMessageHandler<RawChunkMessage>(this);
         Connection.Active?.DropMessageHandler<ChunkUpdateMessage>(this);
     }
-
-    public void OnNowOnTop() { }
-
-    public void OnNotOnTop() { }
 }

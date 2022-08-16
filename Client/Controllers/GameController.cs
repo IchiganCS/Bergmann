@@ -8,7 +8,7 @@ namespace Bergmann.Client.Controllers;
 /// <summary>
 /// Handles the base inputs of the game while the player is moving around etc.
 /// </summary>
-public class GameController : ParentController {
+public class GameController : Controller {
 
     /// <summary>
     /// Grab the cursor, we only want our cross drawn.
@@ -36,14 +36,14 @@ public class GameController : ParentController {
         });
         Fph = new();
 
-        ChildControllers.Add(new ChunkLoaderController(() => Fph.Position));
-        ChildInputHandlers.Add(Fph);
+        Modules.Add(new WorldLoaderModule(() => Fph.Position));
+        InputHandlers.Add(Fph);
     }
 
     public override void HandleInput(UpdateArgs updateArgs) {
         base.HandleInput(updateArgs);
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.Enter))
-            ToPush = Chat;
+            Stack!.Push(Chat);
     }
 }

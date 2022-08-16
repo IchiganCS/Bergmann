@@ -10,7 +10,7 @@ namespace Bergmann.Client.Controllers;
 /// A controller for a chat. One may register commands and input text. The renderer for this is given by ChatRenderer.
 /// It eventually renders tooltips and already sent messages too.
 /// </summary>
-public class ChatController : ParentController, IMessageHandler<ChatMessage> {
+public class ChatController : Controller, IMessageHandler<ChatMessage> {
     public override CursorState RequestedCursorState => CursorState.Normal;
 
     /// <summary>
@@ -66,11 +66,11 @@ public class ChatController : ParentController, IMessageHandler<ChatMessage> {
                 NonCommandAction(InputField.Text);
 
             InputField.SetText("");
-            ShouldPop = true;
+            Stack!.Pop(this);
         }
         ));
 
-        ChildInputHandlers.Add(InputField);
+        InputHandlers.Add(InputField);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public class ChatController : ParentController, IMessageHandler<ChatMessage> {
     public override void HandleInput(UpdateArgs updateArgs) {
         if (updateArgs.KeyboardState.IsKeyDown(Keys.Escape)) {
             InputField.SetText("");
-            ShouldPop = true;
+            Stack!.Pop(this);
         }
 
         else {
