@@ -1,20 +1,16 @@
+using Bergmann.Client.Connectors;
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Client.Connectors;
+namespace Bergmann.Client.Controllers;
 
 
 /// <summary>
 /// Loads chunks from a connection. When supplying the position of a player, it can automate the process.
 /// </summary>
-public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessageHandler<ChunkUpdateMessage> {
-
-    /// <summary>
-    /// The connection where chunks are loaded and dropped from.
-    /// </summary>
-    private Connection Connection { get; set; }
+public class ChunkLoaderController : IController, IDisposable, IMessageHandler<RawChunkMessage>, IMessageHandler<ChunkUpdateMessage> {
 
     /// <summary>
     /// The timer responsible to load chunks. It checks against a given position whether any chunks are in <see cref="LoadDistance"/>
@@ -40,6 +36,9 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
     }
     private int _LoadDistance;
 
+
+    private bool IsActive { get; set; } = false;
+
     /// <summary>
     /// This stores an offset to each chunk column around 0. Add the position to it to see which columns should be requested.
     /// Since this is solely dependent on the <see cref="LoadDistance"/> and the operation to calculate those offsets is quite expensive,
@@ -59,16 +58,7 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
     /// </summary>
     public int DropDistance { get; set; }
 
-    public ChunkLoader(Connection con, int loadDistance = 10, int dropDistance = 40) {
-        Connection = con;
-        LoadDistance = loadDistance;
-        DropDistance = dropDistance;
-
-        Connection.RegisterMessageHandler<RawChunkMessage>(this);
-        Connection.RegisterMessageHandler<ChunkUpdateMessage>(this);
-    }
-
-
+    
     /// <summary>
     /// Generates timers to load and drop chunks in the given intervals using <see cref="LoadDistance"/> and 
     /// <see cref="DropDistance"/>. <paramref name="getPosition"/> is a function to get the current position of the player.
@@ -76,9 +66,14 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
     /// <param name="getPosition">A function which always returns the correct position of the player.</param>
     /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
-    public void SubscribeToPositionUpdate(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000) {
+    public ChunkLoaderController(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000, int loadDistance = 10, int dropDistance = 40) {
+        LoadDistance = loadDistance;
+        DropDistance = dropDistance;
 
         LoadTimer = new(async x => {
+            if (!IsActive)
+                return;
+                
             if (LoadOffsets is null) {
                 // cannot load any chunks if we can't calculate which ones :)
                 Logger.Warn($"Tried to load chunks, but no {nameof(LoadOffsets)} were given.");
@@ -101,38 +96,56 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
             }
 
             foreach (long chunk in chunks)
-                await Connection.ClientToServerAsync(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
+                await Connection.Active!.ClientToServerAsync(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
-            Connection.Chunks.ForEach(chunk => {
+            if (!IsActive)
+                return;
+
+            Connection.Active?.Chunks.ForEach(chunk => {
                 if ((chunk.Offset.Xz - getPosition().Xz).LengthFast > DropDistance * 16) {
                     Vector3i offset = chunk.Offset;
                     offset.Y = 0;
                     RequestedColumns.Remove(Chunk.ComputeKey(offset));
-                    Connection.Chunks.Remove(chunk.Key);
+                    Connection.Active?.Chunks.Remove(chunk.Key);
                 }
             });
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
     }
 
+
     /// <summary>
     /// Drops the timers.
     /// </summary>
     public void Dispose() {
-        Connection.DropMessageHandler<RawChunkMessage>(this);
-        Connection.DropMessageHandler<ChunkUpdateMessage>(this);
         LoadTimer?.Dispose();
         DropTimer?.Dispose();
     }
 
     public void HandleMessage(ChunkUpdateMessage message) {
         foreach (var block in message.UpdatedBlocks) {
-            Connection.Chunks.SetBlockAt(block.Item1, block.Item2);
+            Connection.Active?.Chunks.SetBlockAt(block.Item1, block.Item2);
         }
     }
 
     public void HandleMessage(RawChunkMessage message) {
-        Connection.Chunks.AddOrReplace(message.Chunk);
+        Connection.Active?.Chunks.AddOrReplace(message.Chunk);
     }
+
+    public void OnActivated(ControllerStack stack) {
+        Connection.Active?.RegisterMessageHandler<RawChunkMessage>(this);
+        Connection.Active?.RegisterMessageHandler<ChunkUpdateMessage>(this);
+        IsActive = true;
+    }
+
+    public void OnDeactivated() {
+        IsActive = false;
+        Connection.Active?.DropMessageHandler<RawChunkMessage>(this);
+        Connection.Active?.DropMessageHandler<ChunkUpdateMessage>(this);
+    }
+
+    public void OnNowOnTop() { }
+
+    public void OnNotOnTop() { }
 }

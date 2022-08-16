@@ -11,7 +11,7 @@ namespace Bergmann.Client.Controllers;
 /// A controller for a chat. One may register commands and input text. The renderer for this is given by ChatRenderer.
 /// It eventually renders tooltips and already sent messages too.
 /// </summary>
-public class ChatController : ControllerBase, IMessageHandler<ChatMessage> {
+public class ChatController : ParentController, IMessageHandler<ChatMessage> {
     public override CursorState RequestedCursorState => CursorState.Normal;
 
     /// <summary>
@@ -43,7 +43,6 @@ public class ChatController : ControllerBase, IMessageHandler<ChatMessage> {
     /// <param name="messageAction">The action to be executed on a normal message. See <see cref="NonCommandAction"/>.</param>
     public ChatController(Action<string> messageAction) {
         NonCommandAction = messageAction;
-        Connection.Active?.RegisterMessageHandler(this);
 
         InputField = new();
         InputField.SpecialActions.Add((Keys.Enter, (ks) => {
@@ -71,6 +70,8 @@ public class ChatController : ControllerBase, IMessageHandler<ChatMessage> {
             ShouldPop = true;
         }
         ));
+
+        ChildInputHandlers.Add(InputField);
     }
 
     /// <summary>
@@ -84,13 +85,27 @@ public class ChatController : ControllerBase, IMessageHandler<ChatMessage> {
         }
 
         else {
-            InputField.HandleInput(updateArgs);
+            base.HandleInput(updateArgs);
         }
+    }
+
+    public override void OnActivated(ControllerStack stack) {
+        base.OnActivated(stack);
+
+        Connection.Active?.RegisterMessageHandler(this);
+    }
+
+    public override void OnDeactivated() {
+        base.OnDeactivated();
+
+        Connection.Active?.DropMessageHandler(this);
     }
 
     public void HandleMessage(ChatMessage message) {
         Console.WriteLine(message.Text);
     }
+
+
 
     /// <summary>
     /// A command executable by a chat message.

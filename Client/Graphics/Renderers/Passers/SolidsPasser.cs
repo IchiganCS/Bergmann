@@ -77,6 +77,7 @@ public class SolidsPasser : IRendererPasser {
 
     public SolidsPasser() {
         Chunkers = new();
+        Connection.Active!.Chunks.ForEach(x => MakeNewRendererAt(x.Key));
         Connection.Active!.Chunks.OnChunkChanged += (ch, positions) => {
             MakeNewRendererAt(ch.Key);
         };

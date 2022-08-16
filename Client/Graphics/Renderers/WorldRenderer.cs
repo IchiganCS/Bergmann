@@ -10,11 +10,7 @@ public class WorldRenderer : IDisposable, IRenderer {
 
     private IList<IRendererPasser> RenderPassers { get; set; }
 
-    /// <summary>
-    /// Constructs a world renderer for the <see cref="World.Instance"/>. It subscribes to updates from the world hub
-    /// for chunk receiving and updating. It currently doesn't support loading chunks on startup, it is recommended to
-    /// call this method before working on chunks.
-    /// </summary>
+
     public WorldRenderer() {
         RenderPassers = new List<IRendererPasser>() {
             new SolidsPasser()

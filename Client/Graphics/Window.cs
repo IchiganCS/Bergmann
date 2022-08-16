@@ -37,10 +37,10 @@ public class Window : GameWindow {
     private WorldRenderer WorldRenderer { get; set; }
 
     private bool WireFrameEnabled { get; set; } = false;
-    private ChunkLoader ChunkLoader { get; set; }
+    private bool DebugViewEnabled { get; set; } = false;
 
     public ControllerStack ControllerStack { get; set; }
-    public FPHandler Fph { get; set; }
+    public FPHandler Fph => Controller.Fph;
     public GameController Controller { get; set; }
 
     private void MakeProgram() {
@@ -107,33 +107,31 @@ public class Window : GameWindow {
     }
 
     private void MakeControllers() {
-        ChatController cont = new(x => {
-            if (string.IsNullOrWhiteSpace(x))
-                return;
-                
-            Connection.Active?.ClientToServerAsync(new ChatMessage("ich", x));
-        });
-        ChatRenderer = new ChatRenderer(cont);
+        Controller = new();
+        Controller.Fph.Position = (30, 34, 30);
 
-        cont.Commands.Add(new() {
+        ChatRenderer = new(Controller.Chat);
+
+
+        Controller.Chat.Commands.Add(new() {
             Name = "wireframe",
             Execute = x => WireFrameEnabled = !WireFrameEnabled,
         });
-        cont.Commands.Add(new() {
+        Controller.Chat.Commands.Add(new() {
             Name = "recompile",
             Execute = x => MakeProgram(),
         });
-        cont.Commands.Add(new() {
+        Controller.Chat.Commands.Add(new() {
             Name = "connect",
             Execute = x => {
                 Connection.Active = new(x[0]);
             }
         });
-
-        Fph = new FPHandler() {
-            Position = (30, 34, 30)
-        };
-        Controller = new(Fph, cont);
+        Controller.Chat.Commands.Add(new() {
+            Execute = args =>
+                DebugViewEnabled = !DebugViewEnabled,
+            Name = "debug"
+        });
         ControllerStack = new(Controller);
     }
 
@@ -185,13 +183,10 @@ public class Window : GameWindow {
     private void OnConnect() {
         WorldRenderer = new();
         Fph.Position = (0, 40, 0);
-        ChunkLoader = new(Connection.Active!);
-        ChunkLoader.SubscribeToPositionUpdate(() => Fph.Position);
     }
 
     private void OnDisconnect() {
         WorldRenderer.Dispose();
-        ChunkLoader.Dispose();
     }
 
     protected override void OnUnload() {
@@ -249,7 +244,7 @@ public class Window : GameWindow {
         CrossTexture.Bind();
         CrossRenderer.Render();
 
-        if (Controller.DebugViewEnabled) {
+        if (DebugViewEnabled) {
             DebugRenderer.Update(Fph.Position, 1f / (float)args.Time, Connection.Active!.Chunks.Count);
             DebugRenderer.Render();
         }

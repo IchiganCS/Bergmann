@@ -20,7 +20,7 @@ public class ChatRenderer : UIRenderer {
 
 
     public override void Render() {
-        if (Chat.IsActive)
+        if (Chat.IsOnTop)
             InputRenderer.Render();
     }
 

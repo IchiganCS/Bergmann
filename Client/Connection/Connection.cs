@@ -49,7 +49,7 @@ public class Connection : IDisposable {
     public string ConnectionId => Hub.ConnectionId!;
 
     /// <summary>
-    /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoader"/>.
+    /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoaderController"/>.
     /// </summary>
     public ChunkCollection Chunks { get; init; }
 
@@ -116,46 +116,26 @@ public class Connection : IDisposable {
 
     private Dictionary<Type, IList<object>> MessageHandlers { get; set; } = new();
 
-    public void RegisterReflectionMessageHandler(object handler) {
-        foreach (Type implemented in handler.GetType().GetInterfaces()) {
-            if (!implemented.IsGenericType)
-                continue;
 
-            if (implemented.GetGenericTypeDefinition() != typeof(IMessageHandler<>))
-                continue;
-
-            Type generic = implemented.GetGenericArguments()[0];
-
-            if (MessageHandlers.ContainsKey(generic))
-                MessageHandlers[generic].Add(handler);
-            else
-                MessageHandlers.Add(generic, new List<object>() { handler });
-        }
-    }
-
-    public void RegisterMessageHandler<T> (IMessageHandler<T> handler) where T : IMessage {
+    public void RegisterMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage {
         if (MessageHandlers.ContainsKey(typeof(T)))
             MessageHandlers[typeof(T)].Add(handler);
         else
             MessageHandlers.Add(typeof(T), new List<object>() { handler });
     }
 
-    public void DropMessageHandler(object handler) {
-        foreach (var entry in MessageHandlers) {
-            entry.Value.Remove(handler);
-        }
-    }
-
     public void DropMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage {
-        if (MessageHandlers.TryGetValue(typeof(T), out var value))
-            value.Remove(handler);
+        lock (MessageHandlers)
+            if (MessageHandlers.TryGetValue(typeof(T), out var value))
+                value.Remove(handler);
     }
 
     private IEnumerable<IMessageHandler<T>> GetHandlers<T>() where T : IMessage {
         if (!MessageHandlers.ContainsKey(typeof(T)))
             return Enumerable.Empty<IMessageHandler<T>>();
 
-        return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
+        lock (MessageHandlers)
+            return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>().ToArray();
     }
 
     public async Task ClientToServerAsync(IMessage message) {
