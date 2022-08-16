@@ -748,17 +748,12 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
     {
         // Type
         private static global::System.ReadOnlySpan<byte> GetSpan_Type() => new byte[1 + 4] { 164, 84, 121, 112, 101 };
-        // Info
-        private static global::System.ReadOnlySpan<byte> GetSpan_Info() => new byte[1 + 4] { 164, 73, 110, 102, 111 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Objects.Block value, global::MessagePack.MessagePackSerializerOptions options)
         {
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
+            writer.WriteMapHeader(1);
             writer.WriteRaw(GetSpan_Type());
             writer.Write(value.Type);
-            writer.WriteRaw(GetSpan_Info());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.BlockInfo>(formatterResolver).Serialize(ref writer, value.Info, options);
         }
 
         public global::Bergmann.Shared.Objects.Block Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -769,7 +764,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
             }
 
             options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var __Type__ = default(int);
 
@@ -783,16 +777,10 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
                       reader.Skip();
                       continue;
                     case 4:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 1701869908UL:
-                                __Type__ = reader.ReadInt32();
-                                continue;
-                            case 1868983881UL:
-                                reader.Skip();
-                                continue;
-                        }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701869908UL) { goto FAIL; }
+
+                        __Type__ = reader.ReadInt32();
+                        continue;
 
                 }
             }

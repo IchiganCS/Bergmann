@@ -10,15 +10,16 @@ public class TrueHub : Hub {
     private static WorldHandler World { get; set; } = new();
 
     public void ClientToServer(MessageBox box) {
-        Console.WriteLine("invoked");
         if (box.Message is ChatMessage cm)
             Chat.HandleMessage(cm);
 
         if (box.Message is ChunkColumnRequestMessage ccrm)
             World.HandleMessage(ccrm);
-    }
 
-    // public void ClientToServer(ChatMessage message) {
-    //     Chat.HandleMessage(message);
-    // }
+        if (box.Message is BlockPlacementMessage bpm)
+            World.HandleMessage(bpm);
+
+        if (box.Message is BlockDestructionMessage bdm)
+            World.HandleMessage(bdm);
+    }
 }

@@ -14,6 +14,7 @@ public struct Block {
 
     public int Type { get; set; }
 
+    [MessagePack.IgnoreMember]
     public BlockInfo Info
         => BlockInfo.GetFromID(Type & INFO_MASK);
 

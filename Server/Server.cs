@@ -12,7 +12,7 @@ public class Server {
     public static IHubContext<TrueHub> HubContext { get; set; }
     public static IHubClients Clients => HubContext.Clients;
     public static async Task SendToClientAsync(IClientProxy clients, IMessage message) {
-        await clients.SendAsync("ServerToClient", new MessageBox(message));
+        await clients.SendAsync("ServerToClient", MessageBox.Create(message));
     }
 
     public static void Main(string[] args) {

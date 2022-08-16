@@ -9,7 +9,7 @@ namespace Bergmann.Client.Connectors;
 /// <summary>
 /// Loads chunks from a connection. When supplying the position of a player, it can automate the process.
 /// </summary>
-public class ChunkLoader :IDisposable {
+public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessageHandler<ChunkUpdateMessage> {
 
     /// <summary>
     /// The connection where chunks are loaded and dropped from.
@@ -63,6 +63,8 @@ public class ChunkLoader :IDisposable {
         Connection = con;
         LoadDistance = loadDistance;
         DropDistance = dropDistance;
+
+        Connection.RegisterMessageHandler(this);
     }
 
 
@@ -120,5 +122,15 @@ public class ChunkLoader :IDisposable {
     public void Dispose() {
         LoadTimer?.Dispose();
         DropTimer?.Dispose();
+    }
+
+    public void HandleMessage(ChunkUpdateMessage message) {
+        foreach (var block in message.UpdatedBlocks) {
+            Connection.Chunks.SetBlockAt(block.Item1, block.Item2);
+        }
+    }
+
+    public void HandleMessage(RawChunkMessage message) {
+        Connection.Chunks.AddOrReplace(message.Chunk);
     }
 }

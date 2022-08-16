@@ -111,41 +111,59 @@ public class Connection : IDisposable {
 
         Chunks = new();
 
-        Hub.On<MessageBox>("ServerToClient", x => HandleServerToClient(x.Message));
+        Hub.On<MessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
     }
 
-    private Dictionary<Type, IList<object>> ObscureMessageHandlers { get; set; } = new();
-    private IList<IMessageHandler<ChatMessage>> ChatMessageHandlers { get; set; } = new List<IMessageHandler<ChatMessage>>();
+    private Dictionary<Type, IList<object>> MessageHandleres { get; set; } = new();
 
-    public void RegisterMessageHandler<T>(IMessageHandler<T> messageHandler) where T : IMessage {
-        if (messageHandler is IMessageHandler<ChatMessage> cm)
-            ChatMessageHandlers.Add(cm);
+    public void RegisterMessageHandler(object handler) {
+        foreach (Type implemented in handler.GetType().GetInterfaces()) {
+            if (!implemented.IsGenericType)
+                continue;
 
-        else {
-            if (ObscureMessageHandlers.ContainsKey(typeof(T)))
-                ObscureMessageHandlers[typeof(T)].Add(messageHandler);
+            if (implemented.GetGenericTypeDefinition() != typeof(IMessageHandler<>))
+                continue;
+
+            Type generic = implemented.GetGenericArguments()[0];
+
+            if (MessageHandleres.ContainsKey(generic))
+                MessageHandleres[generic].Add(handler);
             else
-                ObscureMessageHandlers.Add(typeof(T), new List<object>() { messageHandler });
+                MessageHandleres.Add(generic, new List<object>() { handler });
         }
     }
-    private IEnumerable<IMessageHandler<T>> GetMessageHandler<T>() where T : IMessage {
-        if (typeof(T) == typeof(ChatMessage))
-            return (IEnumerable<IMessageHandler<T>>)ChatMessageHandlers;
 
-        else {
-            return ObscureMessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
-        }
+    private IEnumerable<IMessageHandler<T>> GetHandlers<T>() where T : IMessage {
+        if (!MessageHandleres.ContainsKey(typeof(T)))
+            return Enumerable.Empty<IMessageHandler<T>>();
+
+        return MessageHandleres[typeof(T)].Cast<IMessageHandler<T>>();
     }
 
     public async Task ClientToServerAsync(IMessage message) {
-        await Hub.SendAsync("ClientToServer", new MessageBox(message));
+        await Hub.SendAsync("ClientToServer", MessageBox.Create(message));
     }
 
-    private void HandleServerToClient<T>(T message) where T : IMessage {
+    private void HandleServerToClient(IMessage message) {
         if (message is ChatMessage cm)
-            Console.WriteLine($"user {cm.Sender} wrote {cm.Text}");
-        // foreach (IMessageHandler<T> h in GetMessageHandler<T>())
-        //     h.HandleMessage(message);
+            foreach (var item in GetHandlers<ChatMessage>()) {
+                item.HandleMessage(cm);
+            }
+
+        if (message is ChunkColumnRequestMessage ccrm)
+            foreach (var item in GetHandlers<ChunkColumnRequestMessage>()) {
+                item.HandleMessage(ccrm);
+            }
+
+        if (message is RawChunkMessage rcm)
+            foreach (var item in GetHandlers<RawChunkMessage>()) {
+                item.HandleMessage(rcm);
+            }
+
+        if (message is ChunkUpdateMessage cum)
+            foreach (var item in GetHandlers<ChunkUpdateMessage>()) {
+                item.HandleMessage(cum);
+            }
     }
 
 
