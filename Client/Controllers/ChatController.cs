@@ -1,4 +1,6 @@
+using Bergmann.Client.Connectors;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared.Networking;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -9,7 +11,7 @@ namespace Bergmann.Client.Controllers;
 /// A controller for a chat. One may register commands and input text. The renderer for this is given by ChatRenderer.
 /// It eventually renders tooltips and already sent messages too.
 /// </summary>
-public class ChatController : ControllerBase {
+public class ChatController : ControllerBase, IMessageHandler<ChatMessage> {
     public override CursorState RequestedCursorState => CursorState.Normal;
 
     /// <summary>
@@ -41,6 +43,7 @@ public class ChatController : ControllerBase {
     /// <param name="messageAction">The action to be executed on a normal message. See <see cref="NonCommandAction"/>.</param>
     public ChatController(Action<string> messageAction) {
         NonCommandAction = messageAction;
+        Connection.Active?.RegisterMessageHandler(this);
 
         InputField = new();
         InputField.SpecialActions.Add((Keys.Enter, (ks) => {
@@ -83,6 +86,10 @@ public class ChatController : ControllerBase {
         else {
             InputField.HandleInput(updateArgs);
         }
+    }
+
+    public void HandleMessage(ChatMessage message) {
+        Console.WriteLine(message.Text);
     }
 
     /// <summary>

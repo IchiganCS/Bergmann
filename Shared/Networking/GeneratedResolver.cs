@@ -947,8 +947,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
         private static global::System.ReadOnlySpan<byte> GetSpan_Blocks() => new byte[1 + 6] { 166, 66, 108, 111, 99, 107, 115 };
         // Key
         private static global::System.ReadOnlySpan<byte> GetSpan_Key() => new byte[1 + 3] { 163, 75, 101, 121 };
-        // Offset
-        private static global::System.ReadOnlySpan<byte> GetSpan_Offset() => new byte[1 + 6] { 166, 79, 102, 102, 115, 101, 116 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Objects.Chunk value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -959,13 +957,11 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(3);
+            writer.WriteMapHeader(2);
             writer.WriteRaw(GetSpan_Blocks());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,]>(formatterResolver).Serialize(ref writer, value.Blocks, options);
             writer.WriteRaw(GetSpan_Key());
             writer.Write(value.Key);
-            writer.WriteRaw(GetSpan_Offset());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3i>(formatterResolver).Serialize(ref writer, value.Offset, options);
         }
 
         public global::Bergmann.Shared.Objects.Chunk Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -990,16 +986,10 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
                       reader.Skip();
                       continue;
                     case 6:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 126905066941506UL:
-                                ____result.Blocks = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,]>(formatterResolver).Deserialize(ref reader, options);
-                                continue;
-                            case 127979076609615UL:
-                                ____result.Offset = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3i>(formatterResolver).Deserialize(ref reader, options);
-                                continue;
-                        }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 126905066941506UL) { goto FAIL; }
+
+                        ____result.Blocks = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<int[,,]>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
                     case 3:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7955787UL) { goto FAIL; }
 

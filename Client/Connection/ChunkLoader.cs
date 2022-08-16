@@ -64,7 +64,8 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
         LoadDistance = loadDistance;
         DropDistance = dropDistance;
 
-        Connection.RegisterMessageHandler(this);
+        Connection.RegisterMessageHandler<RawChunkMessage>(this);
+        Connection.RegisterMessageHandler<ChunkUpdateMessage>(this);
     }
 
 
@@ -77,7 +78,7 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
     public void SubscribeToPositionUpdate(Func<Vector3> getPosition, int loadTime = 250, int dropTime = 2000) {
 
-        LoadTimer = new(x => {
+        LoadTimer = new(async x => {
             if (LoadOffsets is null) {
                 // cannot load any chunks if we can't calculate which ones :)
                 Logger.Warn($"Tried to load chunks, but no {nameof(LoadOffsets)} were given.");
@@ -90,10 +91,9 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
                 Vector3i currentPos = (Vector3i)getPosition();
                 currentPos.Y = 0;
                 chunks = LoadOffsets
-                    .Select(x => x + currentPos)
-                    .Where(x => !RequestedColumns.ContainsKey(Chunk.ComputeKey(x)))
-                    .Select(x => {
-                        long key = Chunk.ComputeKey(x);
+                    .Select(x => Chunk.ComputeKey(x + currentPos))
+                    .Where(x => !RequestedColumns.ContainsKey(x))
+                    .Select(key => {
                         RequestedColumns.TryAdd(key, key);
                         return key;
                     })
@@ -101,7 +101,7 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
             }
 
             foreach (long chunk in chunks)
-                Connection.ClientToServerAsync(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
+                await Connection.ClientToServerAsync(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
@@ -120,6 +120,8 @@ public class ChunkLoader : IDisposable, IMessageHandler<RawChunkMessage>, IMessa
     /// Drops the timers.
     /// </summary>
     public void Dispose() {
+        Connection.DropMessageHandler<RawChunkMessage>(this);
+        Connection.DropMessageHandler<ChunkUpdateMessage>(this);
         LoadTimer?.Dispose();
         DropTimer?.Dispose();
     }

@@ -114,9 +114,9 @@ public class Connection : IDisposable {
         Hub.On<MessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
     }
 
-    private Dictionary<Type, IList<object>> MessageHandleres { get; set; } = new();
+    private Dictionary<Type, IList<object>> MessageHandlers { get; set; } = new();
 
-    public void RegisterMessageHandler(object handler) {
+    public void RegisterReflectionMessageHandler(object handler) {
         foreach (Type implemented in handler.GetType().GetInterfaces()) {
             if (!implemented.IsGenericType)
                 continue;
@@ -126,18 +126,36 @@ public class Connection : IDisposable {
 
             Type generic = implemented.GetGenericArguments()[0];
 
-            if (MessageHandleres.ContainsKey(generic))
-                MessageHandleres[generic].Add(handler);
+            if (MessageHandlers.ContainsKey(generic))
+                MessageHandlers[generic].Add(handler);
             else
-                MessageHandleres.Add(generic, new List<object>() { handler });
+                MessageHandlers.Add(generic, new List<object>() { handler });
         }
     }
 
+    public void RegisterMessageHandler<T> (IMessageHandler<T> handler) where T : IMessage {
+        if (MessageHandlers.ContainsKey(typeof(T)))
+            MessageHandlers[typeof(T)].Add(handler);
+        else
+            MessageHandlers.Add(typeof(T), new List<object>() { handler });
+    }
+
+    public void DropMessageHandler(object handler) {
+        foreach (var entry in MessageHandlers) {
+            entry.Value.Remove(handler);
+        }
+    }
+
+    public void DropMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage {
+        if (MessageHandlers.TryGetValue(typeof(T), out var value))
+            value.Remove(handler);
+    }
+
     private IEnumerable<IMessageHandler<T>> GetHandlers<T>() where T : IMessage {
-        if (!MessageHandleres.ContainsKey(typeof(T)))
+        if (!MessageHandlers.ContainsKey(typeof(T)))
             return Enumerable.Empty<IMessageHandler<T>>();
 
-        return MessageHandleres[typeof(T)].Cast<IMessageHandler<T>>();
+        return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
     }
 
     public async Task ClientToServerAsync(IMessage message) {

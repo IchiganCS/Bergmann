@@ -26,17 +26,28 @@ public class Chunk {
     /// Returns a number unique to this chunk and is solely dependent on the offset. Can be used as a key in a dictionary for example. 
     /// The key is calculated using <see cref="ComputeKey"/>. The key is a tightly packed array of the offsets in world chunk space as shorts
     /// </summary>
-    public long Key { get; set; }
+    public long Key {
+        get => _Key;
+        set {
+            _Key = value;
+            _Offset = Chunk.ComputeOffset(_Key);
+        }
+    }
+    private long _Key = 0;
 
     /// <summary>
     /// Since Blocks has coordinates relative to this chunk's origin, we need a way to transform it
     /// to world space.
     /// </summary>
-    /// <value></value>
+    [MessagePack.IgnoreMember]
     public Vector3i Offset {
-        get => ComputeOffset(Key);
-        set => Key = ComputeKey(value);
+        get => _Offset;
+        set {
+            _Offset = value;
+            _Key = Chunk.ComputeKey(value);
+        }
     }
+    private Vector3i _Offset = new();
 
     /// <summary>
     /// Calculates the key for a chunk given a position in that chunk.
