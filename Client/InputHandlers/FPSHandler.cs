@@ -102,7 +102,7 @@ public class FPHandler : IInputHandler {
     /// Rotates the camera and moves it as specified by <paramref name="args"/>.
     /// </summary>
     /// <param name="args">The values used to update.</param>
-    public void HandleInput(UpdateArgs args) {
+    public void HandleInput(InputUpdateArgs args) {
         RotateCamera(args.MouseState.Delta);
         FlyingMovement(args.DeltaTime, args.KeyboardState);
 

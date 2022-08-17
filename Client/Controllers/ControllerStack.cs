@@ -26,7 +26,7 @@ public class ControllerStack {
 
 
     /// <param name="args">The arguments forwarded to the top entry of the stack</param>
-    public void Update(UpdateArgs args) {
+    public void Update(InputUpdateArgs args) {
         if (Controllers.Count == 0) {
             Logger.Warn("Handler stack is empty");
             return;

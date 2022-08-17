@@ -35,12 +35,7 @@ public class GameController : Controller {
     public bool DebugViewEnabled { get; private set; } = false;
 
     public GameController() {
-        Chat = new(async x => {
-            if (string.IsNullOrWhiteSpace(x))
-                return;
-
-            await Connection.Active!.ClientToServerAsync(new ChatMessage("ich", x));
-        });
+        Chat = new();
         Fph = new();
 
         Fph.Position = (30, 34, 30);
@@ -94,7 +89,7 @@ public class GameController : Controller {
         }
     }
 
-    public override void HandleInput(UpdateArgs updateArgs) {
+    public override void HandleInput(InputUpdateArgs updateArgs) {
         base.HandleInput(updateArgs);
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.F1))

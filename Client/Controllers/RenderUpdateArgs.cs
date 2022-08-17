@@ -1,4 +1,4 @@
-namespace Bergmann.Client.Graphics.Renderers;
+namespace Bergmann.Client.Controllers;
 
 public class RenderUpdateArgs {
     public float DeltaTime { get; private set; }

@@ -19,7 +19,7 @@ public class TextHandler : IInputHandler {
 
 
     /// <summary>
-    /// Actions executed when a specific key is pressed. It is called during <see cref="HandleInput(UpdateArgs)"/>
+    /// Actions executed when a specific key is pressed. It is called during <see cref="HandleInput(InputUpdateArgs)"/>
     /// </summary>
     public List<(Keys, Action<KeyboardState>)> SpecialActions { get; set; } = new();
 
@@ -28,7 +28,7 @@ public class TextHandler : IInputHandler {
     /// This method moves the cursor and deletes characters if necessary, marks text pastes and copies, and writes plain text.
     /// </summary>
     /// <param name="updateArgs">The update to exectue</param>
-    public void HandleInput(UpdateArgs updateArgs) {
+    public void HandleInput(InputUpdateArgs updateArgs) {
         KeyboardState keyboard = updateArgs.KeyboardState;
 
         foreach ((Keys, Action<KeyboardState>) pair in SpecialActions) {

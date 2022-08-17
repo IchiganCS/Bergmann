@@ -7,7 +7,7 @@ namespace Bergmann.Client.InputHandlers;
 /// <summary>
 /// A collection of every argument required for updating an <see cref="IInputHandler"/>.
 /// </summary>
-public class UpdateArgs {
+public class InputUpdateArgs {
     /// <summary>
     /// The current state of the keyboard.
     /// </summary>
@@ -33,7 +33,7 @@ public class UpdateArgs {
     /// This constructor shall only be called once per frame or the logic breaks.
     /// </summary>
     /// <param name="deltaTime">The delta time in seconds.</param>
-    public UpdateArgs(float deltaTime) {
+    public InputUpdateArgs(float deltaTime) {
         if (!CallbackRegistered) {
             Window.Instance.TextInput += (e) => CachedText += e.AsString;
             CallbackRegistered = true;

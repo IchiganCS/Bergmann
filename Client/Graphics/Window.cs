@@ -76,7 +76,7 @@ public class Window : GameWindow {
         CursorState = ControllerStack.Top.RequestedCursorState;
 
 
-        UpdateArgs updateArgs = new((float)args.Time);
+        InputUpdateArgs updateArgs = new((float)args.Time);
         ControllerStack.Update(updateArgs);
     }
 

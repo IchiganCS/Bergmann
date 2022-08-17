@@ -9,5 +9,5 @@ public interface IInputHandler {
     /// </summary>
     /// <param name="updateArgs">The update args for this update. It provides all data necessary 
     /// to perform such an update.</param>
-    public void HandleInput(UpdateArgs updateArgs);
+    public void HandleInput(InputUpdateArgs updateArgs);
 }

@@ -26,7 +26,7 @@ public class ServiceController : Controller {
         Chat.Render();
     }
 
-    public override void HandleInput(UpdateArgs updateArgs) {
+    public override void HandleInput(InputUpdateArgs updateArgs) {
         base.HandleInput(updateArgs);
         
         Stack!.Push(new GameController());

@@ -1,6 +1,5 @@
 using Bergmann.Client.Graphics;
 using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Networking;
@@ -29,12 +28,6 @@ public class ChatController : Controller {
     public IList<Command> Commands { get; set; } = new List<Command>();
 
     /// <summary>
-    /// If the entered text is no command, but a normal text message, this action is executed with the input string as an argument.
-    /// This action is also called if the message is empty.
-    /// </summary>
-    public Action<string> NonCommandAction { get; set; }
-
-    /// <summary>
     /// The input field of the chat controller.
     /// </summary>
     public TextHandler InputField { get; private set; }
@@ -46,12 +39,10 @@ public class ChatController : Controller {
     /// Constructs a new chat controller. It creates a new input field and registeres necessary events.
     /// </summary>
     /// <param name="messageAction">The action to be executed on a normal message. See <see cref="NonCommandAction"/>.</param>
-    public ChatController(Action<string> messageAction) {
-        NonCommandAction = messageAction;
-
+    public ChatController() {
 
         InputField = new();
-        InputField.SpecialActions.Add((Keys.Enter, (ks) => {
+        InputField.SpecialActions.Add((Keys.Enter, async (ks) => {
             if (InputField.Text.StartsWith(CommandPrefix)) {
                 string text = InputField.Text.Remove(0, CommandPrefix.Length).Trim();
                 string[] elems = text.Split();
@@ -69,8 +60,10 @@ public class ChatController : Controller {
                     }
                 }
             }
-            else
-                NonCommandAction(InputField.Text);
+            else {
+                if (!string.IsNullOrWhiteSpace(InputField.Text))
+                    await Connection.Active!.ClientToServerAsync(new ChatMessage("ich", InputField.Text));
+            }
 
             InputField.SetText("");
             Stack!.Pop(this);
@@ -83,7 +76,7 @@ public class ChatController : Controller {
     /// Forwards typing events to its input field (and special actions) and pops on escape.
     /// </summary>
     /// <param name="updateArgs">The update arguments forwarded to the input field.</param>
-    public override void HandleInput(UpdateArgs updateArgs) {
+    public override void HandleInput(InputUpdateArgs updateArgs) {
         if (updateArgs.KeyboardState.IsKeyDown(Keys.Escape)) {
             InputField.SetText("");
             Stack!.Pop(this);

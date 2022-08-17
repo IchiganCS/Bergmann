@@ -25,7 +25,7 @@ public abstract class Controller {
     public abstract CursorState RequestedCursorState { get; }
 
 
-    public virtual void HandleInput(UpdateArgs updateArgs) {
+    public virtual void HandleInput(InputUpdateArgs updateArgs) {
         foreach (var input in InputHandlers)
             input.HandleInput(updateArgs);
     }
