@@ -6,8 +6,8 @@ using Bergmann.Client.Graphics.Renderers;
 namespace Bergmann.Client.Controllers;
 
 /// <summary>
-/// A controller marks a new part of controlling the game: For example, when the chat is opened, all other input of the game is stopped and some systems may be disabled.
-/// Or when the player opens their inventory.
+/// A controller marks a new part of controlling the game: For example, when the chat is opened, all other input of the game is 
+/// stopped and some systems may be disabled. Or when the player opens their inventory.
 /// </summary>
 public abstract class Controller {
 

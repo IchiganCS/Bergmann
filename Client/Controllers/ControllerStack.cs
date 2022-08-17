@@ -58,6 +58,7 @@ public class ControllerStack {
 
         controller.OnActivated(this);
         controller.OnNowOnTop();
+        Controllers.Push(controller);
     }
 
     /// <summary>

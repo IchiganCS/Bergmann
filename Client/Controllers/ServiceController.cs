@@ -1,3 +1,4 @@
+using Bergmann.Client.Controllers.Modules;
 using Bergmann.Client.InputHandlers;
 using OpenTK.Windowing.Common;
 
@@ -9,9 +10,16 @@ namespace Bergmann.Client.Controllers;
 public class ServiceController : Controller {
     public override CursorState RequestedCursorState => CursorState.Normal;
 
+    public ServiceController() {
+        ChatModule Chat = new();
+        
+        Modules.Add(Chat);
+        Renderers.Add(Chat);
+    }
+
     public override void HandleInput(UpdateArgs updateArgs) {
         base.HandleInput(updateArgs);
-
+        
         Stack!.Push(new GameController());
     }
 }

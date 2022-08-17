@@ -59,13 +59,11 @@ public class WorldLoaderModule : Module, IDisposable,
     
     /// <summary>
     /// Generates timers to load and drop chunks in the given intervals using <see cref="LoadDistance"/> and 
-    /// <see cref="DropDistance"/>. <paramref name="getPosition"/> is a function to get the current position of the player.
+    /// <see cref="DropDistance"/>.
     /// </summary>
-    /// <param name="getPosition">A function which always returns the correct position of the player.</param>
     /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
-    public WorldLoaderModule(Func<Vector3> getPosition, 
-        int loadTime = 250, int dropTime = 2000, 
+    public WorldLoaderModule(int loadTime = 250, int dropTime = 2000, 
         int loadDistance = 10, int dropDistance = 40) {
 
         LoadOffsets = Enumerable.Empty<Vector3i>();
@@ -81,7 +79,7 @@ public class WorldLoaderModule : Module, IDisposable,
             // it contains only chunks which were not previously. It only stores one chunk per column
             IEnumerable<long> chunks;
             lock (RequestedColumns) {
-                Vector3i currentPos = (Vector3i)getPosition();
+                Vector3i currentPos = (Vector3i)(Parent as GameController)!.Fph.Position;
                 currentPos.Y = 0;
                 chunks = LoadOffsets
                     .Select(x => Chunk.ComputeKey(x + currentPos))
@@ -102,7 +100,7 @@ public class WorldLoaderModule : Module, IDisposable,
                 return;
 
             Connection.Active?.Chunks.ForEach(chunk => {
-                if ((chunk.Offset.Xz - getPosition().Xz).LengthFast > DropDistance * 16) {
+                if ((chunk.Offset.Xz - (Parent as GameController)!.Fph.Position.Xz).LengthFast > DropDistance * 16) {
                     Vector3i offset = chunk.Offset;
                     offset.Y = 0;
                     RequestedColumns.Remove(Chunk.ComputeKey(offset));

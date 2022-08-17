@@ -1,3 +1,5 @@
+using Bergmann.Client.Graphics;
+using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Networking;
 using OpenTK.Windowing.Common;
@@ -35,6 +37,8 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
     /// </summary>
     public TextHandler InputField { get; private set; }
 
+    private TextRenderer? InputRenderer { get; set; }
+
 
     /// <summary>
     /// Constructs a new chat controller. It creates a new input field and registeres necessary events.
@@ -42,6 +46,7 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
     /// <param name="messageAction">The action to be executed on a normal message. See <see cref="NonCommandAction"/>.</param>
     public ChatController(Action<string> messageAction) {
         NonCommandAction = messageAction;
+
 
         InputField = new();
         InputField.SpecialActions.Add((Keys.Enter, (ks) => {
@@ -69,7 +74,6 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
             Stack!.Pop(this);
         }
         ));
-
         InputHandlers.Add(InputField);
     }
 
@@ -88,16 +92,35 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
         }
     }
 
+    public override void Render() {
+        base.Render();
+
+        InputRenderer?.Render();
+    }
+
     public override void OnActivated(ControllerStack stack) {
         base.OnActivated(stack);
 
         Connection.Active?.RegisterMessageHandler(this);
+
+        GlThread.Invoke(() => {
+            InputRenderer = new() {
+                PercentageAnchorOffset = (0, 0),
+                AbsoluteAnchorOffset = (30, 30),
+                Dimension = (-1, 70),
+                RelativeAnchor = (0, 0)
+            };
+            InputRenderer.HookTextField(InputField);
+        });
+
     }
 
     public override void OnDeactivated() {
         base.OnDeactivated();
 
         Connection.Active?.DropMessageHandler(this);
+
+        GlThread.Invoke(() => InputRenderer?.Dispose());
     }
 
     public void HandleMessage(ChatMessage message) {
