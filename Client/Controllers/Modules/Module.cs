@@ -6,26 +6,46 @@ namespace Bergmann.Client.Controllers.Modules;
 /// </summary>
 public abstract class Module {
 
-    public bool IsActive { get; private set; }
-
-    public bool IsOnTop { get; private set; }
+    /// <summary>
+    /// Whether the module is currently active.
+    /// </summary>
+    public bool IsActive { get; private set; } = false;
 
     /// <summary>
-    /// The owner of the current module.
+    /// Whether the module is currently on top (the parent controller is on top).
+    /// </summary>
+    public bool IsOnTop { get; private set; } = false;
+
+    /// <summary>
+    /// The owner of the current module. The activate and deactivate methods are mirrored from this object.
     /// </summary>
     public Controller? Parent { get; private set; }
 
+    /// <summary>
+    /// <seealso cref="Controller.OnActivated"/>
+    /// </summart>
     public virtual void OnActivated(Controller parent) {
         Parent = parent;
         IsActive = true;
     }
+
+    /// <summary>
+    /// <seealso cref="Controller.OnDeactivated"/>
+    /// </summart>
     public virtual void OnDeactivated() {
         IsActive = false;
     }
 
+    /// <summary>
+    /// <seealso cref="Controller.OnNowOnTop"/>
+    /// </summart>
     public virtual void OnNowOnTop() {
         IsOnTop = true;
     }
+
+    /// <summary>
+    /// <seealso cref="Controller.OnNotOnTop"/>
+    /// </summart>
     public void OnNotOnTop() {
         IsOnTop = false;
     }

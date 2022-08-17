@@ -84,13 +84,13 @@ public class GameController : Controller {
 
         if (DebugViewEnabled) {
             Program.Active = SharedGlObjects.UIProgram;
-            DebugRenderer.Update(Fph.Position, args.DeltaTime, Connection.Active!.Chunks.Count);
+            DebugRenderer.Update(Fph.Position, 1f / args.DeltaTime, Connection.Active!.Chunks.Count);
             DebugRenderer.Render();
         }
     }
 
-    public override void HandleInput(InputUpdateArgs updateArgs) {
-        base.HandleInput(updateArgs);
+    public override void Update(UpdateArgs updateArgs) {
+        base.Update(updateArgs);
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;

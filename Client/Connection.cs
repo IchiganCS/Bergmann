@@ -88,7 +88,7 @@ public class Connection : IDisposable {
                 .AddMessagePackProtocol(options => {
                     StaticCompositeResolver.Instance.Register(
                         GeneratedResolver.Instance,
-                        CustomResolver.Instance,
+                        OpenTKResolver.Instance,
                         StandardResolver.Instance
                     );
 
@@ -106,7 +106,7 @@ public class Connection : IDisposable {
             return hc;
         }
 
-        Hub = buildHub(Names.Hub).Result;
+        Hub = buildHub(Constants.Hub).Result;
 
         Chunks = new();
 
@@ -138,7 +138,7 @@ public class Connection : IDisposable {
     }
 
     public async Task ClientToServerAsync(IMessage message) {
-        await Hub.SendAsync("ClientToServer", MessageBox.Create(message));
+        await Hub.SendAsync("ClientToServer", new MessageBox(message));
     }
 
     private void HandleServerToClient(IMessage message) {

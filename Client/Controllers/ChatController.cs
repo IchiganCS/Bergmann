@@ -11,9 +11,13 @@ namespace Bergmann.Client.Controllers;
 
 /// <summary>
 /// A controller for a chat. One may register commands and input text. The renderer for this is given by ChatRenderer.
-/// It eventually renders tooltips and already sent messages too.
+/// It eventually renders tooltips, but not sent messages. Rendering those is the task of a ChatModule. 
 /// </summary>
 public class ChatController : Controller {
+
+    /// <summary>
+    /// While the chat is shown, we request that the move can move freely.
+    /// </summary>
     public override CursorState RequestedCursorState => CursorState.Normal;
 
     /// <summary>
@@ -32,6 +36,9 @@ public class ChatController : Controller {
     /// </summary>
     public TextHandler InputField { get; private set; }
 
+    /// <summary>
+    /// This renders the <see cref="InputField"/>
+    /// </summary>
     private TextRenderer? InputRenderer { get; set; }
 
 
@@ -42,6 +49,8 @@ public class ChatController : Controller {
     public ChatController() {
 
         InputField = new();
+
+        //when enter is pressed, handle either a command or send the message to the server.
         InputField.SpecialActions.Add((Keys.Enter, async (ks) => {
             if (InputField.Text.StartsWith(CommandPrefix)) {
                 string text = InputField.Text.Remove(0, CommandPrefix.Length).Trim();
@@ -65,7 +74,7 @@ public class ChatController : Controller {
                     await Connection.Active!.ClientToServerAsync(new ChatMessage("ich", InputField.Text));
             }
 
-            InputField.SetText("");
+            GlThread.Invoke(() => InputField.SetText(""));
             Stack!.Pop(this);
         }
         ));
@@ -76,17 +85,20 @@ public class ChatController : Controller {
     /// Forwards typing events to its input field (and special actions) and pops on escape.
     /// </summary>
     /// <param name="updateArgs">The update arguments forwarded to the input field.</param>
-    public override void HandleInput(InputUpdateArgs updateArgs) {
+    public override void Update(UpdateArgs updateArgs) {
         if (updateArgs.KeyboardState.IsKeyDown(Keys.Escape)) {
-            InputField.SetText("");
+            GlThread.Invoke(() => InputField.SetText(""));
             Stack!.Pop(this);
         }
 
         else {
-            base.HandleInput(updateArgs);
+            base.Update(updateArgs);
         }
     }
 
+    /// <summary>
+    /// Render the input field. Later, maybe tooltips or suggestions can be shown too.
+    /// </summary>
     public override void Render(RenderUpdateArgs args) {
         Program.Active = SharedGlObjects.UIProgram;
 

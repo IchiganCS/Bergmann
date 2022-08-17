@@ -6,7 +6,8 @@ namespace Bergmann.Client.Controllers.Modules;
 
 
 /// <summary>
-/// Loads chunks from a connection. When supplying the position of a player, it can automate the process.
+/// Loads chunks from a connection. This is done automatically by supplying a refernce to the position
+/// of preferably the player. Chunks around this position are automatically dropped and loaded as needed.
 /// </summary>
 public class WorldLoaderModule : Module, IDisposable, 
     IMessageHandler<RawChunkMessage>, 
@@ -61,6 +62,8 @@ public class WorldLoaderModule : Module, IDisposable,
     /// Generates timers to load and drop chunks in the given intervals using <see cref="LoadDistance"/> and 
     /// <see cref="DropDistance"/>.
     /// </summary>
+    /// <param name="dropDistance">The distance at which chunks are dropped from memory</param>
+    /// <param name="loadDistance">The distance at which chunks are loaded from the server</param>
     /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
     public WorldLoaderModule(int loadTime = 250, int dropTime = 2000, 
@@ -110,13 +113,18 @@ public class WorldLoaderModule : Module, IDisposable,
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
     }
 
-
+    /// <summary>
+    /// Add a chunk update to the global list of updates.
+    /// </summary>
     public void HandleMessage(ChunkUpdateMessage message) {
         foreach (var block in message.UpdatedBlocks) {
             Connection.Active?.Chunks.SetBlockAt(block.Item1, block.Item2);
         }
     }
 
+    /// <summary>
+    /// Add the entirely new chunk to the global collection.
+    /// </summary>
     public void HandleMessage(RawChunkMessage message) {
         Connection.Active?.Chunks.AddOrReplace(message.Chunk);
     }
@@ -133,7 +141,11 @@ public class WorldLoaderModule : Module, IDisposable,
         Connection.Active?.DropMessageHandler<ChunkUpdateMessage>(this);
     }
 
-
+    /// <summary>
+    /// This should be called to make sure that the timers are disposed of in a controlled manner.
+    /// Not calling this method does not leak memory, but the timers are running as long as 
+    /// they are not garbage collected.
+    /// </summary>
     public void Dispose() {
         LoadTimer.Dispose();
         DropTimer.Dispose();

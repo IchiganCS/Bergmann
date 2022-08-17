@@ -1,5 +1,3 @@
-using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Client.InputHandlers;
 using Bergmann.Shared;
 
 namespace Bergmann.Client.Controllers;
@@ -24,25 +22,36 @@ public class ControllerStack {
         root.OnNowOnTop();
     }
 
-
-    /// <param name="args">The arguments forwarded to the top entry of the stack</param>
-    public void Update(InputUpdateArgs args) {
+    /// <summary>
+    /// Updates the top of the controller stack. This updating method is subject to change.
+    /// </summary>
+    /// <param name="args"></param>
+    public void Update(UpdateArgs args) {
         if (Controllers.Count == 0) {
             Logger.Warn("Handler stack is empty");
             return;
         }
 
         Controller formerTop = Controllers.Peek();
-        formerTop.HandleInput(args);
+        formerTop.Update(args);
     }
 
+    /// <summary>
+    /// Traverses through the controller stack with the top item being the last to be rendered.
+    /// </summary>
+    /// <param name="args">The arguments being forwarded to all renderers.</param>
     public void Render(RenderUpdateArgs args) {
         foreach (var cont in Controllers.Reverse().ToArray())
             cont.Render(args);
     }
 
+    /// <summary>
+    /// Pops an item from the controller stack.
+    /// </summary>
+    /// <param name="controller">The item which is at the top of the stack. 
+    /// This is used for checking that the wrong controller is not accidentally popped.</param>
     public void Pop(Controller controller) {
-        if (!Object.ReferenceEquals(Top, controller))
+        if (!Object.ReferenceEquals(Top, controller) || Controllers.Count <= 1)
             return;
 
         controller.OnNotOnTop();
@@ -53,6 +62,10 @@ public class ControllerStack {
             Top.OnNowOnTop();
     }
 
+    /// <summary>
+    /// Pushes a new controller to the stack. Activation methods are called accordingly and automatically.
+    /// </summary>
+    /// <param name="controller">The new controller which is soon on top.</param>
     public void Push(Controller controller) {
         if (Controllers.Count > 0)
             Top.OnNotOnTop();

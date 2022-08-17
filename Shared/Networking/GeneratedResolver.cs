@@ -49,7 +49,7 @@ namespace Bergmann.Shared.Networking.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(14)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(13)
             {
                 { typeof((global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)), 0 },
                 { typeof(global::System.Collections.Generic.IList<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>), 1 },
@@ -63,8 +63,7 @@ namespace Bergmann.Shared.Networking.Resolvers
                 { typeof(global::Bergmann.Shared.Networking.MessageBox), 9 },
                 { typeof(global::Bergmann.Shared.Networking.RawChunkMessage), 10 },
                 { typeof(global::Bergmann.Shared.Objects.Block), 11 },
-                { typeof(global::Bergmann.Shared.Objects.BlockInfo), 12 },
-                { typeof(global::Bergmann.Shared.Objects.Chunk), 13 },
+                { typeof(global::Bergmann.Shared.Objects.Chunk), 12 },
             };
         }
 
@@ -90,8 +89,7 @@ namespace Bergmann.Shared.Networking.Resolvers
                 case 9: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.MessageBoxFormatter();
                 case 10: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.RawChunkMessageFormatter();
                 case 11: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockFormatter();
-                case 12: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockInfoFormatter();
-                case 13: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.ChunkFormatter();
+                case 12: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.ChunkFormatter();
                 default: return null;
             }
         }
@@ -786,156 +784,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects
             }
 
             var ____result = new global::Bergmann.Shared.Objects.Block(__Type__);
-            reader.Depth--;
-            return ____result;
-        }
-    }
-
-    public sealed class BlockInfoFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Objects.BlockInfo>
-    {
-        // Name
-        private static global::System.ReadOnlySpan<byte> GetSpan_Name() => new byte[1 + 4] { 164, 78, 97, 109, 101 };
-        // ID
-        private static global::System.ReadOnlySpan<byte> GetSpan_ID() => new byte[1 + 2] { 162, 73, 68 };
-        // IsTransparent
-        private static global::System.ReadOnlySpan<byte> GetSpan_IsTransparent() => new byte[1 + 13] { 173, 73, 115, 84, 114, 97, 110, 115, 112, 97, 114, 101, 110, 116 };
-        // IsOpaque
-        private static global::System.ReadOnlySpan<byte> GetSpan_IsOpaque() => new byte[1 + 8] { 168, 73, 115, 79, 112, 97, 113, 117, 101 };
-        // TopLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_TopLayer() => new byte[1 + 8] { 168, 84, 111, 112, 76, 97, 121, 101, 114 };
-        // BottomLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_BottomLayer() => new byte[1 + 11] { 171, 66, 111, 116, 116, 111, 109, 76, 97, 121, 101, 114 };
-        // LeftLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_LeftLayer() => new byte[1 + 9] { 169, 76, 101, 102, 116, 76, 97, 121, 101, 114 };
-        // RightLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_RightLayer() => new byte[1 + 10] { 170, 82, 105, 103, 104, 116, 76, 97, 121, 101, 114 };
-        // FrontLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_FrontLayer() => new byte[1 + 10] { 170, 70, 114, 111, 110, 116, 76, 97, 121, 101, 114 };
-        // BackLayer
-        private static global::System.ReadOnlySpan<byte> GetSpan_BackLayer() => new byte[1 + 9] { 169, 66, 97, 99, 107, 76, 97, 121, 101, 114 };
-
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Objects.BlockInfo value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(10);
-            writer.WriteRaw(GetSpan_Name());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Name, options);
-            writer.WriteRaw(GetSpan_ID());
-            writer.Write(value.ID);
-            writer.WriteRaw(GetSpan_IsTransparent());
-            writer.Write(value.IsTransparent);
-            writer.WriteRaw(GetSpan_IsOpaque());
-            writer.Write(value.IsOpaque);
-            writer.WriteRaw(GetSpan_TopLayer());
-            writer.Write(value.TopLayer);
-            writer.WriteRaw(GetSpan_BottomLayer());
-            writer.Write(value.BottomLayer);
-            writer.WriteRaw(GetSpan_LeftLayer());
-            writer.Write(value.LeftLayer);
-            writer.WriteRaw(GetSpan_RightLayer());
-            writer.Write(value.RightLayer);
-            writer.WriteRaw(GetSpan_FrontLayer());
-            writer.Write(value.FrontLayer);
-            writer.WriteRaw(GetSpan_BackLayer());
-            writer.Write(value.BackLayer);
-        }
-
-        public global::Bergmann.Shared.Objects.BlockInfo Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-
-            options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
-            var ____result = new global::Bergmann.Shared.Objects.BlockInfo();
-
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-                    case 4:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
-
-                        ____result.Name = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-                    case 2:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 17481UL) { goto FAIL; }
-
-                        ____result.ID = reader.ReadInt32();
-                        continue;
-                    case 13:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_IsTransparent().Slice(1))) { goto FAIL; }
-
-                        ____result.IsTransparent = reader.ReadBoolean();
-                        continue;
-                    case 8:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 7310874233415889737UL:
-                                reader.Skip();
-                                continue;
-                            case 8243128151772786516UL:
-                                ____result.TopLayer = reader.ReadInt32();
-                                continue;
-                        }
-                    case 11:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_BottomLayer().Slice(1))) { goto FAIL; }
-
-                        ____result.BottomLayer = reader.ReadInt32();
-                        continue;
-                    case 9:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 7311982451010987340UL:
-                                if (stringKey[0] != 114) { goto FAIL; }
-
-                                ____result.LeftLayer = reader.ReadInt32();
-                                continue;
-
-                            case 7311982450859794754UL:
-                                if (stringKey[0] != 114) { goto FAIL; }
-
-                                ____result.BackLayer = reader.ReadInt32();
-                                continue;
-
-                        }
-                    case 10:
-                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
-                        {
-                            default: goto FAIL;
-                            case 8746356014181738834UL:
-                                if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 29285UL) { goto FAIL; }
-
-                                ____result.RightLayer = reader.ReadInt32();
-                                continue;
-
-                            case 8746356014282928710UL:
-                                if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 29285UL) { goto FAIL; }
-
-                                ____result.FrontLayer = reader.ReadInt32();
-                                continue;
-
-                        }
-
-                }
-            }
-
             reader.Depth--;
             return ____result;
         }

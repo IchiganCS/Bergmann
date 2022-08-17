@@ -8,11 +8,12 @@ using OpenTK.Windowing.Common;
 namespace Bergmann.Client.Controllers;
 
 /// <summary>
-/// Stores a few modules which should run the entire time. This should be the root of the controller stack.
+/// Stores a few modules which should run the entire time. This should be the root of the controller stack accordingly.
+/// Examples are listeners for chat messages
 /// </summary>
 public class ServiceController : Controller {
     public override CursorState RequestedCursorState => CursorState.Normal;
-    ChatModule Chat;
+    private IncomingChatModule Chat;
 
     public ServiceController() {
         Chat = new();
@@ -26,8 +27,8 @@ public class ServiceController : Controller {
         Chat.Render();
     }
 
-    public override void HandleInput(InputUpdateArgs updateArgs) {
-        base.HandleInput(updateArgs);
+    public override void Update(UpdateArgs updateArgs) {
+        base.Update(updateArgs);
         
         Stack!.Push(new GameController());
     }

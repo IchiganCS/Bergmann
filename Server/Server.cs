@@ -12,7 +12,7 @@ public class Server {
     public static IHubContext<TrueHub> HubContext { get; set; } = null!;
     public static IHubClients Clients => HubContext.Clients;
     public static async Task SendToClientAsync(IClientProxy clients, IMessage message) {
-        await clients.SendAsync("ServerToClient", MessageBox.Create(message));
+        await clients.SendAsync("ServerToClient", new MessageBox(message));
     }
 
     public static void Main(string[] args) {
@@ -24,7 +24,7 @@ public class Server {
             .AddMessagePackProtocol(options => {
                 StaticCompositeResolver.Instance.Register(
                     GeneratedResolver.Instance,
-                    CustomResolver.Instance,
+                    OpenTKResolver.Instance,
                     StandardResolver.Instance
                 );
 
@@ -42,10 +42,10 @@ public class Server {
 
         });
         
-        builder.WebHost.UseUrls($"http://*:{Names.DefaultPort}");
+        builder.WebHost.UseUrls($"http://*:{Constants.DefaultPort}");
 
         WebApplication app = builder.Build();
-        app.MapHub<TrueHub>("/" + Names.Hub);
+        app.MapHub<TrueHub>("/" + Constants.Hub);
         app.UseRouting();
 
 

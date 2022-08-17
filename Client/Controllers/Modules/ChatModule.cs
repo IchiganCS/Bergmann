@@ -4,7 +4,15 @@ using Bergmann.Shared.Networking;
 
 namespace Bergmann.Client.Controllers.Modules;
 
-public class ChatModule : Module, IMessageHandler<ChatMessage> {
+/// <summary>
+/// A module which handles different tasks for incoming chat messages. It receives new chat messages, holds the history
+/// and renders them when requested. This module might be removed and merged with <see cref="ChatController"/>.
+/// </summary>
+public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
+
+    /// <summary>
+    /// The history of all messages received.
+    /// </summary>
     private List<ChatMessage> Messages { get; set; } = new();
 
     private TextRenderer? TopMessage { get; set; }

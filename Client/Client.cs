@@ -9,7 +9,7 @@ public class Client {
     public static void Main(string[] args) {
         Logger.Info("Starting client...");
 
-        string link = $"http://localhost:{Names.DefaultPort}";
+        string link = $"http://localhost:{Constants.DefaultPort}";
         Connection localhost = new(link);
         Connection.Active = localhost;
 
