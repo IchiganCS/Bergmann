@@ -1,9 +1,8 @@
-using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Client.Controllers;
+namespace Bergmann.Client.Controllers.Modules;
 
 
 /// <summary>
@@ -17,13 +16,13 @@ public class WorldLoaderModule : Module, IDisposable,
     /// The timer responsible to load chunks. It checks against a given position whether any chunks are in <see cref="LoadDistance"/>
     /// and are not loaded. If that is the case, those chunks are requested from the server.
     /// </summary>
-    private Timer? LoadTimer { get; set; }
+    private Timer LoadTimer { get; set; }
 
     /// <summary>
     /// The timer responsible to drop chunks. If a chunk distance exceeds <see cref="DropDistance"/> but is still loaded,
     /// it is dropped.
     /// </summary>
-    private Timer? DropTimer { get; set; }
+    private Timer DropTimer { get; set; }
 
     /// <summary>
     /// The distance of chunks which shall be ensured to be loaded. Can be set dynamically.
@@ -43,7 +42,7 @@ public class WorldLoaderModule : Module, IDisposable,
     /// Since this is solely dependent on the <see cref="LoadDistance"/> and the operation to calculate those offsets is quite expensive,
     /// the value is cached.
     /// </summary>
-    private IEnumerable<Vector3i>? LoadOffsets { get; set; }
+    private IEnumerable<Vector3i> LoadOffsets { get; set; }
 
     /// <summary>
     /// A list of those chunk columns which were requested. It stores the lowest chunk of each requested column.
@@ -69,6 +68,8 @@ public class WorldLoaderModule : Module, IDisposable,
         int loadTime = 250, int dropTime = 2000, 
         int loadDistance = 10, int dropDistance = 40) {
 
+        LoadOffsets = Enumerable.Empty<Vector3i>();
+
         LoadDistance = loadDistance;
         DropDistance = dropDistance;
 
@@ -76,11 +77,6 @@ public class WorldLoaderModule : Module, IDisposable,
             if (!IsActive)
                 return;
                 
-            if (LoadOffsets is null) {
-                // cannot load any chunks if we can't calculate which ones :)
-                Logger.Warn($"Tried to load chunks, but no {nameof(LoadOffsets)} were given.");
-                return;
-            }
 
             // it contains only chunks which were not previously. It only stores one chunk per column
             IEnumerable<long> chunks;
@@ -117,11 +113,6 @@ public class WorldLoaderModule : Module, IDisposable,
     }
 
 
-    public void Dispose() {
-        LoadTimer?.Dispose();
-        DropTimer?.Dispose();
-    }
-
     public void HandleMessage(ChunkUpdateMessage message) {
         foreach (var block in message.UpdatedBlocks) {
             Connection.Active?.Chunks.SetBlockAt(block.Item1, block.Item2);
@@ -142,5 +133,11 @@ public class WorldLoaderModule : Module, IDisposable,
         base.OnDeactivated();
         Connection.Active?.DropMessageHandler<RawChunkMessage>(this);
         Connection.Active?.DropMessageHandler<ChunkUpdateMessage>(this);
+    }
+
+
+    public void Dispose() {
+        LoadTimer.Dispose();
+        DropTimer.Dispose();
     }
 }

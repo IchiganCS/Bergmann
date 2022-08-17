@@ -4,7 +4,7 @@ using Bergmann.Shared;
 namespace Bergmann.Client.Controllers;
 
 /// <summary>
-/// A stack of <see cref="Controller"/>s. The topmost is updated in the <see cref="Execute"/> method. All are rendered.
+/// A stack of <see cref="Controller"/>s. The topmost is updated in the <see cref="Update"/> method. All are rendered.
 /// </summary>
 public class ControllerStack {
     /// <summary>
@@ -23,13 +23,9 @@ public class ControllerStack {
         root.OnNowOnTop();
     }
 
-    /// <summary>
-    /// Executes an update cycle: Calls update on the top entry of the stack and performs additional tasks
-    /// depending on whether the controller wrote to its <see cref="Controller.ShouldPop"/> or 
-    /// <see cref="Controller.ToPush"/> values. If so, those are executed accordingly.
-    /// </summary>
+
     /// <param name="args">The arguments forwarded to the top entry of the stack</param>
-    public void Execute(UpdateArgs args) {
+    public void Update(UpdateArgs args) {
         if (Controllers.Count == 0) {
             Logger.Warn("Handler stack is empty");
             return;
@@ -37,6 +33,11 @@ public class ControllerStack {
 
         Controller formerTop = Controllers.Peek();
         formerTop.HandleInput(args);
+    }
+
+    public void Render() {
+        foreach (var cont in Controllers)
+            cont.Render();
     }
 
     public void Pop(Controller controller) {

@@ -1,4 +1,4 @@
-namespace Bergmann.Client.Controllers;
+namespace Bergmann.Client.Controllers.Modules;
 
 /// <summary>
 /// A module is some part of a controller which can be added to better separate differnet parts of a controller. 

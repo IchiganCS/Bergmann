@@ -213,7 +213,7 @@ public class Window : GameWindow {
 
 
         UpdateArgs updateArgs = new((float)args.Time);
-        ControllerStack.Execute(updateArgs);
+        ControllerStack.Update(updateArgs);
     }
 
 

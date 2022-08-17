@@ -1,5 +1,7 @@
 using Bergmann.Client.InputHandlers;
+using Bergmann.Client.Controllers.Modules;
 using OpenTK.Windowing.Common;
+using Bergmann.Client.Graphics.Renderers;
 
 namespace Bergmann.Client.Controllers;
 
@@ -13,6 +15,7 @@ public abstract class Controller {
 
     protected IList<Module> Modules { get; set; } = new List<Module>();
     protected IList<IInputHandler> InputHandlers { get; set; } = new List<IInputHandler>();
+    protected IList<IRenderer> Renderers { get; set; } = new List<IRenderer>();
 
     public bool IsOnTop { get; private set; }
 
@@ -26,6 +29,11 @@ public abstract class Controller {
     public virtual void HandleInput(UpdateArgs updateArgs) {
         foreach (var input in InputHandlers)
             input.HandleInput(updateArgs);
+    }
+
+    public virtual void Render() {
+        foreach (var renderer in Renderers)
+            renderer.Render();
     }
 
 
