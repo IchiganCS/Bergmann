@@ -1,12 +1,10 @@
 using Bergmann.Client.Graphics;
-using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Shared.Networking;
 
 namespace Bergmann.Client.Controllers.Modules;
 
-public class ChatModule : Module, IRenderer, IMessageHandler<ChatMessage> {
+public class ChatModule : Module, IMessageHandler<ChatMessage> {
     private List<ChatMessage> Messages { get; set; } = new();
 
     private TextRenderer? TopMessage { get; set; }
@@ -40,14 +38,11 @@ public class ChatModule : Module, IRenderer, IMessageHandler<ChatMessage> {
     }
 
     public void Render() {
-        Program.Active = SharedGlObjects.UIProgram;
-
         if (Messages.Count == 0)
-            GlThread.Invoke(() => TopMessage?.SetText(""));
+            TopMessage?.SetText("");
         else
-            GlThread.Invoke(() => TopMessage?.SetText(Messages.FindLast(x => true)!.Text));
-    }
+            TopMessage?.SetText(Messages.FindLast(x => true)!.Text);
 
-    public void Dispose() {
+        TopMessage?.Render();
     }
 }

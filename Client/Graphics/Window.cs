@@ -1,5 +1,6 @@
 using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
@@ -25,15 +26,16 @@ public class Window : GameWindow {
     protected override void OnLoad() {
         base.OnLoad();
 
-
         BlockInfo.ReadFromJson("Blocks.json");
         ControllerStack = new(new ServiceController());
 
+        SharedGlObjects.ReadSupportedExtensions();
         SharedGlObjects.CompilePrograms();
         SharedGlObjects.AssembleBlockTextures("Textures.json");
         SharedGlObjects.AssembleLetterTextures();
         SharedGlObjects.MakeUITextures();
 
+        GlLogger.EnableCallback();
 
 
         GL.ClearColor(0.0f, 0.0f, 1.0f, 0.0f);
@@ -87,7 +89,7 @@ public class Window : GameWindow {
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
-        ControllerStack.Render();
+        ControllerStack.Render(new RenderUpdateArgs((float)args.Time));
         GlLogger.WriteGLError();
 
         Context.SwapBuffers();

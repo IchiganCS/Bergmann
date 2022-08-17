@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 namespace Bergmann.Server;
 
 public class Server {
-    public static IHubContext<TrueHub> HubContext { get; set; }
+    public static IHubContext<TrueHub> HubContext { get; set; } = null!;
     public static IHubClients Clients => HubContext.Clients;
     public static async Task SendToClientAsync(IClientProxy clients, IMessage message) {
         await clients.SendAsync("ServerToClient", MessageBox.Create(message));

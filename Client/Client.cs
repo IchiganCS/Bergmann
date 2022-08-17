@@ -19,11 +19,12 @@ public class Client {
         gwSet.RenderFrequency = 60f;
         gwSet.UpdateFrequency = 140f;
 
-        nwSet.APIVersion = Version.Parse("3.3");
+        nwSet.APIVersion = new(3, 3);
         nwSet.Title = "Bergmann";
         nwSet.Size = (1400, 1100);
         nwSet.Location = (100, 100);
 
+        
 
         using Window win = new(gwSet, nwSet);
         Window.Instance = win;

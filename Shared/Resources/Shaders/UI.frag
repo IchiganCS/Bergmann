@@ -16,4 +16,7 @@ void main()
     else {
         fragColor = texture(textureUni, texCoord.xy);
     }
+
+    if (fragColor.a < 0.01)
+        discard;
 }

@@ -17,7 +17,7 @@ public abstract class Module {
 
     public virtual void OnActivated(Controller parent) {
         Parent = parent;
-        IsActive = false;
+        IsActive = true;
     }
     public virtual void OnDeactivated() {
         IsActive = false;

@@ -27,7 +27,9 @@ public static class GlLogger {
     /// Only works in 4.3
     /// </summary>
     public static void EnableCallback() {
-        CallbackEnabled = true;
+        if (!SharedGlObjects.SupportedExtensions.Contains("GL_KHR_debug"))
+            return;
+
         GL.DebugMessageCallback((s, t, id, sev, l, m, u) => {
             string text = Marshal.PtrToStringUTF8(m, l);
             Logger.Level level = sev switch {
@@ -37,5 +39,6 @@ public static class GlLogger {
             };
             Logger.Write(text, level, "OpenGL");
         }, IntPtr.Zero);
+        CallbackEnabled = true;
     }
 }

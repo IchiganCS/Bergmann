@@ -16,6 +16,16 @@ namespace Bergmann.Client.Graphics;
 
 
 public static class SharedGlObjects {
+    public static IList<string> SupportedExtensions { get; private set; } = null!;
+    public static void ReadSupportedExtensions() {
+        int extensionCount = GL.GetInteger(GetPName.NumExtensions);
+        SupportedExtensions = new List<string>(extensionCount);
+
+        for (int i = 0; i < extensionCount; i++)
+            SupportedExtensions.Add(GL.GetString(StringNameIndexed.Extensions, i));
+    }
+
+
     public static Program UIProgram { get; private set; } = null!;
     public static Program BlockProgram { get; private set; } = null!;
     public static void CompilePrograms() {
@@ -60,9 +70,9 @@ public static class SharedGlObjects {
 
         UIProgram.OnLoad += () => {
             GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.DepthTest); //this is required so that ui elements may overlap
+            //GL.Disable(EnableCap.DepthTest); //this is required so that ui elements may overlap
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-
+ 
             UIProgram.SetUniform("windowsize", Window.Instance.Size);
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.ActiveTexture(TextureUnit.Texture1);

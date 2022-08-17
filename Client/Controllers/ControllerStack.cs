@@ -1,3 +1,4 @@
+using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared;
 
@@ -35,9 +36,9 @@ public class ControllerStack {
         formerTop.HandleInput(args);
     }
 
-    public void Render() {
-        foreach (var cont in Controllers)
-            cont.Render();
+    public void Render(RenderUpdateArgs args) {
+        foreach (var cont in Controllers.Reverse().ToArray())
+            cont.Render(args);
     }
 
     public void Pop(Controller controller) {
@@ -65,5 +66,5 @@ public class ControllerStack {
     /// Gets the top of all <see cref="Controller"/>s.
     /// </summary>
     public Controller Top
-            => Controllers.Peek();
+        => Controllers.Peek();
 }

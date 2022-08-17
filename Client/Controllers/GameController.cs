@@ -8,6 +8,7 @@ using Bergmann.Client.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.Renderers.UI;
 
 namespace Bergmann.Client.Controllers;
 
@@ -26,7 +27,10 @@ public class GameController : Controller {
     /// </summary>
     public FPHandler Fph { get; init; }
 
-    public ChatController Chat { get; init; }
+    private ChatController Chat { get; init; }
+
+    private WorldRenderer WorldRenderer { get; init; }
+    private DebugRenderer DebugRenderer { get; init; }
     public bool WireFrameEnabled { get; private set; } = false;
     public bool DebugViewEnabled { get; private set; } = false;
 
@@ -62,13 +66,15 @@ public class GameController : Controller {
             Name = "debug"
         });
 
-        Renderers.Add(new WorldRenderer());
+        WorldRenderer = new();
+        DebugRenderer = new();
         Modules.Add(new WorldLoaderModule());
+
 
         InputHandlers.Add(Fph);
     }
 
-    public override void Render() {
+    public override void Render(RenderUpdateArgs args) {
         Program.Active = SharedGlObjects.BlockProgram;
 
         if (WireFrameEnabled)
@@ -79,7 +85,13 @@ public class GameController : Controller {
         Matrix4 viewMat = Fph.LookAt;
         SharedGlObjects.BlockProgram.SetUniform("view", viewMat);
 
-        base.Render();
+        WorldRenderer.Render();
+
+        if (DebugViewEnabled) {
+            Program.Active = SharedGlObjects.UIProgram;
+            DebugRenderer.Update(Fph.Position, args.DeltaTime, Connection.Active!.Chunks.Count);
+            DebugRenderer.Render();
+        }
     }
 
     public override void HandleInput(UpdateArgs updateArgs) {

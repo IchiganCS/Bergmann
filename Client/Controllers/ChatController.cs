@@ -1,4 +1,6 @@
 using Bergmann.Client.Graphics;
+using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Networking;
@@ -12,7 +14,7 @@ namespace Bergmann.Client.Controllers;
 /// A controller for a chat. One may register commands and input text. The renderer for this is given by ChatRenderer.
 /// It eventually renders tooltips and already sent messages too.
 /// </summary>
-public class ChatController : Controller, IMessageHandler<ChatMessage> {
+public class ChatController : Controller {
     public override CursorState RequestedCursorState => CursorState.Normal;
 
     /// <summary>
@@ -53,19 +55,19 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
             if (InputField.Text.StartsWith(CommandPrefix)) {
                 string text = InputField.Text.Remove(0, CommandPrefix.Length).Trim();
                 string[] elems = text.Split();
-                if (elems.Length == 0)
-                    return; //TODO no command given
+                if (elems.Length > 0) {
+                    string command = elems[0];
+                    string[] args = elems.Skip(1).ToArray();
 
-                string command = elems[0];
-                string[] args = elems.Skip(1).ToArray();
+                    foreach (Command cmd in Commands) {
+                        if (cmd.Name.ToLower() == command.ToLower())
+                            cmd.Execute?.Invoke(args);
+                    }
 
-                foreach (Command cmd in Commands) {
-                    if (cmd.Name.ToLower() == command.ToLower())
-                        cmd.Execute?.Invoke(args);
+                    if (!Commands.Any(x => x.Name == command)) {
+                        //TODO command not found
+                    }
                 }
-
-                if (!Commands.Any(x => x.Name == command))
-                    return; //TODO command not found
             }
             else
                 NonCommandAction(InputField.Text);
@@ -92,16 +94,14 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
         }
     }
 
-    public override void Render() {
-        base.Render();
+    public override void Render(RenderUpdateArgs args) {
+        Program.Active = SharedGlObjects.UIProgram;
 
         InputRenderer?.Render();
     }
 
     public override void OnActivated(ControllerStack stack) {
         base.OnActivated(stack);
-
-        Connection.Active?.RegisterMessageHandler(this);
 
         GlThread.Invoke(() => {
             InputRenderer = new() {
@@ -118,15 +118,8 @@ public class ChatController : Controller, IMessageHandler<ChatMessage> {
     public override void OnDeactivated() {
         base.OnDeactivated();
 
-        Connection.Active?.DropMessageHandler(this);
-
         GlThread.Invoke(() => InputRenderer?.Dispose());
     }
-
-    public void HandleMessage(ChatMessage message) {
-        Console.WriteLine(message.Text);
-    }
-
 
 
     /// <summary>

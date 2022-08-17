@@ -143,10 +143,8 @@ public class TextRenderer : UIRenderer {
         Vertices?.Bind();
         UIVertex.BindVAO();
         Indices?.Bind();
-        GlLogger.WriteGLError();
 
         GL.DrawElements(PrimitiveType.Triangles, Indices!.Length, DrawElementsType.UnsignedInt, 0);
-        GlLogger.WriteGLError();
     }
 
 

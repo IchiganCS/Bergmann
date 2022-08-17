@@ -33,16 +33,10 @@ public class DebugRenderer : UIRenderer {
                 PercentageAnchorOffset = (0, 1),
                 Dimension = (-1, 70)
             });
+            Texts[i].SetText("");
         }
-
-        UpdateEmpty();
     }
 
-    //set some default values for robustness
-    private void UpdateEmpty() {
-        foreach (var text in Texts)
-            text.SetText("");
-    }
 
     /// <summary>
     /// Updates the values rendered. All of these values are required for a full debug information.
