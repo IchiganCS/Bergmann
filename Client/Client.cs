@@ -16,7 +16,7 @@ public class Client {
         GameWindowSettings gwSet = GameWindowSettings.Default;
         NativeWindowSettings nwSet = NativeWindowSettings.Default;
 
-        gwSet.RenderFrequency = 60f;
+        gwSet.RenderFrequency = 00f;
         gwSet.UpdateFrequency = 140f;
 
         nwSet.APIVersion = new(3, 3);

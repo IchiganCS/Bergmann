@@ -9,6 +9,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers.UI;
+using Bergmann.Shared;
 
 namespace Bergmann.Client.Controllers;
 
@@ -79,8 +80,12 @@ public class GameController : Controller {
 
         Matrix4 viewMat = Fph.LookAt;
         SharedGlObjects.BlockProgram.SetUniform("view", viewMat);
+        
+        Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Graphics.Window.Instance.Size.X / Graphics.Window.Instance.Size.Y, 0.1f, 300f);
+        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
+        Program.Active.SetUniform("projection", projMat);
 
-        WorldRenderer.Render();
+        WorldRenderer.Render(new(projMat, Fph.LookAt));
 
         if (DebugViewEnabled) {
             Program.Active = SharedGlObjects.UIProgram;

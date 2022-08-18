@@ -36,8 +36,8 @@ public class TextHandler : IInputHandler {
                 pair.Item2(keyboard);
         }
 
-        if (updateArgs.TextInput != "") {
-            Insert(updateArgs.TextInput);
+        if (updateArgs.TypedText != "") {
+            Insert(updateArgs.TypedText);
         }
 
         bool control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);

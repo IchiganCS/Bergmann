@@ -26,16 +26,14 @@ public class InputUpdateArgs {
     /// <summary>
     /// The text input of the window in unicode symbols.
     /// </summary>
-    public string TextInput { get; private set; }
+    public string TypedText { get; private set; }
 
     /// <summary>
     /// Constructs a new instance from <see cref="Window.Instance"/> and the given delta time.
     /// This constructor shall only be called once per frame or the logic breaks.
     /// </summary>
     /// <param name="deltaTime">The delta time in seconds.</param>
-    /// <param name="fetchInputFromStaticWindow">Whether the constructor should fetch input from the window. 
-    /// Might be useful when the application should not handle user input, but only perform raw updates.</param>
-    public InputUpdateArgs(float deltaTime, bool fetchInputFromStaticWindow = true) {
+    public InputUpdateArgs(float deltaTime) {
         if (!CallbackRegistered) {
             Window.Instance.TextInput += (e) => CachedText += e.AsString;
             CallbackRegistered = true;
@@ -43,7 +41,7 @@ public class InputUpdateArgs {
 
         KeyboardState = Window.Instance.KeyboardState;
         MouseState = Window.Instance.MouseState;
-        TextInput = CachedText;
+        TypedText = CachedText;
 
 
         DeltaTime = deltaTime;

@@ -1,4 +1,5 @@
 using Bergmann.Client.Graphics.Renderers.Passers;
+using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers;
 
@@ -6,7 +7,7 @@ namespace Bergmann.Client.Graphics.Renderers;
 /// A renderer for the entire world. Of course, it doesn't render the entire world, but only handles
 /// the different render passes. It holds a set of <see cref="IRendererPasser"/> to achieve this.
 /// </summary>
-public class WorldRenderer : IDisposable, IRenderer {
+public class WorldRenderer : IDisposable {
 
     private IList<IRendererPasser> RenderPassers { get; set; }
 
@@ -18,9 +19,9 @@ public class WorldRenderer : IDisposable, IRenderer {
     }
 
 
-    public void Render() {
+    public void Render(IrregularBox box) {
         foreach (IRendererPasser passer in RenderPassers)
-            passer.Render();
+            passer.Render(box);
     }
 
 

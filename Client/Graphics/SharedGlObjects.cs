@@ -48,9 +48,6 @@ public static class SharedGlObjects {
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
 
-            Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Window.Instance.Size.X / Window.Instance.Size.Y, 0.1f, 300f);
-            projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
-            BlockProgram.SetUniform("projection", projMat);
             BlockProgram.SetUniform("model", Matrix4.Identity);
 
             GL.ActiveTexture(TextureUnit.Texture0);

@@ -2,6 +2,7 @@ using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers;
 using Bergmann.Client.InputHandlers;
+using Bergmann.Shared;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
@@ -79,11 +80,10 @@ public class Window : GameWindow {
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         base.OnRenderFrame(args);
+
         GlThread.DoAll();
 
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-
         ControllerStack.Render(new RenderUpdateArgs((float)args.Time));
         GlLogger.WriteGLError();
 

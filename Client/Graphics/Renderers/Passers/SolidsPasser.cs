@@ -77,11 +77,37 @@ public class SolidsPasser : IRendererPasser {
     public SolidsPasser() {
         Chunkers = new();
         Connection.Active!.Chunks.OnChunkChanged += (ch, positions) => {
+            List<long> keys = new();
+
             MakeNewRendererAt(ch.Key);
+
+            if (positions.Any(x => (x - ch.Offset).Y == 0))
+                keys.Add(Chunk.ComputeKey(ch.Offset - (0, 16, 0)));
+            if (positions.Any(x => (x - ch.Offset).Y == 15))
+                keys.Add(Chunk.ComputeKey(ch.Offset + (0, 16, 0)));
+            if (positions.Any(x => (x - ch.Offset).X == 0))
+                keys.Add(Chunk.ComputeKey(ch.Offset - (16, 0, 0)));
+            if (positions.Any(x => (x - ch.Offset).X == 15))
+                keys.Add(Chunk.ComputeKey(ch.Offset + (16, 0, 0)));
+            if (positions.Any(x => (x - ch.Offset).Z == 0))
+                keys.Add(Chunk.ComputeKey(ch.Offset - (0, 0, 16)));
+            if (positions.Any(x => (x - ch.Offset).Z == 15))
+                keys.Add(Chunk.ComputeKey(ch.Offset + (0, 0, 16)));
+
+            foreach (var key in keys.Where(x => Chunkers.ContainsKey(x)))
+                MakeNewRendererAt(key);
         };
 
         Connection.Active!.Chunks.OnChunkAdded += ch => {
             MakeNewRendererAt(ch.Key);
+
+
+            // foreach (var key in Geometry.AllFaces
+            //            .Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)
+            //            .Select(Chunk.ComputeKey)
+            //            .Where(Chunkers.ContainsKey))
+
+            //    MakeNewRendererAt(key);
         };
 
         Connection.Active!.Chunks.OnChunkRemoved += ch =>
@@ -91,10 +117,10 @@ public class SolidsPasser : IRendererPasser {
     }
 
 
-    public void Render() {
+    public void Render(IrregularBox box) {
         lock (Chunkers)
             foreach (SolidsChunkRenderer ren in Chunkers.Values)
-                ren.Render();
+                ren.Render(box);
     }
 
     public void Dispose() {
@@ -120,6 +146,8 @@ public class SolidsPasser : IRendererPasser {
         /// </summary>
         private VertexArray<Vertex3D>? VAO { get; set; }
 
+        private Vector3 MiddlePoint { get; set; }
+
 
         /// <summary>
         /// Builds the buffers for a given chunk. Throws away all old buffers. This is quite a costly operation.
@@ -128,6 +156,8 @@ public class SolidsPasser : IRendererPasser {
         public void BuildFor(Chunk chunk) {
             if (chunk is null)
                 return;
+
+            MiddlePoint = chunk.Offset + (8, 8, 8);
 
             int heldLock = -1;
 
@@ -160,7 +190,7 @@ public class SolidsPasser : IRendererPasser {
                 foreach (Geometry.Face face in Geometry.AllFaces) {
 
 
-                    if (chunk.GetBlockWorld(blockPosition + Geometry.FaceToVector[(int)face]) == 0) {
+                    if (Connection.Active?.Chunks.GetBlockAt(blockPosition + Geometry.FaceToVector[(int)face]) == 0) {
                         Vector3[] ps = Geometry.Positions[(int)face];
                         int layer = info.GetLayerFromFace(face);
                         Vector3 globalPosition = blockPosition;
@@ -229,8 +259,10 @@ public class SolidsPasser : IRendererPasser {
         /// Renders the buffer. It may not quite be up to date, depending on when the other threads finish with their execution, 
         /// but it is guaranteed to either not render anything, or something that was just a little back in time.
         /// </summary>
-        public void Render()
-            => VAO?.Draw();
+        public void Render(IrregularBox box) {
+            if (box.Contains(MiddlePoint))
+                VAO?.Draw();
+        }
 
 
 
