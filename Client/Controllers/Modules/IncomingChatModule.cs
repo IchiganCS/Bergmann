@@ -13,13 +13,13 @@ public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
     /// <summary>
     /// The history of all messages received.
     /// </summary>
-    private List<ChatMessage> Messages { get; set; } = new();
+    private List<ChatMessage> History { get; set; } = new();
 
     private TextRenderer? TopMessage { get; set; }
 
 
     public void HandleMessage(ChatMessage message) {
-        Messages.Add(message);
+        History.Add(message);
 
 
     }
@@ -46,10 +46,10 @@ public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
     }
 
     public void Render() {
-        if (Messages.Count == 0)
+        if (History.Count == 0)
             TopMessage?.SetText("");
         else
-            TopMessage?.SetText(Messages.FindLast(x => true)!.Text);
+            TopMessage?.SetText(History.FindLast(x => true)!.Text);
 
         TopMessage?.Render();
     }

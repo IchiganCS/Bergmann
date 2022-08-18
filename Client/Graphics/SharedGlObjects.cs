@@ -16,13 +16,17 @@ namespace Bergmann.Client.Graphics;
 
 
 public static class SharedGlObjects {
-    public static IList<string> SupportedExtensions { get; private set; } = null!;
+    private static IList<string> SupportedExtensions { get; set; } = null!;
     public static void ReadSupportedExtensions() {
         int extensionCount = GL.GetInteger(GetPName.NumExtensions);
         SupportedExtensions = new List<string>(extensionCount);
 
         for (int i = 0; i < extensionCount; i++)
             SupportedExtensions.Add(GL.GetString(StringNameIndexed.Extensions, i));
+    }
+
+    public static bool SupportsExtension(string extensionName) {
+        return SupportedExtensions.Contains(extensionName);
     }
 
 

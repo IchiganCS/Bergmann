@@ -62,7 +62,7 @@ public class DebugRenderer : UIRenderer {
     /// Disposes all renderers used for rendering the debug view.
     /// </summary>
     public override void Dispose() {
-        foreach (IRenderer ren in Texts)
-            ren.Dispose();
+        foreach (IRenderer renderer in Texts)
+            renderer.Dispose();
     }
 }

@@ -53,9 +53,6 @@ public class Window : GameWindow {
 
     protected override void OnUnload() {
         base.OnUnload();
-
-        Vertex.CloseVAO();
-        UIVertex.CloseVAO();
         SharedGlObjects.FreeAll();
     }
 
@@ -70,8 +67,6 @@ public class Window : GameWindow {
     protected override void OnUpdateFrame(FrameEventArgs args) {
         base.OnUpdateFrame(args);
 
-        if (!IsFocused)
-            return;
 
         CursorState = ControllerStack.Top.RequestedCursorState;
 

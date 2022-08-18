@@ -27,7 +27,7 @@ public static class GlLogger {
     /// Only works in 4.3
     /// </summary>
     public static void EnableCallback() {
-        if (!SharedGlObjects.SupportedExtensions.Contains("GL_KHR_debug"))
+        if (!SharedGlObjects.SupportsExtension("GL_KHR_debug"))
             return;
 
         GL.DebugMessageCallback((s, t, id, sev, l, m, u) => {

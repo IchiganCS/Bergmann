@@ -11,39 +11,33 @@ namespace Bergmann.Client.Graphics.Renderers.UI;
 /// </summary>
 public class BoxRenderer : UIRenderer {
 
-    /// <summary>
-    /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. It holds 4 vertices.
-    /// </summary>
-    private Buffer<UIVertex> Vertices { get; set; }
-
-    /// <summary>
-    /// The indices for the vertices. It holds 6.
-    /// </summary>
-    private Buffer<uint> Indices { get; set; }
+    private VertexArray<UIVertex> VAO { get; set; }
 
 
     /// <summary>
     /// Constructs an empty box renderer and allocates the buffers.
     /// </summary>
     public BoxRenderer() {
-            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer,  4);
-            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, 6);
+        VAO = new(
+            new Buffer<UIVertex>(BufferTarget.ArrayBuffer, 4),
+            new Buffer<uint>(BufferTarget.ElementArrayBuffer, 6));
     }
 
 
 
     /// <summary>
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
-    /// This method can only work if a layout is set (e.g. <see cref="UIRenderer.Dimension"/> etc. is set).
+    /// This method can only work if a layout is set (e.g. <see cref="UIRenderer.Dimension"/> etc. is set) and
+    /// should be called from the gl thread.
     /// </summary>
     public void ApplyLayout() {
         Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
 
-        Indices.Fill(new uint[6] {
+        VAO.IndexBuffer.Fill(new uint[6] {
             0, 1, 3,
             0, 2, 3
         });
-        Vertices.Fill(new UIVertex[4] {
+        VAO.VertexBuffer.Fill(new UIVertex[4] {
             new() {
                 Absolute = anchorOffset + AbsoluteAnchorOffset,
                 Percent = PercentageAnchorOffset,
@@ -69,19 +63,14 @@ public class BoxRenderer : UIRenderer {
     /// non-stack slot.
     /// </summary>
     public override void Render() {
-        Vertices.Bind();
-        UIVertex.BindVAO();
-        Indices.Bind();
         Program.Active?.SetUniform("useStack", false);
         GlLogger.WriteGLError();
 
-        GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
+        VAO.Draw();
         GlLogger.WriteGLError();
     }
 
 
-    public override void Dispose() {
-        Vertices.Dispose();
-        Indices.Dispose();
-    }
+    public override void Dispose()
+        => VAO.Dispose();
 }

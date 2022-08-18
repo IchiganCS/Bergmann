@@ -23,7 +23,7 @@ public class SolidsPasser : IRendererPasser {
     /// The index array. It holds <see cref="_Count"/> many items. 
     /// One may only modify it if the i-th lock of <see cref="_Locks"/> is held.
     /// </summary>
-    private static Vertex[][] _VertexArrays;
+    private static Vertex3D[][] _VertexArrays;
 
     /// <summary>
     /// How many threads can concurrently work. Keep in mind that these are large arrays, so don't make that number too high.
@@ -31,18 +31,18 @@ public class SolidsPasser : IRendererPasser {
     private static int _Count;
 
     static SolidsPasser() {
-        _Count =  10;
+        _Count = 10;
 
         _Locks = new SemaphoreSlim[_Count];
         _IndexArrays = new uint[_Count][];
-        _VertexArrays = new Vertex[_Count][];
+        _VertexArrays = new Vertex3D[_Count][];
 
         // Construct an estimate maximum. These buffers should never overflow and they are very large.
         // They shouldn't need to be reallocated or garbage collection, that'd be slow
         for (int i = 0; i < _Count; i++) {
             _Locks[i] = new(1, 1);
             _IndexArrays[i] = new uint[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 4 / 2];
-            _VertexArrays[i] = new Vertex[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3 / 2];
+            _VertexArrays[i] = new Vertex3D[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * 6 * 3 / 2];
         }
     }
 
@@ -112,22 +112,14 @@ public class SolidsPasser : IRendererPasser {
     /// A helper class to render all solids in a given chunk.
     /// </summary>
     private class SolidsChunkRenderer {
-        /// <summary>
-        /// A buffer for all vertices on the gpu. It isn't guaranteed to be up to date or even be initialized on time.
-        /// Therefore, it's nullable.
-        /// </summary>
-        private Buffer<Vertex>? VertexBuffer { get; set; }
 
         /// <summary>
-        /// A buffer for all indices on the gpu. It isn't guaranteed to be up to date or even be initialized on time.
-        /// Therefore, it's nullable.
+        /// The vao storing all indices, vertices and everything else required to render the chunk.
+        /// Note that this object is null for an extended period of time after construction of the renderer.
+        /// It is constructed as soon as the <see cref="BuildFor"/> method is called.
         /// </summary>
-        private Buffer<uint>? IndexBuffer { get; set; }
+        private VertexArray<Vertex3D>? VAO { get; set; }
 
-        /// <summary>
-        /// A boolean whether the current buffer is renderable.
-        /// </summary>
-        private bool IsRenderable { get; set; } = false;
 
         /// <summary>
         /// Builds the buffers for a given chunk. Throws away all old buffers. This is quite a costly operation.
@@ -219,13 +211,16 @@ public class SolidsPasser : IRendererPasser {
             //Write the buffers on the gl thread. Only then release the lock 
             //(hence only one update per frame is possible for now)
             GlThread.Invoke(() => {
-                VertexBuffer ??= new Buffer<Vertex>(BufferTarget.ArrayBuffer, currentVertex + 1);
-                IndexBuffer ??= new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1);
+                if (VAO is null) {
+                    VAO = new(
+                        new Buffer<Vertex3D>(BufferTarget.ArrayBuffer, currentVertex + 1),
+                        new Buffer<uint>(BufferTarget.ElementArrayBuffer, currentIndex + 1)
+                    );
+                }
 
-                IndexBuffer.Fill(_IndexArrays[heldLock], true, currentIndex + 1);
-                VertexBuffer.Fill(_VertexArrays[heldLock], true, currentVertex + 1);
+                VAO.IndexBuffer.Fill(_IndexArrays[heldLock], true, currentIndex + 1);
+                VAO.VertexBuffer.Fill(_VertexArrays[heldLock], true, currentVertex + 1);
                 _Locks[heldLock].Release();
-                IsRenderable = true;
             });
         }
 
@@ -234,23 +229,12 @@ public class SolidsPasser : IRendererPasser {
         /// Renders the buffer. It may not quite be up to date, depending on when the other threads finish with their execution, 
         /// but it is guaranteed to either not render anything, or something that was just a little back in time.
         /// </summary>
-        public void Render() {
-            if (IsRenderable) {
-                VertexBuffer!.Bind();
-                Vertex.BindVAO();
-                IndexBuffer!.Bind();
-                GlLogger.WriteGLError();
-
-                GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
-            }
-        }
+        public void Render()
+            => VAO?.Draw();
 
 
 
-        public void Dispose() {
-            IsRenderable = false;
-            VertexBuffer?.Dispose();
-            IndexBuffer?.Dispose();
-        }
+        public void Dispose()
+            => VAO?.Dispose();
     }
 }

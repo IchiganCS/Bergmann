@@ -1,13 +1,6 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.InputHandlers;
-using Bergmann.Shared;
-using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using SixLabors.Fonts;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace Bergmann.Client.Graphics.Renderers.UI;
 
@@ -19,40 +12,22 @@ namespace Bergmann.Client.Graphics.Renderers.UI;
 /// </summary>
 public class TextRenderer : UIRenderer {
 
-        /// <summary>
-    /// The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. 
+    /// <summary>
+    /// Vertices: The vertices for the box. It is filled with objects of <see cref="UIVertex"/>. 
     /// Take a look at it to see the options you have for the layout
     /// of boxes. Since each box can be separated into different textures, this buffer can hold 4 * num_of_cuts.
+    /// 
+    /// The indices connect those. The vao holds all information to render the text.
+    /// 
+    /// Although this item is initialized in the constructor, this is done asynchronously on the gl thread.
     /// </summary>
-    private Buffer<UIVertex>? Vertices { get; set; }
+    private VertexArray<UIVertex>? VAO { get; set; }
 
-    /// <summary>
-    /// The indices for the vertices.
-    /// </summary>
-    private Buffer<uint>? Indices { get; set; }
+    private TextHandler? Connected { get; set; }
 
 
-    /// <summary>
-    /// Ensures that buffers are large enought to hold sections many items.
-    /// Regenerates if necessary.
-    /// </summary>
-    /// <param name="sections">The number of sections for the box renderer</param>
-    private void EnsureBufferCapacity(int sections) {
-        if (Vertices is null || Indices is null) {
-            Vertices?.Dispose();
-            Indices?.Dispose();
-
-            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
-            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
-        }
-
-        else if (Vertices.Reserved < sections * 4 || Indices.Reserved < sections * 6) {
-            Vertices.Dispose();
-            Indices.Dispose();
-
-            Vertices = new Buffer<UIVertex>(BufferTarget.ArrayBuffer, sections * 4);
-            Indices = new Buffer<uint>(BufferTarget.ElementArrayBuffer, sections * 6);
-        }
+    public TextRenderer() {
+        GlThread.Invoke(() => VAO = new());
     }
 
     /// <summary>
@@ -73,8 +48,6 @@ public class TextRenderer : UIRenderer {
 
 
         Vector2 anchorOffset = -RelativeAnchor * Dimension;
-
-        EnsureBufferCapacity(text.Length);
 
         List<UIVertex> vertices = new();
         List<uint> indices = new();
@@ -119,18 +92,24 @@ public class TextRenderer : UIRenderer {
             indexToUse += 4;
         }
 
-        Vertices?.Fill(vertices.ToArray());
-        Indices?.Fill(indices.ToArray());
+        GlThread.Invoke(() => {
+            VAO?.VertexBuffer.Fill(vertices.ToArray(), true);
+            VAO?.IndexBuffer.Fill(indices.ToArray(), true);
+        });
     }
 
     /// <summary>
     /// Hooks the text field to this text renderer. No further action on the text renderer is then required.
     /// </summary>
     /// <param name="tf">The text field whose values are checked on every update</param>
-    public void HookTextField(TextHandler tf) {
-        SetText(tf.Text, tf.Cursor);
-        tf.OnUpdate += 
-            () => SetText(tf.Text, tf.Cursor);
+    public void ConnectToTextInput(TextHandler tf) {
+        Connected = tf;
+        SetTextFromConnected();
+        Connected.OnUpdate += SetTextFromConnected;
+    }
+
+    private void SetTextFromConnected() {
+        SetText(Connected!.Text, Connected!.Cursor);
     }
 
     /// <summary>
@@ -140,16 +119,13 @@ public class TextRenderer : UIRenderer {
         SharedGlObjects.LetterTextures.Bind();
         Program.Active!.SetUniform("useStack", true);
 
-        Vertices?.Bind();
-        UIVertex.BindVAO();
-        Indices?.Bind();
-
-        GL.DrawElements(PrimitiveType.Triangles, Indices!.Length, DrawElementsType.UnsignedInt, 0);
+        VAO?.Draw();
     }
 
 
     public override void Dispose() {
-        Vertices?.Dispose();
-        Indices?.Dispose();
+        if (Connected is not null)
+            Connected.OnUpdate -= SetTextFromConnected;
+        VAO?.Dispose();
     }
 }

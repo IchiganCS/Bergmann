@@ -10,7 +10,7 @@ public struct UIVertex {
     /// </summary>
     public Vector2 Percent;
     /// <summary>
-    /// An absolute offset in pixel size to teh vertex.
+    /// An absolute offset in pixel size to the vertex.
     /// </summary>
     public Vector2 Absolute;
 
@@ -20,46 +20,22 @@ public struct UIVertex {
     public Vector3 TexCoord;
 
 
-    /// <summary>
-    /// The handle to a VAO object applicable to all instances of this class.
-    /// </summary>
-    public static int Handle { get; set; }
+    private static int Size = Marshal.SizeOf<UIVertex>();
+    private static IntPtr PercentOffset = Marshal.OffsetOf<UIVertex>(nameof(Percent));
+    private static IntPtr AbsoluteOffset = Marshal.OffsetOf<UIVertex>(nameof(Absolute));
+    private static IntPtr TexCoordOffset = Marshal.OffsetOf<UIVertex>(nameof(TexCoord));
+
 
     /// <summary>
-    /// Initializes the Handle
+    /// Sets attributes for the currently bound vao to fit this vertex layout.
     /// </summary>
-    private static void InitVAO() {
-        Handle = GL.GenVertexArray();
-        GL.BindVertexArray(Handle);
+    public static void SetVAOAttributes() {
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
         GL.EnableVertexAttribArray(2);
 
-        GlLogger.WriteGLError();
-    }
-
-    /// <summary>
-    /// Binds the VAO specific to this class using the currently bound array buffer
-    /// </summary>
-    public static void BindVAO() {
-        if (Handle == 0)
-            InitVAO();
-
-        GL.BindVertexArray(Handle);
-
-        int size = Marshal.SizeOf<UIVertex>();
-        GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Percent)));
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(Absolute)));
-        GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, size, Marshal.OffsetOf<UIVertex>(nameof(TexCoord)));
-        GlLogger.WriteGLError();
-    }
-
-    /// <summary>
-    /// Disposes the VAO
-    /// </summary>
-    public static void CloseVAO() {
-        GL.DeleteVertexArray(Handle);
-        GlLogger.WriteGLError();
-        Handle = 0;
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, Size, PercentOffset);
+        GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, Size, AbsoluteOffset);
+        GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, Size, TexCoordOffset);
     }
 }

@@ -115,7 +115,7 @@ public class ChatController : Controller {
                 Dimension = (-1, 70),
                 RelativeAnchor = (0, 0)
             };
-            InputRenderer.HookTextField(InputField);
+            InputRenderer.ConnectToTextInput(InputField);
         });
 
     }
