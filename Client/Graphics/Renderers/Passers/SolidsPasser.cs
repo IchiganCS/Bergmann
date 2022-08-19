@@ -64,6 +64,14 @@ public class SolidsPasser : IRendererPasser {
         }
     }
 
+    private void MakeNewRendererIfAllAroundLoaded(Vector3i offset, long key) {
+        if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + offset)
+            .Select(Chunk.ComputeKey)
+            .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
+
+            MakeNewRendererAt(key);
+    }
+
     private void DropRendererAt(long key) {
         lock (Chunkers) {
             if (!Chunkers.ContainsKey(key))
@@ -99,20 +107,15 @@ public class SolidsPasser : IRendererPasser {
         };
 
         Connection.Active!.Chunks.OnChunkAdded += ch => {
-            if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)
-                .Select(Chunk.ComputeKey)
-                .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
+            // only load chunks were all neighbors are loaded in the non-rendered chunk list.
+            // Then we don't have to deal with the situation that chunk faces are loaded which don't need to be actually rendered.
+            // If all around are loaded, one can safely assume that each lookup on the neighbors succeeds and we don't have
+            // to deal with illegetimate assumptions which would result in a necessity to reload later.
 
-                MakeNewRendererAt(ch.Key);
+            MakeNewRendererIfAllAroundLoaded(ch.Offset, ch.Key);
 
-
-            foreach (var neighborOffset in Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)) {
-                if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + neighborOffset)
-                    .Select(Chunk.ComputeKey)
-                    .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
-
-                    MakeNewRendererAt(Chunk.ComputeKey(neighborOffset));
-            }
+            foreach (var neighborOffset in Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset))
+                MakeNewRendererIfAllAroundLoaded(neighborOffset, Chunk.ComputeKey(neighborOffset));
         };
 
         Connection.Active!.Chunks.OnChunkRemoved += ch =>
