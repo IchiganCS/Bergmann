@@ -94,20 +94,25 @@ public class SolidsPasser : IRendererPasser {
             if (positions.Any(x => (x - ch.Offset).Z == 15))
                 keys.Add(Chunk.ComputeKey(ch.Offset + (0, 0, 16)));
 
-            foreach (var key in keys.Where(x => Chunkers.ContainsKey(x)))
+            foreach (var key in keys.Where(Chunkers.ContainsKey))
                 MakeNewRendererAt(key);
         };
 
         Connection.Active!.Chunks.OnChunkAdded += ch => {
-            MakeNewRendererAt(ch.Key);
+            if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)
+                .Select(Chunk.ComputeKey)
+                .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
+
+                MakeNewRendererAt(ch.Key);
 
 
-            // foreach (var key in Geometry.AllFaces
-            //            .Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)
-            //            .Select(Chunk.ComputeKey)
-            //            .Where(Chunkers.ContainsKey))
+            foreach (var neighborOffset in Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset)) {
+                if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + neighborOffset)
+                    .Select(Chunk.ComputeKey)
+                    .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
 
-            //    MakeNewRendererAt(key);
+                    MakeNewRendererAt(Chunk.ComputeKey(neighborOffset));
+            }
         };
 
         Connection.Active!.Chunks.OnChunkRemoved += ch =>
