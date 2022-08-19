@@ -1,4 +1,5 @@
 using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Shared;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -125,7 +126,7 @@ public class SolidsPasser : IRendererPasser {
     }
 
 
-    public void Render(IrregularBox box) {
+    public void Render(Frustum box) {
         lock (Chunkers)
             foreach (SolidsChunkRenderer ren in Chunkers.Values)
                 ren.Render(box);
@@ -267,9 +268,10 @@ public class SolidsPasser : IRendererPasser {
         /// Renders the buffer. It may not quite be up to date, depending on when the other threads finish with their execution, 
         /// but it is guaranteed to either not render anything, or something that was just a little back in time.
         /// </summary>
-        public void Render(IrregularBox box) {
-            if (box.Contains(MiddlePoint))
+        public void Render(Frustum box) {
+            if (box.Contains(MiddlePoint)) {
                 VAO?.Draw();
+            }
         }
 
 

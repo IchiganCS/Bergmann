@@ -23,7 +23,7 @@ public static class Geometry {
     /// </summary>
     /// <param name="position">The origin position</param>
     /// <returns>All neighboring blocks; the origin is not included</returns>
-    public static IEnumerable<Vector3i> AllNeighbors(Vector3i position) {
+    public static IEnumerable<Vector3i> AllUnitNeighbors(Vector3i position) {
         return Enumerable.Range(0, 6).Select(x => position + FaceToVector[x]);
     }
 

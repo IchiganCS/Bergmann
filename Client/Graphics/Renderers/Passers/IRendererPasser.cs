@@ -6,5 +6,5 @@ namespace Bergmann.Client.Graphics.Renderers.Passers;
 /// An interface for all renderers who need their own render pass.
 /// </summary>
 public interface IRendererPasser : IDisposable {
-    public void Render(IrregularBox box);
+    public void Render(Frustum box);
 }

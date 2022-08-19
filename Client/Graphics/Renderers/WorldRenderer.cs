@@ -19,7 +19,7 @@ public class WorldRenderer : IDisposable {
     }
 
 
-    public void Render(IrregularBox box) {
+    public void Render(Frustum box) {
         foreach (IRendererPasser passer in RenderPassers)
             passer.Render(box);
     }
