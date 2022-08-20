@@ -25,7 +25,7 @@ public class FPHandler : IInputHandler {
     /// The minimum space to be left between the handler and potential blocks.
     /// </summary>
     /// <value></value>
-    public float MinBlockSpace { get; set; } = 0.2f;
+    public float MinBlockSpace { get; set; } = 0.135f;
 
     /// <summary>
     /// This will be the height of the camera above the ground.
@@ -157,14 +157,15 @@ public class FPHandler : IInputHandler {
     /// </summary>
     private void CollisionRespect(Vector3 prevPos) {
         Vector3 direction = Position - prevPos;
-        direction.Y = 0;
+
+        if (direction.Y < 0)
+            direction.Y = 0;
 
         if (direction != (0, 0, 0)) {
             foreach (Vector3 collider in Colliders) {
                 if (Connection.Active!.Chunks.Raycast(prevPos + collider, direction, out _, out _, out var hit2, direction.LengthFast * 1.03f)) {
                     Position = prevPos;
                     direction = (0, 0, 0);
-                    //return;
                 }
             }
         }
@@ -180,7 +181,6 @@ public class FPHandler : IInputHandler {
             if (Connection.Active!.Chunks.Raycast(Position, (0, 1, 0), out _, out _, out hit, 0.1f)) {
                 GravitationalPull = -GravitationalPull;
                 Position = (Position.X, prevPos.Y, Position.Z);
-                IsGrounded = true;
             }
         }
         else if (!Connection.Active!.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 1.03f)) {
