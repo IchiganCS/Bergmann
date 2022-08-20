@@ -27,17 +27,18 @@ public class BoxRenderer : UIRenderer {
 
     /// <summary>
     /// Constructs <see cref="Vertices"/> and <see cref="Indices"/> for this box.
-    /// This method can only work if a layout is set (e.g. <see cref="UIRenderer.Dimension"/> etc. is set) and
-    /// should be called from the gl thread.
+    /// This method can only work if a layout is set (e.g. <see cref="UIRenderer.Dimension"/> etc. is set).
     /// </summary>
     public void ApplyLayout() {
         Vector2 anchorOffset = new(-RelativeAnchor.X * Dimension.X, -RelativeAnchor.Y * Dimension.Y);
 
-        VAO.IndexBuffer.Fill(new uint[6] {
+        GlThread.Invoke(() => {
+            VAO.IndexBuffer.Fill(new uint[6] {
             0, 1, 3,
             0, 2, 3
-        });
-        VAO.VertexBuffer.Fill(new UIVertex[4] {
+            });
+
+            VAO.VertexBuffer.Fill(new UIVertex[4] {
             new() {
                 Absolute = anchorOffset + AbsoluteAnchorOffset,
                 Percent = PercentageAnchorOffset,
@@ -54,6 +55,7 @@ public class BoxRenderer : UIRenderer {
                 Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(Dimension.X, Dimension.Y),
                 Percent = PercentageAnchorOffset,
                 TexCoord = new(1, 1, 0)}
+            });
         });
     }
 
@@ -64,10 +66,8 @@ public class BoxRenderer : UIRenderer {
     /// </summary>
     public override void Render() {
         Program.Active?.SetUniform("useStack", false);
-        GlLogger.WriteGLError();
 
         VAO.Draw();
-        GlLogger.WriteGLError();
     }
 
 

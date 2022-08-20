@@ -2,17 +2,23 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics;
 
-public sealed class Frustum {
+/// <summary>
+/// A frustum in world space. It contains methods to do geometric operations on it.
+/// </summary>
+public class Frustum {
 
     /// <summary>
     /// All of these planes point outward, so the point lies on the left.
     /// </summary>
     private NormalPlane[] Planes { get; set; }
 
-    public Frustum(Matrix4 projection, Matrix4 view, float margin = 14) {
-        Matrix4 inverseProj = projection.Inverted();
-        Matrix4 inverseView = view.Inverted();
-
+    /// <summary>
+    /// Construct the frustum using a backwards operation on the projection and view matrix.
+    /// </summary>
+    /// <param name="inverseProj">The inverted projection matrix. It transforms from NDC to camera space.</param>
+    /// <param name="inverseView">The inverted view matrix. It transforms from camera space.</param>
+    /// <param name="margin">An optional margin added to each corner of the frustum.</param>
+    public Frustum(Matrix4 inverseProj, Matrix4 inverseView, float margin = 0) {
         Vector4 temp_bottomBackLeft = new Vector4(-1, -1, 1, 1) * inverseProj;
         Vector4 temp_bottomBackRight = new Vector4(1, -1, 1, 1) * inverseProj;
         Vector4 temp_bottomFrontLeft = new Vector4(-1, -1, -1, 1) * inverseProj;
@@ -23,26 +29,6 @@ public sealed class Frustum {
         Vector4 temp_topFrontRight = new Vector4(1, 1, -1, 1) * inverseProj;
 
 
-
-        
-
-        // temp_bottomBackLeft.Z *= -1;
-        // temp_bottomBackRight.Z *= -1;
-        // temp_bottomFrontLeft.Z *= -1;
-        // temp_bottomFrontRight.Z *= -1;
-        // temp_topBackLeft.Z *= -1;
-        // temp_topBackRight.Z *= -1;
-        // temp_topFrontLeft.Z *= -1;
-        // temp_topFrontRight.Z *= -1;
-
-        // temp_bottomBackLeft.X *= -1;
-        // temp_bottomBackRight.X *= -1;
-        // temp_bottomFrontLeft.X *= -1;
-        // temp_bottomFrontRight.X *= -1;
-        // temp_topBackLeft.X *= -1;
-        // temp_topBackRight.X *= -1;
-        // temp_topFrontLeft.X *= -1;
-        // temp_topFrontRight.X *= -1;
 
         temp_bottomBackLeft /= temp_bottomBackLeft.W;
         temp_bottomBackRight /= temp_bottomBackRight.W;
@@ -104,12 +90,19 @@ public sealed class Frustum {
         );
     }
 
+    /// <summary>
+    /// Whether a given point lies in the frustum.
+    /// </summary>
+    /// <param name="point"></param>
+    /// <returns></returns>
     public bool Contains(Vector3 point) {
-        //return !Planes[2].IsOnRight(point);
         return Planes.All(x => !x.IsOnRight(point));
     }
 
 
+    /// <summary>
+    /// A plane in 3d space identified by a normal. Just a helper for frustum.
+    /// </summary>
     private sealed class NormalPlane {
         /// <summary>
         /// Normal should point to the right of the plane.

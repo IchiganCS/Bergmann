@@ -85,7 +85,7 @@ public class GameController : Controller {
         projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
         Program.Active.SetUniform("projection", projMat);
 
-        WorldRenderer.Render(new(projMat, Fph.LookAt));
+        WorldRenderer.Render(new(projMat.Inverted(), Fph.LookAt.Inverted(), 14));
 
         if (DebugViewEnabled) {
             Program.Active = SharedGlObjects.UIProgram;

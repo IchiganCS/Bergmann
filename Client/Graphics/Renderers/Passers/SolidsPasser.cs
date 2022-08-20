@@ -66,7 +66,9 @@ public class SolidsPasser : IRendererPasser {
     }
 
     private void MakeNewRendererIfAllAroundLoaded(Vector3i offset, long key) {
-        if (Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + offset)
+        if (Connection.Active!.Chunks.Any(x => x.Key == key) &&            
+            Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + offset)
+            .Where(x => x.Y > 0) //since those would stop the lowest chunk from being loaded.
             .Select(Chunk.ComputeKey)
             .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
 
@@ -78,7 +80,8 @@ public class SolidsPasser : IRendererPasser {
             if (!Chunkers.ContainsKey(key))
                 return;
 
-            Chunkers[key]?.Dispose();
+            SolidsChunkRenderer scr = Chunkers[key];
+            GlThread.Invoke(() => scr.Dispose());
             Chunkers.Remove(key);
         }
     }

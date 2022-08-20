@@ -58,6 +58,7 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
     public void Draw() {
         if (Handle < 0) {
             Logger.Warn("Tried drawing invalid vertex array");
+            return;
         }
 
         GL.BindVertexArray(Handle);
@@ -66,6 +67,11 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
     }
 
     public void Dispose() {
+        if (Handle < 0) {
+            Logger.Warn("Tried to dispose already disposed vertex array");
+            return;
+        }
+
         GL.DeleteVertexArray(Handle);
         VertexBuffer.Dispose();
         IndexBuffer.Dispose();
