@@ -121,21 +121,30 @@ public static class Geometry {
         else
             spaceX = position.X;
 
-        timeX = spaceX / Math.Abs(incomingDirection.X);
+        if (incomingDirection.X == 0)
+            timeX = float.PositiveInfinity;
+        else
+            timeX = spaceX / Math.Abs(incomingDirection.X);
 
         if (incomingDirection.Y < 0)
             spaceY = 1 - position.Y;
         else
             spaceY = position.Y;
 
-        timeY = spaceY / Math.Abs(incomingDirection.Y);
+        if (incomingDirection.Y == 0)
+            timeY = float.PositiveInfinity;
+        else
+            timeY = spaceY / Math.Abs(incomingDirection.Y);
 
         if (incomingDirection.Z < 0)
             spaceZ = 1 - position.Z;
         else
             spaceZ = position.Z;
 
-        timeZ = spaceZ / Math.Abs(incomingDirection.Z);
+        if (incomingDirection.Z == 0)
+            timeZ = float.PositiveInfinity;
+        else
+            timeZ = spaceZ / Math.Abs(incomingDirection.Z);
 
         if (timeX < timeY) {
             if (timeX < timeZ) {
@@ -221,7 +230,7 @@ public static class Geometry {
     /// <param name="hitFace">The hit face of the block.</param>
     /// <returns>Whether there was a hit in <paramref name="distance"/>.</returns>
     public static bool Raycast(this ChunkCollection collection,
-        Vector3 origin, Vector3 direction, out Vector3i hitBlock, out Geometry.Face hitFace, float distance = 5) {
+        Vector3 origin, Vector3 direction, out Vector3i hitBlock, out Geometry.Face hitFace, out Vector3 hitPos, float distance = 5) {
 
 
         //this method works like this:
@@ -236,7 +245,7 @@ public static class Geometry {
         directionDelta.NormalizeFast();
         directionDelta /= 100f;
 
-        int i = (int)distance * 10;
+        int i = Math.Max((int)distance * 10, 10);
         while ((position - origin).LengthSquared < distance * distance) {
             i--;
 
@@ -246,9 +255,10 @@ public static class Geometry {
                 (int)Math.Floor(position.Z));
 
             Block current = collection.GetBlockAt(flooredPosition);
-            if (current > 0) {
+            if (current != 0) {
                 hitBlock = flooredPosition;
-                hitFace = Geometry.GetFaceFromHit(position - flooredPosition, direction, out _);
+                hitFace = Geometry.GetFaceFromHit(position - flooredPosition, direction, out var hitPoint);
+                hitPos = hitBlock + hitPoint;
                 return true;
             }
 
@@ -264,6 +274,7 @@ public static class Geometry {
 
         hitFace = Geometry.Face.Front;
         hitBlock = (0, 0, 0);
+        hitPos = (0, 0, 0);
         return false;
     }
 }

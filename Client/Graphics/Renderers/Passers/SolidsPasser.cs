@@ -51,7 +51,7 @@ public class SolidsPasser : IRendererPasser {
 
     private SortedList<long, SolidsChunkRenderer> Chunkers { get; set; }
 
-    private void MakeNewRendererAt(long key) {
+    public void AddChunk(long key) {
         lock (Chunkers) {
             if (Chunkers.ContainsKey(key)) {
                 SolidsChunkRenderer ren = Chunkers[key];
@@ -65,17 +65,7 @@ public class SolidsPasser : IRendererPasser {
         }
     }
 
-    private void MakeNewRendererIfAllAroundLoaded(Vector3i offset, long key) {
-        if (Connection.Active!.Chunks.Any(x => x.Key == key) &&            
-            Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + offset)
-            .Where(x => x.Y > 0) //since those would stop the lowest chunk from being loaded.
-            .Select(Chunk.ComputeKey)
-            .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
-
-            MakeNewRendererAt(key);
-    }
-
-    private void DropRendererAt(long key) {
+    public void DropChunk(long key) {
         lock (Chunkers) {
             if (!Chunkers.ContainsKey(key))
                 return;
@@ -87,45 +77,7 @@ public class SolidsPasser : IRendererPasser {
     }
 
     public SolidsPasser() {
-        Chunkers = new();
-        Connection.Active!.Chunks.OnChunkChanged += (ch, positions) => {
-            List<long> keys = new();
-
-            MakeNewRendererAt(ch.Key);
-
-            if (positions.Any(x => (x - ch.Offset).Y == 0))
-                keys.Add(Chunk.ComputeKey(ch.Offset - (0, 16, 0)));
-            if (positions.Any(x => (x - ch.Offset).Y == 15))
-                keys.Add(Chunk.ComputeKey(ch.Offset + (0, 16, 0)));
-            if (positions.Any(x => (x - ch.Offset).X == 0))
-                keys.Add(Chunk.ComputeKey(ch.Offset - (16, 0, 0)));
-            if (positions.Any(x => (x - ch.Offset).X == 15))
-                keys.Add(Chunk.ComputeKey(ch.Offset + (16, 0, 0)));
-            if (positions.Any(x => (x - ch.Offset).Z == 0))
-                keys.Add(Chunk.ComputeKey(ch.Offset - (0, 0, 16)));
-            if (positions.Any(x => (x - ch.Offset).Z == 15))
-                keys.Add(Chunk.ComputeKey(ch.Offset + (0, 0, 16)));
-
-            foreach (var key in keys.Where(Chunkers.ContainsKey))
-                MakeNewRendererAt(key);
-        };
-
-        Connection.Active!.Chunks.OnChunkAdded += ch => {
-            // only load chunks were all neighbors are loaded in the non-rendered chunk list.
-            // Then we don't have to deal with the situation that chunk faces are loaded which don't need to be actually rendered.
-            // If all around are loaded, one can safely assume that each lookup on the neighbors succeeds and we don't have
-            // to deal with illegetimate assumptions which would result in a necessity to reload later.
-
-            MakeNewRendererIfAllAroundLoaded(ch.Offset, ch.Key);
-
-            foreach (var neighborOffset in Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + ch.Offset))
-                MakeNewRendererIfAllAroundLoaded(neighborOffset, Chunk.ComputeKey(neighborOffset));
-        };
-
-        Connection.Active!.Chunks.OnChunkRemoved += ch =>
-            DropRendererAt(ch.Key);
-
-        Connection.Active!.Chunks.ForEach(x => MakeNewRendererAt(x.Key));
+        Chunkers = new();        
     }
 
 

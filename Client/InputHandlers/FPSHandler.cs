@@ -1,4 +1,5 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -15,6 +16,27 @@ public class FPHandler : IInputHandler {
     public float FlyDownSpeed { get; set; } = 4;
     public float FlyBoostMult { get; set; } = 10;
 
+    public float WalkSideSpeed { get; set; } = 5;
+    public float WalkForwardsSpeed { get; set; } = 5;
+    public float WalkBackwardSpeed { get; set; } = 3;
+    public float WalkBoostMult { get; set; } = 1.6f;
+
+    /// <summary>
+    /// The minimum space to be left between the handler and potential blocks.
+    /// </summary>
+    /// <value></value>
+    public float MinBlockSpace { get; set; } = 0.2f;
+
+    /// <summary>
+    /// This will be the height of the camera above the ground.
+    /// </summary>
+    public float Height { get; set; } = 1.7f;
+
+    /// <summary>
+    /// Where to check for collision except in the camera. All postions are understood relative to the camera position.
+    /// </summary>
+    public IList<Vector3> Colliders = new List<Vector3>() { new(0, 0, 0), new(0, -1.5f, 0) };
+
     /// <summary>
     /// Clamps the angle of the x rotation to this angle. Given in radians
     /// </summary>
@@ -24,10 +46,18 @@ public class FPHandler : IInputHandler {
     /// </summary>
     public Vector2 Sensitivity { get; set; } = new(0.003f, 0.0028f);
 
+    /// <summary>
+    /// Only considered in the <see cref="WalkingMovement"/> method. It is decreased and then applied to the position,
+    /// except when jumping of course.
+    /// </summary>
+    public float GravitationalPull { get; set; } = 0;
+
+    public bool IsGrounded { get; set; } = false;
 
 
-
-
+    /// <summary>
+    /// The current position of the camera.
+    /// </summary>
     public Vector3 Position { get; set; }
 
 
@@ -36,6 +66,10 @@ public class FPHandler : IInputHandler {
     /// the x axis, the y component around the y axis.
     /// </summary>
     public Vector2 EulerAngles { get; set; }
+
+    /// <summary>
+    /// The rotation constructed from the stored <see cref="EulerAngles"/>.
+    /// </summary>
     public Quaternion Rotation
         => Quaternion.FromEulerAngles(0, EulerAngles.Y, 0) *
             Quaternion.FromEulerAngles(EulerAngles.X, 0, 0);
@@ -91,6 +125,86 @@ public class FPHandler : IInputHandler {
     }
 
 
+    public void WalkingMovement(float deltaTime, KeyboardState keyboard) {
+        float x = 0, z = 0;
+        if (keyboard.IsKeyDown(KeyMappings.Forward))
+            z += WalkForwardsSpeed * (keyboard.IsKeyDown(KeyMappings.Boost) ? WalkBoostMult : 1);
+        if (keyboard.IsKeyDown(KeyMappings.Backwards))
+            z -= WalkBackwardSpeed;
+
+        if (keyboard.IsKeyDown(KeyMappings.Right))
+            x += WalkSideSpeed;
+        if (keyboard.IsKeyDown(KeyMappings.Left))
+            x -= WalkSideSpeed;
+
+        if (keyboard.IsKeyDown(KeyMappings.Up) && IsGrounded) {
+            IsGrounded = false;
+            GravitationalPull = 6.5f;
+        }
+
+        Position += deltaTime * (Quaternion.FromEulerAngles(0, EulerAngles.Y, 0) * new Vector3(x, 0, z));
+
+        if (!IsGrounded)
+            GravitationalPull = Math.Max(-40, GravitationalPull - deltaTime * 20f);
+
+        Position += (0, deltaTime * GravitationalPull, 0);
+    }
+
+
+    /// <summary>
+    /// Moves the camera out of any blocks with a margin and makes sure one there is <paramref name="playerHeight"/>
+    /// space below the camera.
+    /// </summary>
+    private void CollisionRespect(Vector3 prevPos) {
+        Vector3 direction = Position - prevPos;
+        direction.Y = 0;
+
+        if (direction != (0, 0, 0)) {
+            foreach (Vector3 collider in Colliders) {
+                if (Connection.Active!.Chunks.Raycast(prevPos + collider, direction, out _, out _, out var hit2, direction.LengthFast * 1.03f)) {
+                    Position = prevPos;
+                    direction = (0, 0, 0);
+                    //return;
+                }
+            }
+        }
+
+        // check in y direction.
+        if (!IsGrounded) {
+            if (Connection.Active!.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 0.93f)) {
+                GravitationalPull = 0;
+                Position = hit + (0, Height, 0);
+                IsGrounded = true;
+            }
+            //up
+            if (Connection.Active!.Chunks.Raycast(Position, (0, 1, 0), out _, out _, out hit, 0.1f)) {
+                GravitationalPull = -GravitationalPull;
+                Position = (Position.X, prevPos.Y, Position.Z);
+                IsGrounded = true;
+            }
+        }
+        else if (!Connection.Active!.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 1.03f)) {
+            IsGrounded = false;
+        }
+
+        // check in x and z direction
+        Vector3[] directionsToCheck = new[] {
+            new Vector3(direction.X, 0, 0),
+            new Vector3(0, 0, direction.Z),
+        }
+        .Where(x => x != (0, 0, 0))
+        .Select(Vector3.NormalizeFast)
+        .ToArray();
+
+        foreach (Vector3 currentDir in directionsToCheck) {
+            foreach (Vector3 collider in Colliders) {
+                if (Connection.Active!.Chunks.Raycast(Position + collider, currentDir, out _, out _, out var hitPoint, MinBlockSpace * 1.1f)) {
+                    Position = hitPoint - currentDir * MinBlockSpace - collider;
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Constructs a look at matrix for this camera.
     /// </summary>
@@ -103,9 +217,6 @@ public class FPHandler : IInputHandler {
     /// </summary>
     /// <param name="args">The values used to update.</param>
     public void HandleInput(InputUpdateArgs args) {
-        RotateCamera(args.MouseState.Delta);
-        FlyingMovement(args.DeltaTime, args.KeyboardState);
-
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
             Connection.Active?.ClientToServerAsync(new BlockDestructionMessage(Position, Forward));
         }
@@ -113,6 +224,13 @@ public class FPHandler : IInputHandler {
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockPlacement)) {
             Connection.Active?.ClientToServerAsync(new BlockPlacementMessage(Position, Forward, 1));
         }
+
+        RotateCamera(args.MouseState.Delta);
+        Vector3 cachedPosition = Position;
+        //FlyingMovement(args.DeltaTime, args.KeyboardState);
+        WalkingMovement(args.DeltaTime, args.KeyboardState);
+        CollisionRespect(cachedPosition);
+
 
     }
 }

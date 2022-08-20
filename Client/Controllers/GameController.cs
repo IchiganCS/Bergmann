@@ -39,7 +39,7 @@ public class GameController : Controller {
         Chat = new();
         Fph = new();
 
-        Fph.Position = (30, 34, 30);
+        Fph.Position = (30, 60, 30);
 
 
         Chat.Commands.Add(new() {

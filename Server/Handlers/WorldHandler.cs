@@ -33,7 +33,7 @@ public class WorldHandler : IMessageHandler<BlockPlacementMessage>, IMessageHand
     }
 
     public async void HandleMessage(BlockPlacementMessage message) {
-        if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out Geometry.Face hitFace)) {
+        if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out Geometry.Face hitFace, out _)) {
             blockPos = blockPos + Geometry.FaceToVector[(int)hitFace];
             if (Data.World.Chunks.GetBlockAt(blockPos) != 0)
                 return;
@@ -45,7 +45,7 @@ public class WorldHandler : IMessageHandler<BlockPlacementMessage>, IMessageHand
     }
 
     public async void HandleMessage(BlockDestructionMessage message) {
-        if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out _)) {
+        if (Data.World.Chunks.Raycast(message.Position, message.Forward, out Vector3i blockPos, out _, out _)) {
             long key = Chunk.ComputeKey(blockPos);
             Data.World.Chunks.SetBlockAt(blockPos, 0);
             await Server.SendToClientAsync(Server.Clients.All, new ChunkUpdateMessage(key, blockPos, 0));            
