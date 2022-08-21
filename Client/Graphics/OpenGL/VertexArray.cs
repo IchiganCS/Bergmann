@@ -9,9 +9,22 @@ namespace Bergmann.Client.Graphics;
 /// vertex attributes.
 /// </summary>
 public sealed class VertexArray<T> : IDisposable where T : struct {
+
+    /// <summary>
+    /// The handle to the vertex array. If it is -1, this was disposed.
+    /// </summary>
+    /// <value></value>
     public int Handle { get; private set; }
 
+    /// <summary>
+    /// The vertex buffer associated with the vertex array.
+    /// </summary>
     public Buffer<T> VertexBuffer { get; private set; }
+
+
+    /// <summary>
+    /// The index buffer associated with the vertex array.
+    /// </summary>
     public Buffer<uint> IndexBuffer { get; private set; }
 
     /// <summary>
@@ -27,8 +40,8 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
     /// you can call any operation on the buffer you want and the vao will update automatically. 
     /// They may be also accessed through the exposed members.
     /// </summary>
-    /// <param name="vertices">The vertices </param>
-    /// <param name="indices"></param>
+    /// <param name="vertices">The vertices of the vertex array.</param>
+    /// <param name="indices">The indices of the vertex array.</param>
     public VertexArray(Buffer<T> vertices, Buffer<uint> indices) {
         Handle = GL.GenVertexArray();
         VertexBuffer = vertices;
@@ -55,6 +68,9 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
         GL.BindVertexArray(0);
     }
 
+    /// <summary>
+    /// Makes a draw call to <see cref="GL.DrawArrays(PrimitiveType, int, int)"/> if the handle is valid with the vao bound.
+    /// </summary>
     public void Draw() {
         if (Handle < 0) {
             Logger.Warn("Tried drawing invalid vertex array");
@@ -66,6 +82,10 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
         GL.BindVertexArray(0);
     }
 
+
+    /// <summary>
+    /// Disposes of the vertex array. No more call on this object shall be made.
+    /// </summary>
     public void Dispose() {
         if (Handle < 0) {
             Logger.Warn("Tried to dispose already disposed vertex array");

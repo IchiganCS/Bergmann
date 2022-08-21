@@ -50,6 +50,9 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
     /// </summary>
     public Guid? UserID { get; private set; }
 
+    /// <summary>
+    /// The name of the logged in users.
+    /// </summary>
     public string? UserName { get; private set; }
 
     /// <summary>
@@ -77,6 +80,10 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
     /// </summary>
     public static event ActiveChangedDelegate OnActiveChanged = default!;
 
+    /// <summary>
+    /// Builds an instance of a static resolver. This may only be executed once.
+    /// It registers our self-implemented/self-generated resolvers.
+    /// </summary>
     static Connection() {
         StaticCompositeResolver.Instance.Register(
             GeneratedResolver.Instance,
@@ -112,14 +119,18 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
             await hc.StartAsync();
             return hc;
         }
-
+        // build the hub
         Hub = buildHub("Hub").Result;
 
-        RegisterMessageHandler(this);
+        // listen to all messages sent from the server
+        Hub.On<ServerMessageBox>("ServerToClient", HandleServerToClient);
 
+
+        // listen to successful login attempts
+        RegisterMessageHandler<SuccessfulLoginMessage>(this);
+
+        // Builds a new empty chunk collection
         Chunks = new();
-
-        Hub.On<ServerMessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
     }
 
     private Dictionary<Type, IList<object>> MessageHandlers { get; set; } = new();
@@ -150,7 +161,13 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
         await Hub.SendAsync("ClientToServer", new ClientMessageBox(message, UserID));
     }
 
-    private void HandleServerToClient(IMessage message) {
+    /// <summary>
+    /// This method is called whenever the server sends a message to the client.
+    /// It should call appropriate handlers.
+    /// </summary>
+    /// <param name="box">The box with the contained message to handle.</param>
+    private void HandleServerToClient(ServerMessageBox box) {
+        IMessage message = box.Message;
         if (message is ChatMessageSentMessage cm)
             foreach (var item in GetHandlers<ChatMessageSentMessage>()) {
                 item.HandleMessage(cm);
@@ -185,11 +202,17 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
             Logger.Warn("Received invalid message type");
     }
 
-
+    /// <summary>
+    /// Kills the hub, therefore making the connection useless.
+    /// </summary>
     public void Dispose() {
         Hub.DisposeAsync();
     }
 
+    /// <summary>
+    /// When a successful login attempt happened, the connection should cache responding values,
+    /// since those are automatically filled in the <see cref="ClientMessageBox"/>.
+    /// </summary>
     public void HandleMessage(SuccessfulLoginMessage message) {
         UserID = message.UserID;
         UserName = message.Name;

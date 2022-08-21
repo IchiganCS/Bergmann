@@ -1,11 +1,12 @@
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.InputHandlers;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
-/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyTexture"/> method, so there's no need to call it.
+/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyLayout"/> method, so there's no need to call it.
 /// Additionally, when specifying the layout of the box, you only have to specify the y coordinate of 
 /// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextHandler"/>, 
 /// it renders the cursor automatically.
@@ -23,11 +24,17 @@ public class TextRenderer : UIRenderer {
     /// </summary>
     private VertexArray<UIVertex>? VAO { get; set; }
 
+    /// <summary>
+    /// A potentially connected input renderer.
+    /// </summary>
     private TextHandler? Connected { get; set; }
 
 
     public TextRenderer() {
-        GlThread.Invoke(() => VAO = new());
+        GlThread.Invoke(() => VAO = new(
+            new(BufferTarget.ArrayBuffer, hint: BufferUsageHint.DynamicDraw),
+            new(BufferTarget.ElementArrayBuffer, hint: BufferUsageHint.DynamicDraw)
+        ));
     }
 
     /// <summary>
@@ -92,9 +99,12 @@ public class TextRenderer : UIRenderer {
             indexToUse += 4;
         }
 
+        UIVertex[] verticesArray = vertices.ToArray();
+        uint[] indicesArray = indices.ToArray();
+
         GlThread.Invoke(() => {
-            VAO?.VertexBuffer.Fill(vertices.ToArray(), true);
-            VAO?.IndexBuffer.Fill(indices.ToArray(), true);
+            VAO?.VertexBuffer.Fill(verticesArray, true);
+            VAO?.IndexBuffer.Fill(indicesArray, true);
         });
     }
 
@@ -104,8 +114,8 @@ public class TextRenderer : UIRenderer {
     /// <param name="tf">The text field whose values are checked on every update</param>
     public void ConnectToTextInput(TextHandler tf) {
         Connected = tf;
-        SetTextFromConnected();
         Connected.OnUpdate += SetTextFromConnected;
+        SetTextFromConnected();
     }
 
     private void SetTextFromConnected() {
@@ -126,6 +136,7 @@ public class TextRenderer : UIRenderer {
     public override void Dispose() {
         if (Connected is not null)
             Connected.OnUpdate -= SetTextFromConnected;
-        VAO?.Dispose();
+
+        GlThread.Invoke(() => VAO?.Dispose());
     }
 }

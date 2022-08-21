@@ -52,6 +52,16 @@ public abstract class Controller {
     }
 
     /// <summary>
+    /// The controller receives a weak update, that means, the input is not directed for this specific controller.
+    /// Some controllers however, may decline this restriction or perform only some background updates. The
+    /// default implementation is empty.
+    /// </summary>
+    /// <param name="update">The update args. Those are not directed for this controller.</param>
+    public virtual void WeakUpdate(UpdateArgs update) {
+
+    }
+
+    /// <summary>
     /// Renders the controller. The default implementation is empty.
     /// </summary>
     /// <param name="args">Arguments which might be used for rendering stuff.</param>

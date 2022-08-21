@@ -1,8 +1,5 @@
 using Bergmann.Client.Controllers;
 using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Client.InputHandlers;
-using Bergmann.Shared;
 using Bergmann.Shared.Objects;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
@@ -11,7 +8,9 @@ using OpenTK.Windowing.Desktop;
 namespace Bergmann.Client.Graphics;
 
 public class Window : GameWindow {
-
+    /// <summary>
+    /// The currently running instance of the window. This might be useful to request window sizes and other values.
+    /// </summary>
     public static Window Instance { get; set; } = null!;
 
     public Window(GameWindowSettings gws, NativeWindowSettings nws) :
@@ -20,8 +19,11 @@ public class Window : GameWindow {
     }
 
 
-
-    public ControllerStack ControllerStack { get; set; } = null!;
+    /// <summary>
+    /// The controller stack always taking care of what to handle. You may think of it as a weird kind of 
+    /// scene graph.
+    /// </summary>
+    private ControllerStack ControllerStack { get; set; } = null!;
 
 
     protected override void OnLoad() {
@@ -29,12 +31,8 @@ public class Window : GameWindow {
 
         BlockInfo.ReadFromJson("Blocks.json");
         ControllerStack = new(new ServiceController());
+        SharedGlObjects.BuildAll();
 
-        SharedGlObjects.ReadSupportedExtensions();
-        SharedGlObjects.CompilePrograms();
-        SharedGlObjects.AssembleBlockTextures("Textures.json");
-        SharedGlObjects.AssembleLetterTextures();
-        SharedGlObjects.MakeUITextures();
 
         GlLogger.EnableCallback();
 

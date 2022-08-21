@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers.UI;
-using Bergmann.Client.InputHandlers;
 using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -15,8 +14,16 @@ using SixLabors.ImageSharp.Processing;
 namespace Bergmann.Client.Graphics;
 
 
+/// <summary>
+/// A unified class to hold static values required for all kinds of different objects. That may contain
+/// texture stacks or different OpenGL programs and also some helper functions.
+/// </summary>
 public static class SharedGlObjects {
     private static IList<string> SupportedExtensions { get; set; } = null!;
+
+    /// <summary>
+    /// A required operation to read all supported extensions. Call this on loading.
+    /// </summary>
     public static void ReadSupportedExtensions() {
         int extensionCount = GL.GetInteger(GetPName.NumExtensions);
         SupportedExtensions = new List<string>(extensionCount);
@@ -25,13 +32,28 @@ public static class SharedGlObjects {
             SupportedExtensions.Add(GL.GetString(StringNameIndexed.Extensions, i));
     }
 
+    /// <summary>
+    /// Whether any extension identfied by its string is supported.
+    /// </summary>
+    /// <param name="extensionName">The name of the extension. Don't forget the GL_ part in front of it.</param>
+    /// <returns>A boolean whether this extension is supported by the currently running context.</returns>
     public static bool SupportsExtension(string extensionName) {
         return SupportedExtensions.Contains(extensionName);
     }
 
-
+    /// <summary>
+    /// A ui program only useful for rendering ui elements.
+    /// </summary>
     public static Program UIProgram { get; private set; } = null!;
+
+    /// <summary>
+    /// A block program with some default transformation and texturing logic.
+    /// </summary>
     public static Program BlockProgram { get; private set; } = null!;
+
+    /// <summary>
+    /// Compiles all necessary programs with hard coded file name values.
+    /// </summary>
     public static void CompilePrograms() {
         DeletePrograms();
 
@@ -71,7 +93,6 @@ public static class SharedGlObjects {
 
         UIProgram.OnLoad += () => {
             GL.Disable(EnableCap.CullFace);
-            //GL.Disable(EnableCap.DepthTest); //this is required so that ui elements may overlap
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
  
             UIProgram.SetUniform("windowsize", Window.Instance.Size);
@@ -85,6 +106,10 @@ public static class SharedGlObjects {
         Vertex.Dispose();
         Fragment.Dispose();
     }
+
+    /// <summary>
+    /// Frees up all porgrams by making them invalid. This method should only be called for clean up purposes.
+    /// </summary>
     public static void DeletePrograms() {
         UIProgram?.Dispose();
         BlockProgram?.Dispose();
@@ -97,12 +122,16 @@ public static class SharedGlObjects {
     /// z component.
     /// </summary>
     public static TextureStack BlockTextures { get; private set; } = null!;
-    public static void AssembleBlockTextures(string filename) {
+
+    /// <summary>
+    /// Reads all block textures from the default resource manager file name.
+    /// </summary>
+    public static void AssembleBlockTextures() {
         DropBlockTextures();
         BlockTextures = new();
 
         using JsonDocument doc = JsonDocument.Parse(
-            ResourceManager.ReadFile(ResourceManager.Type.Jsons, filename));
+            ResourceManager.ReadFile(ResourceManager.Type.Jsons, "Textures.json"));
 
         JsonSerializerOptions options = new() {
             Converters = {
@@ -123,17 +152,25 @@ public static class SharedGlObjects {
                 using Image<Rgba32> tex = texture.CloneAs<Rgba32>();
                 BlockTextures.Write(tex, x.GetProperty("Layer").GetInt32());
             } catch (Exception e) {
-                Logger.Warn($"Couldn't load texture from json file {filename} with {x}. \nException: {e}");
+                Logger.Warn($"Couldn't load texture from json file \"Textures.json\" with {x}. \nException: {e}");
             }
         }
         GlLogger.WriteGLError();
     }
+    /// <summary>
+    /// Drops the texture for the blocks from memory.
+    /// </summary>
     public static void DropBlockTextures() {
         BlockTextures?.Dispose();
     }
 
 
+    /// <summary>
+    /// A stack of textures which contain one letter per level. The index of the contained letters may be inferred from
+    /// <see cref="RenderableChars"/>.
+    /// </summary>
     public static TextureStack LetterTextures { get; private set; } = null!;
+
     /// <summary>
     /// All the chars that can be rendered by the text renderer. If the used char is not known, OpenGl defaults to "a".
     /// Then you can just add it.
@@ -175,13 +212,21 @@ public static class SharedGlObjects {
         }
         GlLogger.WriteGLError();
     }
+    /// <summary>
+    /// Drops the letter stack from memory.
+    /// </summary>
     public static void DropLetterTextures() {
         LetterTextures?.Dispose();
     }
 
-
+    /// <summary>
+    /// The cross in the middle. It might be replaced.
+    /// </summary>
     public static Texture2D CrossTexture { get; set; } = null!;
 
+    /// <summary>
+    /// Loads all ui textures from memory using hard coded values.
+    /// </summary>
     public static void MakeUITextures() {
         using Image<Rgba32> img = Image<Rgba32>.Load(
             ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
@@ -197,11 +242,28 @@ public static class SharedGlObjects {
         };
         CrossRenderer.ApplyLayout();
     }
+
+    /// <summary>
+    /// Drops all ui textures from memory.
+    /// </summary>
     public static void DropUITextures() {
         CrossTexture?.Dispose();
     }
 
+    /// <summary>
+    /// A helper function to build all required OpenGL objects.
+    /// </summary>
+    public static void BuildAll() {
+        ReadSupportedExtensions();
+        CompilePrograms();
+        AssembleBlockTextures();
+        AssembleLetterTextures();
+        MakeUITextures();
+    }
 
+    /// <summary>
+    /// A helper function to do all cleanup methods in one place. This might only be called when the client is closed.
+    /// </summary>
     public static void FreeAll() {
         DeletePrograms();
         DropBlockTextures();

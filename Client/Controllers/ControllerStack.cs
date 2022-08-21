@@ -32,8 +32,10 @@ public class ControllerStack {
             return;
         }
 
-        Controller formerTop = Controllers.Peek();
-        formerTop.Update(args);
+        Top.Update(args);
+
+        foreach (Controller cont in Controllers)
+            cont.WeakUpdate(args);
     }
 
     /// <summary>
