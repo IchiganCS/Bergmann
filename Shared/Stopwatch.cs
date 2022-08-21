@@ -6,7 +6,7 @@ namespace Bergmann.Shared;
 /// Wrap this stopwatch in a using block. Then, when the block is ending, the item is disposed and a <see cref="Logger.Info"/>
 /// is called. Certain functionality may be added when needed. It is a wrapper for a <see cref="System.Diagnostics.Stopwatch"/>
 /// </summary>
-public class Stopwatch : IDisposable {
+public sealed class Stopwatch : IDisposable {
 
     /// <summary>
     /// The name of the watch. It is output in the console for easier recognition.

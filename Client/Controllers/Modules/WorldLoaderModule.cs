@@ -1,5 +1,7 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Client;
 using Bergmann.Shared.Networking.Messages;
+using Bergmann.Shared.Networking.Server;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
@@ -96,7 +98,7 @@ public class WorldLoaderModule : Module, IDisposable,
             }
 
             foreach (long chunk in chunks)
-                await Connection.Active.ClientToServerAsync(new ChunkColumnRequestMessage(chunk));
+                await Connection.Active.Send(new ChunkColumnRequestMessage(chunk));
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {

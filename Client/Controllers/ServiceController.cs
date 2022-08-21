@@ -1,8 +1,5 @@
-using Bergmann.Client.Controllers.Modules;
-using Bergmann.Client.Graphics;
-using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers;
-using Bergmann.Client.InputHandlers;
+using Bergmann.Shared.Networking.Client;
+using Bergmann.Shared.Networking.Messages;
 using OpenTK.Windowing.Common;
 
 namespace Bergmann.Client.Controllers;
@@ -13,23 +10,16 @@ namespace Bergmann.Client.Controllers;
 /// </summary>
 public class ServiceController : Controller {
     public override CursorState RequestedCursorState => CursorState.Normal;
-    private IncomingChatModule Chat;
+    private DateTime LastLoginAttempt { get; set; } = DateTime.MinValue;
 
-    public ServiceController() {
-        Chat = new();
-
-        Modules.Add(Chat);
-    }
-
-    public override void Render(RenderUpdateArgs args) {
-        Program.Active = SharedGlObjects.UIProgram;
-
-        Chat.Render();
-    }
-
-    public override void Update(UpdateArgs updateArgs) {
+    public override async void Update(UpdateArgs updateArgs) {
         base.Update(updateArgs);
         
-        Stack!.Push(new GameController());
+        if (Connection.Active.UserID is not null)
+            Stack!.Push(new GameController());
+        else if (DateTime.Now - LastLoginAttempt > TimeSpan.FromMilliseconds(500)) {
+            LastLoginAttempt = DateTime.Now;
+            await Connection.Active.Send(new LogInAttemptMessage("test", "test"));
+        }
     }
 }

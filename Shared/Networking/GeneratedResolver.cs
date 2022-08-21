@@ -49,22 +49,25 @@ namespace Bergmann.Shared.Networking.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(14)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(17)
             {
                 { typeof((global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)), 0 },
                 { typeof(global::System.Collections.Generic.IList<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>), 1 },
                 { typeof(int[,,]), 2 },
                 { typeof(global::Bergmann.Shared.Networking.Messages.IMessage), 3 },
-                { typeof(global::Bergmann.Shared.Networking.ClientMessageBox), 4 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage), 5 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage), 6 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChatMessage), 7 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage), 8 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage), 9 },
-                { typeof(global::Bergmann.Shared.Networking.Messages.RawChunkMessage), 10 },
-                { typeof(global::Bergmann.Shared.Networking.ServerMessageBox), 11 },
-                { typeof(global::Bergmann.Shared.Objects.Block), 12 },
-                { typeof(global::Bergmann.Shared.Objects.Chunk), 13 },
+                { typeof(global::Bergmann.Shared.Networking.Client.BlockDestructionMessage), 4 },
+                { typeof(global::Bergmann.Shared.Networking.Client.BlockPlacementMessage), 5 },
+                { typeof(global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage), 6 },
+                { typeof(global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage), 7 },
+                { typeof(global::Bergmann.Shared.Networking.Client.ClientMessageBox), 8 },
+                { typeof(global::Bergmann.Shared.Networking.Client.LogInAttemptMessage), 9 },
+                { typeof(global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage), 10 },
+                { typeof(global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage), 11 },
+                { typeof(global::Bergmann.Shared.Networking.Server.RawChunkMessage), 12 },
+                { typeof(global::Bergmann.Shared.Networking.Server.ServerMessageBox), 13 },
+                { typeof(global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage), 14 },
+                { typeof(global::Bergmann.Shared.Objects.Block), 15 },
+                { typeof(global::Bergmann.Shared.Objects.Chunk), 16 },
             };
         }
 
@@ -82,16 +85,19 @@ namespace Bergmann.Shared.Networking.Resolvers
                 case 1: return new global::MessagePack.Formatters.InterfaceListFormatter2<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>();
                 case 2: return new global::MessagePack.Formatters.ThreeDimensionalArrayFormatter<int>();
                 case 3: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.IMessageFormatter();
-                case 4: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ClientMessageBoxFormatter();
-                case 5: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.BlockDestructionMessageFormatter();
-                case 6: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.BlockPlacementMessageFormatter();
-                case 7: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.ChatMessageFormatter();
-                case 8: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessageFormatter();
-                case 9: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.ChunkUpdateMessageFormatter();
-                case 10: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages.RawChunkMessageFormatter();
-                case 11: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.ServerMessageBoxFormatter();
-                case 12: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockFormatter();
-                case 13: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.ChunkFormatter();
+                case 4: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.BlockDestructionMessageFormatter();
+                case 5: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.BlockPlacementMessageFormatter();
+                case 6: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.ChatMessageSentMessageFormatter();
+                case 7: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.ChunkColumnRequestMessageFormatter();
+                case 8: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.ClientMessageBoxFormatter();
+                case 9: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client.LogInAttemptMessageFormatter();
+                case 10: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server.ChatMessageReceivedMessageFormatter();
+                case 11: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server.ChunkUpdateMessageFormatter();
+                case 12: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server.RawChunkMessageFormatter();
+                case 13: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server.ServerMessageBoxFormatter();
+                case 14: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server.SuccessfulLoginMessageFormatter();
+                case 15: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.BlockFormatter();
+                case 16: return new Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Objects.ChunkFormatter();
                 default: return null;
             }
         }
@@ -130,16 +136,19 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
 
         public IMessageFormatter()
         {
-            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(6, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
+            this.typeToKeyAndJumpMap = new global::System.Collections.Generic.Dictionary<global::System.RuntimeTypeHandle, global::System.Collections.Generic.KeyValuePair<int, int>>(9, global::MessagePack.Internal.RuntimeTypeHandleEqualityComparer.Default)
             {
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChatMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
-                { typeof(global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(2, 2) },
-                { typeof(global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(3, 3) },
-                { typeof(global::Bergmann.Shared.Networking.Messages.RawChunkMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(4, 4) },
-                { typeof(global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(5, 5) },
+                { typeof(global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(0, 0) },
+                { typeof(global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(1, 1) },
+                { typeof(global::Bergmann.Shared.Networking.Client.BlockPlacementMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(2, 2) },
+                { typeof(global::Bergmann.Shared.Networking.Client.BlockDestructionMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(3, 3) },
+                { typeof(global::Bergmann.Shared.Networking.Server.RawChunkMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(4, 4) },
+                { typeof(global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(5, 5) },
+                { typeof(global::Bergmann.Shared.Networking.Client.LogInAttemptMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(6, 6) },
+                { typeof(global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(7, 7) },
+                { typeof(global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage).TypeHandle, new global::System.Collections.Generic.KeyValuePair<int, int>(8, 8) },
             };
-            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(6)
+            this.keyToJumpMap = new global::System.Collections.Generic.Dictionary<int, int>(9)
             {
                 { 0, 0 },
                 { 1, 1 },
@@ -147,6 +156,9 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 { 3, 3 },
                 { 4, 4 },
                 { 5, 5 },
+                { 6, 6 },
+                { 7, 7 },
+                { 8, 8 },
             };
         }
 
@@ -160,22 +172,31 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 switch (keyValuePair.Value)
                 {
                     case 0:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChatMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.ChatMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage)value, options);
                         break;
                     case 1:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage)value, options);
                         break;
                     case 2:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.BlockPlacementMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Client.BlockPlacementMessage)value, options);
                         break;
                     case 3:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.BlockDestructionMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Client.BlockDestructionMessage)value, options);
                         break;
                     case 4:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.RawChunkMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.RawChunkMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.RawChunkMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Server.RawChunkMessage)value, options);
                         break;
                     case 5:
-                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage)value, options);
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage)value, options);
+                        break;
+                    case 6:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.LogInAttemptMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Client.LogInAttemptMessage)value, options);
+                        break;
+                    case 7:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage)value, options);
+                        break;
+                    case 8:
+                        options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage>().Serialize(ref writer, (global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage)value, options);
                         break;
                     default:
                         break;
@@ -211,22 +232,31 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             switch (key)
             {
                 case 0:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChatMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage>().Deserialize(ref reader, options);
                     break;
                 case 1:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage>().Deserialize(ref reader, options);
                     break;
                 case 2:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.BlockPlacementMessage>().Deserialize(ref reader, options);
                     break;
                 case 3:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.BlockDestructionMessage>().Deserialize(ref reader, options);
                     break;
                 case 4:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.RawChunkMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.RawChunkMessage>().Deserialize(ref reader, options);
                     break;
                 case 5:
-                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage>().Deserialize(ref reader, options);
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage>().Deserialize(ref reader, options);
+                    break;
+                case 6:
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Client.LogInAttemptMessage>().Deserialize(ref reader, options);
+                    break;
+                case 7:
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage>().Deserialize(ref reader, options);
+                    break;
+                case 8:
+                    result = (global::Bergmann.Shared.Networking.Messages.IMessage)options.Resolver.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage>().Deserialize(ref reader, options);
                     break;
                 default:
                     reader.Skip();
@@ -266,167 +296,16 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
 #pragma warning disable SA1403 // File may only contain a single namespace
 #pragma warning disable SA1649 // File name should match first type name
 
-namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking
+namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Client
 {
-    public sealed class ClientMessageBoxFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.ClientMessageBox>
-    {
-        // Message
-        private static global::System.ReadOnlySpan<byte> GetSpan_Message() => new byte[1 + 7] { 167, 77, 101, 115, 115, 97, 103, 101 };
-        // ConnectionId
-        private static global::System.ReadOnlySpan<byte> GetSpan_ConnectionId() => new byte[1 + 12] { 172, 67, 111, 110, 110, 101, 99, 116, 105, 111, 110, 73, 100 };
-
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.ClientMessageBox value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_Message());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Serialize(ref writer, value.Message, options);
-            writer.WriteRaw(GetSpan_ConnectionId());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.ConnectionId, options);
-        }
-
-        public global::Bergmann.Shared.Networking.ClientMessageBox Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-
-            options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
-            var __Message__ = default(global::Bergmann.Shared.Networking.Messages.IMessage);
-            var __ConnectionId__ = default(string);
-
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-                    case 7:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28542640894207309UL) { goto FAIL; }
-
-                        __Message__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-                    case 12:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_ConnectionId().Slice(1))) { goto FAIL; }
-
-                        __ConnectionId__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-
-                }
-            }
-
-            var ____result = new global::Bergmann.Shared.Networking.ClientMessageBox(__Message__, __ConnectionId__);
-            reader.Depth--;
-            return ____result;
-        }
-    }
-
-    public sealed class ServerMessageBoxFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.ServerMessageBox>
-    {
-        // Message
-        private static global::System.ReadOnlySpan<byte> GetSpan_Message() => new byte[1 + 7] { 167, 77, 101, 115, 115, 97, 103, 101 };
-
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.ServerMessageBox value, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (value is null)
-            {
-                writer.WriteNil();
-                return;
-            }
-
-            var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(1);
-            writer.WriteRaw(GetSpan_Message());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Serialize(ref writer, value.Message, options);
-        }
-
-        public global::Bergmann.Shared.Networking.ServerMessageBox Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
-        {
-            if (reader.TryReadNil())
-            {
-                return null;
-            }
-
-            options.Security.DepthStep(ref reader);
-            var formatterResolver = options.Resolver;
-            var length = reader.ReadMapHeader();
-            var __Message__ = default(global::Bergmann.Shared.Networking.Messages.IMessage);
-
-            for (int i = 0; i < length; i++)
-            {
-                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
-                switch (stringKey.Length)
-                {
-                    default:
-                    FAIL:
-                      reader.Skip();
-                      continue;
-                    case 7:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28542640894207309UL) { goto FAIL; }
-
-                        __Message__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
-
-                }
-            }
-
-            var ____result = new global::Bergmann.Shared.Networking.ServerMessageBox(__Message__);
-            reader.Depth--;
-            return ____result;
-        }
-    }
-
-}
-
-#pragma warning restore 168
-#pragma warning restore 414
-#pragma warning restore 618
-#pragma warning restore 612
-
-#pragma warning restore SA1129 // Do not use default value type constructor
-#pragma warning restore SA1309 // Field names should not begin with underscore
-#pragma warning restore SA1312 // Variable names should begin with lower-case letter
-#pragma warning restore SA1403 // File may only contain a single namespace
-#pragma warning restore SA1649 // File name should match first type name
-
-// <auto-generated>
-// THIS (.cs) FILE IS GENERATED BY MPC(MessagePack-CSharp). DO NOT CHANGE IT.
-// </auto-generated>
-
-#pragma warning disable 618
-#pragma warning disable 612
-#pragma warning disable 414
-#pragma warning disable 168
-#pragma warning disable CS1591 // document public APIs
-
-#pragma warning disable SA1129 // Do not use default value type constructor
-#pragma warning disable SA1309 // Field names should not begin with underscore
-#pragma warning disable SA1312 // Variable names should begin with lower-case letter
-#pragma warning disable SA1403 // File may only contain a single namespace
-#pragma warning disable SA1649 // File name should match first type name
-
-namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messages
-{
-    public sealed class BlockDestructionMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage>
+    public sealed class BlockDestructionMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.BlockDestructionMessage>
     {
         // Position
         private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
         // Forward
         private static global::System.ReadOnlySpan<byte> GetSpan_Forward() => new byte[1 + 7] { 167, 70, 111, 114, 119, 97, 114, 100 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.BlockDestructionMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -442,7 +321,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::OpenTK.Mathematics.Vector3>(formatterResolver).Serialize(ref writer, value.Forward, options);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Client.BlockDestructionMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -478,13 +357,13 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.BlockDestructionMessage(__Position__, __Forward__);
+            var ____result = new global::Bergmann.Shared.Networking.Client.BlockDestructionMessage(__Position__, __Forward__);
             reader.Depth--;
             return ____result;
         }
     }
 
-    public sealed class BlockPlacementMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage>
+    public sealed class BlockPlacementMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.BlockPlacementMessage>
     {
         // Position
         private static global::System.ReadOnlySpan<byte> GetSpan_Position() => new byte[1 + 8] { 168, 80, 111, 115, 105, 116, 105, 111, 110 };
@@ -493,7 +372,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
         // BlockToPlace
         private static global::System.ReadOnlySpan<byte> GetSpan_BlockToPlace() => new byte[1 + 12] { 172, 66, 108, 111, 99, 107, 84, 111, 80, 108, 97, 99, 101 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.BlockPlacementMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -511,7 +390,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Block>(formatterResolver).Serialize(ref writer, value.BlockToPlace, options);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Client.BlockPlacementMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -553,20 +432,18 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.BlockPlacementMessage(__Position__, __Forward__, __BlockToPlace__);
+            var ____result = new global::Bergmann.Shared.Networking.Client.BlockPlacementMessage(__Position__, __Forward__, __BlockToPlace__);
             reader.Depth--;
             return ____result;
         }
     }
 
-    public sealed class ChatMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.ChatMessage>
+    public sealed class ChatMessageSentMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage>
     {
-        // Sender
-        private static global::System.ReadOnlySpan<byte> GetSpan_Sender() => new byte[1 + 6] { 166, 83, 101, 110, 100, 101, 114 };
         // Text
         private static global::System.ReadOnlySpan<byte> GetSpan_Text() => new byte[1 + 4] { 164, 84, 101, 120, 116 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.ChatMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -575,14 +452,12 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_Sender());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Sender, options);
+            writer.WriteMapHeader(1);
             writer.WriteRaw(GetSpan_Text());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Text, options);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.ChatMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -592,7 +467,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             options.Security.DepthStep(ref reader);
             var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var __Sender__ = default(string);
             var __Text__ = default(string);
 
             for (int i = 0; i < length; i++)
@@ -604,11 +478,6 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                     FAIL:
                       reader.Skip();
                       continue;
-                    case 6:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 125779802219859UL) { goto FAIL; }
-
-                        __Sender__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
-                        continue;
                     case 4:
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1954047316UL) { goto FAIL; }
 
@@ -618,18 +487,18 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.ChatMessage(__Sender__, __Text__);
+            var ____result = new global::Bergmann.Shared.Networking.Client.ChatMessageSentMessage(__Text__);
             reader.Depth--;
             return ____result;
         }
     }
 
-    public sealed class ChunkColumnRequestMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage>
+    public sealed class ChunkColumnRequestMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage>
     {
         // Key
         private static global::System.ReadOnlySpan<byte> GetSpan_Key() => new byte[1 + 3] { 163, 75, 101, 121 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -642,7 +511,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             writer.Write(value.Key);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -671,20 +540,246 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.ChunkColumnRequestMessage(__Key__);
+            var ____result = new global::Bergmann.Shared.Networking.Client.ChunkColumnRequestMessage(__Key__);
             reader.Depth--;
             return ____result;
         }
     }
 
-    public sealed class ChunkUpdateMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage>
+    public sealed class ClientMessageBoxFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.ClientMessageBox>
+    {
+        // Message
+        private static global::System.ReadOnlySpan<byte> GetSpan_Message() => new byte[1 + 7] { 167, 77, 101, 115, 115, 97, 103, 101 };
+        // Guid
+        private static global::System.ReadOnlySpan<byte> GetSpan_Guid() => new byte[1 + 4] { 164, 71, 117, 105, 100 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.ClientMessageBox value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Message());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Serialize(ref writer, value.Message, options);
+            writer.WriteRaw(GetSpan_Guid());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid?>(formatterResolver).Serialize(ref writer, value.Guid, options);
+        }
+
+        public global::Bergmann.Shared.Networking.Client.ClientMessageBox Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Message__ = default(global::Bergmann.Shared.Networking.Messages.IMessage);
+            var __Guid__ = default(global::System.Guid?);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 7:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28542640894207309UL) { goto FAIL; }
+
+                        __Message__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 4:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1684632903UL) { goto FAIL; }
+
+                        __Guid__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid?>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.Client.ClientMessageBox(__Message__, __Guid__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class LogInAttemptMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Client.LogInAttemptMessage>
+    {
+        // Password
+        private static global::System.ReadOnlySpan<byte> GetSpan_Password() => new byte[1 + 8] { 168, 80, 97, 115, 115, 119, 111, 114, 100 };
+        // Name
+        private static global::System.ReadOnlySpan<byte> GetSpan_Name() => new byte[1 + 4] { 164, 78, 97, 109, 101 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Client.LogInAttemptMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Password());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Password, options);
+            writer.WriteRaw(GetSpan_Name());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Name, options);
+        }
+
+        public global::Bergmann.Shared.Networking.Client.LogInAttemptMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Password__ = default(string);
+            var __Name__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7237970109966541136UL) { goto FAIL; }
+
+                        __Password__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 4:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
+
+                        __Name__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.Client.LogInAttemptMessage(__Password__, __Name__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+}
+
+#pragma warning restore 168
+#pragma warning restore 414
+#pragma warning restore 618
+#pragma warning restore 612
+
+#pragma warning restore SA1129 // Do not use default value type constructor
+#pragma warning restore SA1309 // Field names should not begin with underscore
+#pragma warning restore SA1312 // Variable names should begin with lower-case letter
+#pragma warning restore SA1403 // File may only contain a single namespace
+#pragma warning restore SA1649 // File name should match first type name
+
+// <auto-generated>
+// THIS (.cs) FILE IS GENERATED BY MPC(MessagePack-CSharp). DO NOT CHANGE IT.
+// </auto-generated>
+
+#pragma warning disable 618
+#pragma warning disable 612
+#pragma warning disable 414
+#pragma warning disable 168
+#pragma warning disable CS1591 // document public APIs
+
+#pragma warning disable SA1129 // Do not use default value type constructor
+#pragma warning disable SA1309 // Field names should not begin with underscore
+#pragma warning disable SA1312 // Variable names should begin with lower-case letter
+#pragma warning disable SA1403 // File may only contain a single namespace
+#pragma warning disable SA1649 // File name should match first type name
+
+namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Server
+{
+    public sealed class ChatMessageReceivedMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage>
+    {
+        // Text
+        private static global::System.ReadOnlySpan<byte> GetSpan_Text() => new byte[1 + 4] { 164, 84, 101, 120, 116 };
+        // Sender
+        private static global::System.ReadOnlySpan<byte> GetSpan_Sender() => new byte[1 + 6] { 166, 83, 101, 110, 100, 101, 114 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_Text());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Text, options);
+            writer.WriteRaw(GetSpan_Sender());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Sender, options);
+        }
+
+        public global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Text__ = default(string);
+            var __Sender__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 4:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1954047316UL) { goto FAIL; }
+
+                        __Text__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 6:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 125779802219859UL) { goto FAIL; }
+
+                        __Sender__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.Server.ChatMessageReceivedMessage(__Text__, __Sender__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class ChunkUpdateMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage>
     {
         // Key
         private static global::System.ReadOnlySpan<byte> GetSpan_Key() => new byte[1 + 3] { 163, 75, 101, 121 };
         // UpdatedBlocks
         private static global::System.ReadOnlySpan<byte> GetSpan_UpdatedBlocks() => new byte[1 + 13] { 173, 85, 112, 100, 97, 116, 101, 100, 66, 108, 111, 99, 107, 115 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -700,7 +795,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Collections.Generic.IList<(global::OpenTK.Mathematics.Vector3i, global::Bergmann.Shared.Objects.Block)>>(formatterResolver).Serialize(ref writer, value.UpdatedBlocks, options);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -736,18 +831,18 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.ChunkUpdateMessage(__Key__, __UpdatedBlocks__);
+            var ____result = new global::Bergmann.Shared.Networking.Server.ChunkUpdateMessage(__Key__, __UpdatedBlocks__);
             reader.Depth--;
             return ____result;
         }
     }
 
-    public sealed class RawChunkMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Messages.RawChunkMessage>
+    public sealed class RawChunkMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Server.RawChunkMessage>
     {
         // Chunk
         private static global::System.ReadOnlySpan<byte> GetSpan_Chunk() => new byte[1 + 5] { 165, 67, 104, 117, 110, 107 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Messages.RawChunkMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Server.RawChunkMessage value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -761,7 +856,7 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Objects.Chunk>(formatterResolver).Serialize(ref writer, value.Chunk, options);
         }
 
-        public global::Bergmann.Shared.Networking.Messages.RawChunkMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::Bergmann.Shared.Networking.Server.RawChunkMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -791,7 +886,127 @@ namespace Bergmann.Shared.Networking.Formatters.Bergmann.Shared.Networking.Messa
                 }
             }
 
-            var ____result = new global::Bergmann.Shared.Networking.Messages.RawChunkMessage(__Chunk__);
+            var ____result = new global::Bergmann.Shared.Networking.Server.RawChunkMessage(__Chunk__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class ServerMessageBoxFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Server.ServerMessageBox>
+    {
+        // Message
+        private static global::System.ReadOnlySpan<byte> GetSpan_Message() => new byte[1 + 7] { 167, 77, 101, 115, 115, 97, 103, 101 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Server.ServerMessageBox value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(1);
+            writer.WriteRaw(GetSpan_Message());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Serialize(ref writer, value.Message, options);
+        }
+
+        public global::Bergmann.Shared.Networking.Server.ServerMessageBox Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __Message__ = default(global::Bergmann.Shared.Networking.Messages.IMessage);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 7:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 28542640894207309UL) { goto FAIL; }
+
+                        __Message__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::Bergmann.Shared.Networking.Messages.IMessage>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.Server.ServerMessageBox(__Message__);
+            reader.Depth--;
+            return ____result;
+        }
+    }
+
+    public sealed class SuccessfulLoginMessageFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage>
+    {
+        // UserID
+        private static global::System.ReadOnlySpan<byte> GetSpan_UserID() => new byte[1 + 6] { 166, 85, 115, 101, 114, 73, 68 };
+        // Name
+        private static global::System.ReadOnlySpan<byte> GetSpan_Name() => new byte[1 + 4] { 164, 78, 97, 109, 101 };
+
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage value, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNil();
+                return;
+            }
+
+            var formatterResolver = options.Resolver;
+            writer.WriteMapHeader(2);
+            writer.WriteRaw(GetSpan_UserID());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid>(formatterResolver).Serialize(ref writer, value.UserID, options);
+            writer.WriteRaw(GetSpan_Name());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Name, options);
+        }
+
+        public global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        {
+            if (reader.TryReadNil())
+            {
+                return null;
+            }
+
+            options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
+            var length = reader.ReadMapHeader();
+            var __UserID__ = default(global::System.Guid);
+            var __Name__ = default(string);
+
+            for (int i = 0; i < length; i++)
+            {
+                var stringKey = global::MessagePack.Internal.CodeGenHelpers.ReadStringSpan(ref reader);
+                switch (stringKey.Length)
+                {
+                    default:
+                    FAIL:
+                      reader.Skip();
+                      continue;
+                    case 6:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 75082242552661UL) { goto FAIL; }
+
+                        __UserID__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::System.Guid>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 4:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701667150UL) { goto FAIL; }
+
+                        __Name__ = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+
+                }
+            }
+
+            var ____result = new global::Bergmann.Shared.Networking.Server.SuccessfulLoginMessage(__UserID__, __Name__);
             reader.Depth--;
             return ____result;
         }

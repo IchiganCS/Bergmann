@@ -1,6 +1,6 @@
 using Bergmann.Shared.Networking.Messages;
 
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Server;
 
 [MessagePack.MessagePackObject]
 /// <summary>

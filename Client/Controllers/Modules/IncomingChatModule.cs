@@ -2,6 +2,7 @@ using Bergmann.Client.Graphics;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Networking.Messages;
+using Bergmann.Shared.Networking.Server;
 
 namespace Bergmann.Client.Controllers.Modules;
 
@@ -9,17 +10,17 @@ namespace Bergmann.Client.Controllers.Modules;
 /// A module which handles different tasks for incoming chat messages. It receives new chat messages, holds the history
 /// and renders them when requested. This module might be removed and merged with <see cref="ChatController"/>.
 /// </summary>
-public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
+public class IncomingChatModule : Module, IMessageHandler<ChatMessageReceivedMessage> {
 
     /// <summary>
     /// The history of all messages received.
     /// </summary>
-    private List<ChatMessage> History { get; set; } = new();
+    private List<ChatMessageReceivedMessage> History { get; set; } = new();
 
     private TextRenderer? TopMessage { get; set; }
 
 
-    public void HandleMessage(ChatMessage message) {
+    public void HandleMessage(ChatMessageReceivedMessage message) {
         History.Add(message);
 
 

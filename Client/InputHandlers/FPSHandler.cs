@@ -1,4 +1,5 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Client;
 using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
@@ -158,13 +159,13 @@ public class FPHandler : IInputHandler {
 
         if (keyboard.IsKeyDown(KeyMappings.Up) && IsGrounded) {
             IsGrounded = false;
-            GravitationalPull = 7.4f;
+            GravitationalPull = 7.8f;
         }
 
         Position += deltaTime * (Quaternion.FromEulerAngles(0, EulerAngles.Y, 0) * new Vector3(x, 0, z));
 
         if (!IsGrounded)
-            GravitationalPull = Math.Max(-50, GravitationalPull - deltaTime * 25f);
+            GravitationalPull = Math.Max(-50, GravitationalPull - deltaTime * 30f);
 
         Position += (0, deltaTime * GravitationalPull, 0);
     }
@@ -231,7 +232,7 @@ public class FPHandler : IInputHandler {
     /// <summary>
     /// Constructs a look at matrix for this camera.
     /// </summary>
-    public Matrix4 LookAt
+    public Matrix4 LookAtMatrix
         => Matrix4.LookAt(Position, Position + Forward, new(0, 1, 0));
 
 
@@ -241,11 +242,11 @@ public class FPHandler : IInputHandler {
     /// <param name="args">The values used to update.</param>
     public async void HandleInput(InputUpdateArgs args) {
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            await Connection.Active.ClientToServerAsync(new BlockDestructionMessage(Position, Forward));
+            await Connection.Active.Send(new BlockDestructionMessage(Position, Forward));
         }
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockPlacement)) {
-            await Connection.Active.ClientToServerAsync(new BlockPlacementMessage(Position, Forward, 1));
+            await Connection.Active.Send(new BlockPlacementMessage(Position, Forward, 1));
         }
 
         RotateCamera(args.MouseState.Delta);

@@ -29,6 +29,7 @@ public class GameController : Controller {
     public FPHandler Fph { get; init; }
 
     private ChatController Chat { get; init; }
+    private IncomingChatModule IncomingChat { get; init; }
 
     private WorldRenderer WorldRenderer { get; init; }
     private DebugRenderer DebugRenderer { get; init; }
@@ -36,8 +37,9 @@ public class GameController : Controller {
     public bool DebugViewEnabled { get; private set; } = false;
 
     public GameController() {
-        Chat = new();
         Fph = new();
+        Chat = new();
+        IncomingChat = new();
 
         Fph.Position = (30, 60, 30);
 
@@ -65,7 +67,7 @@ public class GameController : Controller {
         WorldRenderer = new();
         DebugRenderer = new();
         Modules.Add(new WorldLoaderModule());
-
+        Modules.Add(IncomingChat);
 
         InputHandlers.Add(Fph);
     }
@@ -78,17 +80,20 @@ public class GameController : Controller {
         else
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
-        Matrix4 viewMat = Fph.LookAt;
+        Matrix4 viewMat = Fph.LookAtMatrix;
         SharedGlObjects.BlockProgram.SetUniform("view", viewMat);
-        
+
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Graphics.Window.Instance.Size.X / Graphics.Window.Instance.Size.Y, 0.1f, 300f);
         projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
         Program.Active.SetUniform("projection", projMat);
 
-        WorldRenderer.Render(new(projMat.Inverted(), Fph.LookAt.Inverted(), 14));
+        WorldRenderer.Render(new(projMat.Inverted(), Fph.LookAtMatrix.Inverted(), 14));
+
+
+        Program.Active = SharedGlObjects.UIProgram;
+        IncomingChat.Render();
 
         if (DebugViewEnabled) {
-            Program.Active = SharedGlObjects.UIProgram;
             DebugRenderer.Update(Fph.Position, 1f / args.DeltaTime, Connection.Active.Chunks.Count);
             DebugRenderer.Render();
         }

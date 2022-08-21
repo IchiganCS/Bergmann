@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 namespace Bergmann.Shared.Noise;
 
 /// <summary>
-/// A classic perlin2d noise sampler as described by Wikipedia.
+/// A classic perlin2d noise sampler as described by Wikipedia (https://en.wikipedia.org/wiki/Perlin_noise).
 /// </summary>
 public class Perlin2D : INoise<Vector2> {
 
@@ -57,6 +57,7 @@ public class Perlin2D : INoise<Vector2> {
     }
 
     public float Sample(Vector2 position) {
+
         //the special perlin vectors to interpolate the value from
         Vector2[] perlins = new Vector2[4];
         //the offsets where those vectors where sampled

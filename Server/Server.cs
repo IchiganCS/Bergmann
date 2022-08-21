@@ -2,6 +2,7 @@ using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Networking.Resolvers;
+using Bergmann.Shared.Networking.Server;
 using MessagePack;
 using MessagePack.Resolvers;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -12,22 +13,24 @@ namespace Bergmann.Server;
 public class Server {
     public static IHubContext<TrueHub> HubContext { get; set; } = null!;
     public static IHubClients Clients => HubContext.Clients;
-    public static async Task SendToClientAsync(IClientProxy clients, IMessage message) {
+    
+    public static async Task Send(IClientProxy clients, IMessage message) {
         await clients.SendAsync("ServerToClient", new ServerMessageBox(message));
     }
 
     public static void Main(string[] args) {
         Logger.Info("Starting server...");
-
-
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+
+        StaticCompositeResolver.Instance.Register(
+            GeneratedResolver.Instance,
+            OpenTKResolver.Instance,
+            StandardResolver.Instance
+        );
+        
         builder.Services.AddSignalR()
             .AddMessagePackProtocol(options => {
-                StaticCompositeResolver.Instance.Register(
-                    GeneratedResolver.Instance,
-                    OpenTKResolver.Instance,
-                    StandardResolver.Instance
-                );
 
                 options.SerializerOptions = 
                     MessagePackSerializerOptions.Standard
@@ -37,6 +40,8 @@ public class Server {
             .AddHubOptions<TrueHub>(options => {
                 options.EnableDetailedErrors = true;
             });
+
+
         builder.Services.AddResponseCompression(opts => {
             opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                 new[] { "application/octet-stream" });

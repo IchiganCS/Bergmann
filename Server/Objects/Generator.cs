@@ -67,7 +67,6 @@ public class Generator {
     public Chunk? GenerateChunk(long key) {
         Chunk result = new();
 
-        // https://en.wikipedia.org/wiki/Perlin_noise
         int[,,] blocks = new int[16, 16, 16];
         Vector3i offset = Chunk.ComputeOffset(key);
         

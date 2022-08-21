@@ -1,6 +1,6 @@
 using Bergmann.Shared.Networking.Messages;
 
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Client;
 
 [MessagePack.MessagePackObject]
 /// <summary>
@@ -13,19 +13,21 @@ public class ClientMessageBox {
     /// <summary>
     /// The boxed message.
     /// </summary>
-    public IMessage Message { get; set; }
+    public IMessage Message { get; init; }
 
     /// <summary>
-    /// The connection id of the client sending the message.
+    /// The guid of the logged in user.
     /// </summary>
-    public string ConnectionId { get; }
+    public Guid? Guid { get; init; }
 
     /// <summary>
     /// Constructs a new box for the message.
     /// </summary>
     /// <param name="message">The message to be wrapped.</param>
-    public ClientMessageBox(IMessage message, string connectionId) {
+    /// <param name="guid">The guid of the logged in user. If the value is null, the server may only execute actions
+    /// wihout a login.</param>
+    public ClientMessageBox(IMessage message, Guid? guid) {
         Message = message;
-        ConnectionId = connectionId;
+        Guid = guid;
     }
 }

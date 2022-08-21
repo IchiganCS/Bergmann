@@ -1,7 +1,9 @@
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Client;
 using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Networking.Resolvers;
+using Bergmann.Shared.Networking.Server;
 using Bergmann.Shared.Objects;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -16,7 +18,7 @@ namespace Bergmann.Client;
 /// A connection is built from a link, hubs are established and whenever a component wants to request an action
 /// from the server, connection shall expose a method for it.
 /// </summary>
-public class Connection : IDisposable {
+public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
 
     /// <summary>
     /// Backing field for <see cref="Active"/>.
@@ -42,6 +44,13 @@ public class Connection : IDisposable {
     /// A world hub, an instance of the class from the server package.
     /// </summary>
     private HubConnection Hub { get; init; }
+
+    /// <summary>
+    /// The guid of the logged in user. 
+    /// </summary>
+    public Guid? UserID { get; private set; }
+
+    public string? UserName { get; private set; }
 
     /// <summary>
     /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoaderController"/>.
@@ -106,6 +115,8 @@ public class Connection : IDisposable {
 
         Hub = buildHub("Hub").Result;
 
+        RegisterMessageHandler(this);
+
         Chunks = new();
 
         Hub.On<ServerMessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
@@ -135,34 +146,52 @@ public class Connection : IDisposable {
             return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>().ToArray();
     }
 
-    public async Task ClientToServerAsync(IMessage message) {
-        await Hub.SendAsync("ClientToServer", new ClientMessageBox(message, Hub.ConnectionId!));
+    public async Task Send(IMessage message) {
+        await Hub.SendAsync("ClientToServer", new ClientMessageBox(message, UserID));
     }
 
     private void HandleServerToClient(IMessage message) {
-        if (message is ChatMessage cm)
-            foreach (var item in GetHandlers<ChatMessage>()) {
+        if (message is ChatMessageSentMessage cm)
+            foreach (var item in GetHandlers<ChatMessageSentMessage>()) {
                 item.HandleMessage(cm);
             }
 
-        if (message is ChunkColumnRequestMessage ccrm)
+        else if (message is ChunkColumnRequestMessage ccrm)
             foreach (var item in GetHandlers<ChunkColumnRequestMessage>()) {
                 item.HandleMessage(ccrm);
             }
 
-        if (message is RawChunkMessage rcm)
+        else if (message is RawChunkMessage rcm)
             foreach (var item in GetHandlers<RawChunkMessage>()) {
                 item.HandleMessage(rcm);
             }
 
-        if (message is ChunkUpdateMessage cum)
+        else if (message is ChunkUpdateMessage cum)
             foreach (var item in GetHandlers<ChunkUpdateMessage>()) {
                 item.HandleMessage(cum);
             }
+
+        else if (message is ChatMessageReceivedMessage crm)
+            foreach (var item in GetHandlers<ChatMessageReceivedMessage>()) {
+                item.HandleMessage(crm);
+            }
+
+        else if (message is SuccessfulLoginMessage slm)
+            foreach (var item in GetHandlers<SuccessfulLoginMessage>()) {
+                item.HandleMessage(slm);
+            }
+
+        else
+            Logger.Warn("Received invalid message type");
     }
 
 
     public void Dispose() {
         Hub.DisposeAsync();
+    }
+
+    public void HandleMessage(SuccessfulLoginMessage message) {
+        UserID = message.UserID;
+        UserName = message.Name;
     }
 }
