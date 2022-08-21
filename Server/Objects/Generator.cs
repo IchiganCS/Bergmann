@@ -2,7 +2,7 @@ using Bergmann.Shared.Noise;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Server;
+namespace Bergmann.Server.Objects;
 
 
 /// <summary>

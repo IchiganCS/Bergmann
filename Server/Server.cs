@@ -1,5 +1,6 @@
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Networking.Resolvers;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -12,7 +13,7 @@ public class Server {
     public static IHubContext<TrueHub> HubContext { get; set; } = null!;
     public static IHubClients Clients => HubContext.Clients;
     public static async Task SendToClientAsync(IClientProxy clients, IMessage message) {
-        await clients.SendAsync("ServerToClient", new MessageBox(message));
+        await clients.SendAsync("ServerToClient", new ServerMessageBox(message));
     }
 
     public static void Main(string[] args) {
@@ -42,10 +43,10 @@ public class Server {
 
         });
         
-        builder.WebHost.UseUrls($"http://*:{Constants.DefaultPort}");
+        builder.WebHost.UseUrls($"http://*:23156");
 
         WebApplication app = builder.Build();
-        app.MapHub<TrueHub>("/" + Constants.Hub);
+        app.MapHub<TrueHub>("/Hub");
         app.UseRouting();
 
 

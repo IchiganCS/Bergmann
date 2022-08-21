@@ -1,4 +1,5 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
@@ -95,19 +96,19 @@ public class WorldLoaderModule : Module, IDisposable,
             }
 
             foreach (long chunk in chunks)
-                await Connection.Active!.ClientToServerAsync(new ChunkColumnRequestMessage(Connection.Active!.ConnectionId, chunk));
+                await Connection.Active.ClientToServerAsync(new ChunkColumnRequestMessage(chunk));
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
             if (!IsActive)
                 return;
 
-            Connection.Active?.Chunks.ForEach(chunk => {
+            Connection.Active.Chunks.ForEach(chunk => {
                 if ((chunk.Offset.Xz - (Parent as GameController)!.Fph.Position.Xz).LengthFast > DropDistance * 16) {
                     Vector3i offset = chunk.Offset;
                     offset.Y = 0;
                     RequestedColumns.Remove(Chunk.ComputeKey(offset));
-                    Connection.Active?.Chunks.Remove(chunk.Key);
+                    Connection.Active.Chunks.Remove(chunk.Key);
                 }
             });
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(dropTime));
@@ -118,7 +119,7 @@ public class WorldLoaderModule : Module, IDisposable,
     /// </summary>
     public void HandleMessage(ChunkUpdateMessage message) {
         foreach (var block in message.UpdatedBlocks) {
-            Connection.Active?.Chunks.SetBlockAt(block.Item1, block.Item2);
+            Connection.Active.Chunks.SetBlockAt(block.Item1, block.Item2);
         }
     }
 
@@ -126,19 +127,19 @@ public class WorldLoaderModule : Module, IDisposable,
     /// Add the entirely new chunk to the global collection.
     /// </summary>
     public void HandleMessage(RawChunkMessage message) {
-        Connection.Active?.Chunks.AddOrReplace(message.Chunk);
+        Connection.Active.Chunks.AddOrReplace(message.Chunk);
     }
 
     public override void OnActivated(Controller controller) {
-        Connection.Active?.RegisterMessageHandler<RawChunkMessage>(this);
-        Connection.Active?.RegisterMessageHandler<ChunkUpdateMessage>(this);
+        Connection.Active.RegisterMessageHandler<RawChunkMessage>(this);
+        Connection.Active.RegisterMessageHandler<ChunkUpdateMessage>(this);
         base.OnActivated(controller);
     }
 
     public override void OnDeactivated() {
         base.OnDeactivated();
-        Connection.Active?.DropMessageHandler<RawChunkMessage>(this);
-        Connection.Active?.DropMessageHandler<ChunkUpdateMessage>(this);
+        Connection.Active.DropMessageHandler<RawChunkMessage>(this);
+        Connection.Active.DropMessageHandler<ChunkUpdateMessage>(this);
     }
 
     /// <summary>

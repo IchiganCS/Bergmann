@@ -1,3 +1,5 @@
+using Bergmann.Shared.Networking.Messages;
+
 namespace Bergmann.Shared.Networking;
 
 [MessagePack.MessagePackObject]
@@ -6,7 +8,7 @@ namespace Bergmann.Shared.Networking;
 /// It does not server any purpose but better serialization support. MessagePack struggles with deserializing
 /// raw interfaces (currently).
 /// </summary>
-public class MessageBox {
+public class ClientMessageBox {
 
     /// <summary>
     /// The boxed message.
@@ -14,10 +16,16 @@ public class MessageBox {
     public IMessage Message { get; set; }
 
     /// <summary>
+    /// The connection id of the client sending the message.
+    /// </summary>
+    public string ConnectionId { get; }
+
+    /// <summary>
     /// Constructs a new box for the message.
     /// </summary>
     /// <param name="message">The message to be wrapped.</param>
-    public MessageBox(IMessage message) {
+    public ClientMessageBox(IMessage message, string connectionId) {
         Message = message;
+        ConnectionId = connectionId;
     }
 }

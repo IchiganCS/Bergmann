@@ -55,12 +55,12 @@ public class SolidsPasser : IRendererPasser {
         lock (Chunkers) {
             if (Chunkers.ContainsKey(key)) {
                 SolidsChunkRenderer ren = Chunkers[key];
-                Task.Run(() => ren.BuildFor(Connection.Active?.Chunks.TryGet(key)!));
+                Task.Run(() => ren.BuildFor(Connection.Active.Chunks.TryGet(key)!));
             }
             else {
                 SolidsChunkRenderer ren = new();
                 Chunkers.Add(key, ren);
-                Task.Run(() => ren.BuildFor(Connection.Active?.Chunks.TryGet(key)!));
+                Task.Run(() => ren.BuildFor(Connection.Active.Chunks.TryGet(key)!));
             }
         }
     }
@@ -154,7 +154,7 @@ public class SolidsPasser : IRendererPasser {
                 foreach (Geometry.Face face in Geometry.AllFaces) {
 
 
-                    if (Connection.Active?.Chunks.GetBlockAt(blockPosition + Geometry.FaceToVector[(int)face]) == 0) {
+                    if (Connection.Active.Chunks.GetBlockAt(blockPosition + Geometry.FaceToVector[(int)face]) == 0) {
                         Vector3[] ps = Geometry.Positions[(int)face];
                         int layer = info.GetLayerFromFace(face);
                         Vector3 globalPosition = blockPosition;

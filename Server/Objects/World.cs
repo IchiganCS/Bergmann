@@ -1,6 +1,6 @@
 using Bergmann.Shared.Objects;
 
-namespace Bergmann.Server;
+namespace Bergmann.Server.Objects;
 
 public class World {
 

@@ -2,7 +2,7 @@ using Bergmann.Client.Graphics;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
-using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -71,7 +71,7 @@ public class ChatController : Controller {
             }
             else {
                 if (!string.IsNullOrWhiteSpace(InputField.Text))
-                    await Connection.Active!.ClientToServerAsync(new ChatMessage("ich", InputField.Text));
+                    await Connection.Active.ClientToServerAsync(new ChatMessage("ich", InputField.Text));
             }
 
             GlThread.Invoke(() => InputField.SetText(""));

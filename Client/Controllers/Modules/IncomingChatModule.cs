@@ -1,6 +1,7 @@
 using Bergmann.Client.Graphics;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 
 namespace Bergmann.Client.Controllers.Modules;
 
@@ -34,7 +35,7 @@ public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
             RelativeAnchor = (0, 0)
         });
 
-        Connection.Active?.RegisterMessageHandler(this);
+        Connection.Active.RegisterMessageHandler(this);
     }
 
     public override void OnDeactivated() {
@@ -42,7 +43,7 @@ public class IncomingChatModule : Module, IMessageHandler<ChatMessage> {
 
         GlThread.Invoke(() => TopMessage?.Dispose());
 
-        Connection.Active?.DropMessageHandler(this);
+        Connection.Active.DropMessageHandler(this);
     }
 
     public void Render() {

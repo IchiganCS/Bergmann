@@ -1,4 +1,5 @@
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -52,7 +53,25 @@ public class FPHandler : IInputHandler {
     /// </summary>
     public float GravitationalPull { get; set; } = 0;
 
+    /// <summary>
+    /// A boolean whether the camera is grounded, e.g. touching the bottom.
+    /// This value is only used in <see cref="WalkingMovement"/> and might not be up to date if flying is enabled.
+    /// </summary>
     public bool IsGrounded { get; set; } = false;
+
+    /// <summary>
+    /// A boolean whether the current fps handler is flying.
+    /// </summary>
+    public bool IsFlying { get; set; } = false;
+
+    /// <summary>
+    /// A boolean whether the current fps handler is walking. 
+    /// Always the opposite of flying and enabled by default.
+    /// </summary>
+    public bool IsWalking {
+        get => !IsFlying;
+        set => IsFlying = !value;
+    }
 
 
     /// <summary>
@@ -139,13 +158,13 @@ public class FPHandler : IInputHandler {
 
         if (keyboard.IsKeyDown(KeyMappings.Up) && IsGrounded) {
             IsGrounded = false;
-            GravitationalPull = 6.5f;
+            GravitationalPull = 7.4f;
         }
 
         Position += deltaTime * (Quaternion.FromEulerAngles(0, EulerAngles.Y, 0) * new Vector3(x, 0, z));
 
         if (!IsGrounded)
-            GravitationalPull = Math.Max(-40, GravitationalPull - deltaTime * 20f);
+            GravitationalPull = Math.Max(-50, GravitationalPull - deltaTime * 25f);
 
         Position += (0, deltaTime * GravitationalPull, 0);
     }
@@ -156,14 +175,16 @@ public class FPHandler : IInputHandler {
     /// space below the camera.
     /// </summary>
     private void CollisionRespect(Vector3 prevPos) {
+        // check for walking through walls. If we run through a wall, reset position.
         Vector3 direction = Position - prevPos;
 
+        // but not down.
         if (direction.Y < 0)
             direction.Y = 0;
 
         if (direction != (0, 0, 0)) {
             foreach (Vector3 collider in Colliders) {
-                if (Connection.Active!.Chunks.Raycast(prevPos + collider, direction, out _, out _, out var hit2, direction.LengthFast * 1.03f)) {
+                if (Connection.Active.Chunks.Raycast(prevPos + collider, direction, out _, out _, out var hit2, direction.LengthFast * 1.03f)) {
                     Position = prevPos;
                     direction = (0, 0, 0);
                 }
@@ -172,18 +193,20 @@ public class FPHandler : IInputHandler {
 
         // check in y direction.
         if (!IsGrounded) {
-            if (Connection.Active!.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 0.93f)) {
+            // check if we now hit the ground.
+            if (Connection.Active.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 0.93f)) {
                 GravitationalPull = 0;
                 Position = hit + (0, Height, 0);
                 IsGrounded = true;
             }
-            //up
-            if (Connection.Active!.Chunks.Raycast(Position, (0, 1, 0), out _, out _, out hit, 0.1f)) {
-                GravitationalPull = -GravitationalPull;
+            // check if we hit the ceiling.
+            if (Connection.Active.Chunks.Raycast(Position, (0, 1, 0), out _, out _, out hit, 0.1f)) {
+                GravitationalPull = -0f;
                 Position = (Position.X, prevPos.Y, Position.Z);
             }
         }
-        else if (!Connection.Active!.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 1.03f)) {
+        // check if we're still grounded.
+        else if (!Connection.Active.Chunks.Raycast(Position, (0, -1, 0), out _, out _, out var hit, Height * 1.03f)) {
             IsGrounded = false;
         }
 
@@ -198,7 +221,7 @@ public class FPHandler : IInputHandler {
 
         foreach (Vector3 currentDir in directionsToCheck) {
             foreach (Vector3 collider in Colliders) {
-                if (Connection.Active!.Chunks.Raycast(Position + collider, currentDir, out _, out _, out var hitPoint, MinBlockSpace * 1.1f)) {
+                if (Connection.Active.Chunks.Raycast(Position + collider, currentDir, out _, out _, out var hitPoint, MinBlockSpace * 1.1f)) {
                     Position = hitPoint - currentDir * MinBlockSpace - collider;
                 }
             }
@@ -216,21 +239,24 @@ public class FPHandler : IInputHandler {
     /// Rotates the camera and moves it as specified by <paramref name="args"/>.
     /// </summary>
     /// <param name="args">The values used to update.</param>
-    public void HandleInput(InputUpdateArgs args) {
+    public async void HandleInput(InputUpdateArgs args) {
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            Connection.Active?.ClientToServerAsync(new BlockDestructionMessage(Position, Forward));
+            await Connection.Active.ClientToServerAsync(new BlockDestructionMessage(Position, Forward));
         }
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockPlacement)) {
-            Connection.Active?.ClientToServerAsync(new BlockPlacementMessage(Position, Forward, 1));
+            await Connection.Active.ClientToServerAsync(new BlockPlacementMessage(Position, Forward, 1));
         }
 
         RotateCamera(args.MouseState.Delta);
+
+
         Vector3 cachedPosition = Position;
-        //FlyingMovement(args.DeltaTime, args.KeyboardState);
-        WalkingMovement(args.DeltaTime, args.KeyboardState);
+        if (IsWalking)
+            WalkingMovement(args.DeltaTime, args.KeyboardState);
+        else if (IsFlying)
+            FlyingMovement(args.DeltaTime, args.KeyboardState);
+
         CollisionRespect(cachedPosition);
-
-
     }
 }

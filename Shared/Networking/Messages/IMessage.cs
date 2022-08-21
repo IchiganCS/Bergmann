@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Messages;
 
 [Union(0, typeof(ChatMessage))]
 [Union(1, typeof(ChunkColumnRequestMessage))]
@@ -11,7 +11,7 @@ namespace Bergmann.Shared.Networking;
 /// <summary>
 /// Every message sent to and from the server is an <see cref="IMessage"/>. This enables unified handling of 
 /// all messages and minimize the impact of SignalR. Because interfaces can't be sent directly, there's a wrapper
-/// <see cref="MessageBox"/>.
+/// <see cref="ClientMessageBox"/>.
 /// </summary>
 public interface IMessage {
     

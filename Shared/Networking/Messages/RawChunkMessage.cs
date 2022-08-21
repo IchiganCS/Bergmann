@@ -1,6 +1,6 @@
 using Bergmann.Shared.Objects;
 
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Messages;
 
 [MessagePack.MessagePackObject]
 /// <summary>
@@ -11,7 +11,7 @@ namespace Bergmann.Shared.Networking;
 public class RawChunkMessage : IMessage {
 
     /// <summary>
-    /// The chunk which is sent to the server. It might not necessarily be up to date when received 
+    /// The chunk which is sent. It might not necessarily be up to date when received 
     /// (as are all messages).
     /// </summary>
     public Chunk Chunk { get; set; }

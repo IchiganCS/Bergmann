@@ -1,7 +1,7 @@
 using Bergmann.Shared.Objects;
 using OpenTK.Mathematics;
 
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Messages;
 
 [MessagePack.MessagePackObject]
 /// <summary>

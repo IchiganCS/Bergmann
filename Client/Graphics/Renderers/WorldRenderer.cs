@@ -28,11 +28,11 @@ public class WorldRenderer : IDisposable {
         => AddChunkToAllIfAroundLoaded(Chunk.ComputeOffset(key), key);
 
     private void AddChunkToAllIfAroundLoaded(Vector3i offset, long key) {
-        if (Connection.Active!.Chunks.Any(x => x.Key == key) &&            
+        if (Connection.Active.Chunks.Any(x => x.Key == key) &&            
             Geometry.AllFaces.Select(x => Geometry.FaceToVector[(int)x] * 16 + offset)
             .Where(x => x.Y > 0) // since only those cold be existent
             .Select(Chunk.ComputeKey)
-            .All(y => Connection.Active!.Chunks.Any(x => x.Key == y)))
+            .All(y => Connection.Active.Chunks.Any(x => x.Key == y)))
 
             AddChunkToAll(key);
     }
@@ -47,11 +47,11 @@ public class WorldRenderer : IDisposable {
             new SolidsPasser()
         };
 
-        Connection.Active!.Chunks.OnChunkChanged += OnChunkUpdated;
-        Connection.Active!.Chunks.OnChunkAdded += OnChunkAdded;
-        Connection.Active!.Chunks.OnChunkRemoved += OnChunkRemoved;
+        Connection.Active.Chunks.OnChunkChanged += OnChunkUpdated;
+        Connection.Active.Chunks.OnChunkAdded += OnChunkAdded;
+        Connection.Active.Chunks.OnChunkRemoved += OnChunkRemoved;
 
-        Connection.Active!.Chunks.ForEach(x => 
+        Connection.Active.Chunks.ForEach(x => 
             AddChunkToAllIfAroundLoaded(x.Key));
     }
 
@@ -99,9 +99,9 @@ public class WorldRenderer : IDisposable {
 
 
     public void Dispose() {
-        Connection.Active!.Chunks.OnChunkChanged -= OnChunkUpdated;
-        Connection.Active!.Chunks.OnChunkAdded -= OnChunkAdded;
-        Connection.Active!.Chunks.OnChunkRemoved -= OnChunkRemoved;
+        Connection.Active.Chunks.OnChunkChanged -= OnChunkUpdated;
+        Connection.Active.Chunks.OnChunkAdded -= OnChunkAdded;
+        Connection.Active.Chunks.OnChunkRemoved -= OnChunkRemoved;
 
         foreach (IRendererPasser passer in RenderPassers)
             passer.Dispose();

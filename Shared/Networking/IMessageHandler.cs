@@ -1,3 +1,5 @@
+using Bergmann.Shared.Networking.Messages;
+
 namespace Bergmann.Shared.Networking;
 
 

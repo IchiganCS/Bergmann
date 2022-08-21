@@ -1,4 +1,4 @@
-namespace Bergmann.Shared.Networking;
+namespace Bergmann.Shared.Networking.Messages;
 
 [MessagePack.MessagePackObject]
 /// <summary>

@@ -1,5 +1,6 @@
 using Bergmann.Shared;
 using Bergmann.Shared.Networking;
+using Bergmann.Shared.Networking.Messages;
 using Bergmann.Shared.Networking.Resolvers;
 using Bergmann.Shared.Objects;
 using MessagePack;
@@ -20,12 +21,12 @@ public class Connection : IDisposable {
     /// <summary>
     /// Backing field for <see cref="Active"/>.
     /// </summary>
-    private static Connection? _Active;
+    private static Connection _Active = null!;
 
     /// <summary>
     /// The currently active connection. All components shall work with the currently active connection.
     /// </summary>
-    public static Connection? Active {
+    public static Connection Active {
         get => _Active;
         set {
             if (value?.Link == _Active?.Link || value is null)
@@ -41,11 +42,6 @@ public class Connection : IDisposable {
     /// A world hub, an instance of the class from the server package.
     /// </summary>
     private HubConnection Hub { get; init; }
-
-    /// <summary>
-    /// The connection id of the hub. Useful when requesting information from the server.
-    /// </summary>
-    public string ConnectionId => Hub.ConnectionId!;
 
     /// <summary>
     /// The chunks loaded and requested from the connection. It is held up to date by a <see cref="ChunkLoaderController"/>.
@@ -72,6 +68,14 @@ public class Connection : IDisposable {
     /// </summary>
     public static event ActiveChangedDelegate OnActiveChanged = default!;
 
+    static Connection() {
+        StaticCompositeResolver.Instance.Register(
+            GeneratedResolver.Instance,
+            OpenTKResolver.Instance,
+            StandardResolver.Instance
+        );
+    }
+
     /// <summary>
     /// Builds a new connection and builds required hubs and other initialization.
     /// </summary>
@@ -86,12 +90,6 @@ public class Connection : IDisposable {
                 .WithUrl(new Uri(Link, hubName))
                 .WithAutomaticReconnect()
                 .AddMessagePackProtocol(options => {
-                    StaticCompositeResolver.Instance.Register(
-                        GeneratedResolver.Instance,
-                        OpenTKResolver.Instance,
-                        StandardResolver.Instance
-                    );
-
                     options.SerializerOptions =
                         MessagePackSerializerOptions.Standard
                         .WithResolver(StaticCompositeResolver.Instance)
@@ -106,11 +104,11 @@ public class Connection : IDisposable {
             return hc;
         }
 
-        Hub = buildHub(Constants.Hub).Result;
+        Hub = buildHub("Hub").Result;
 
         Chunks = new();
 
-        Hub.On<MessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
+        Hub.On<ServerMessageBox>("ServerToClient", box => HandleServerToClient(box.Message));
     }
 
     private Dictionary<Type, IList<object>> MessageHandlers { get; set; } = new();
@@ -138,7 +136,7 @@ public class Connection : IDisposable {
     }
 
     public async Task ClientToServerAsync(IMessage message) {
-        await Hub.SendAsync("ClientToServer", new MessageBox(message));
+        await Hub.SendAsync("ClientToServer", new ClientMessageBox(message, Hub.ConnectionId!));
     }
 
     private void HandleServerToClient(IMessage message) {
