@@ -154,7 +154,7 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
             return Enumerable.Empty<IMessageHandler<T>>();
 
         lock (MessageHandlers)
-            return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>().ToArray();
+            return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
     }
 
     public async Task Send(IMessage message) {

@@ -23,14 +23,6 @@ public abstract class Controller {
     protected IList<Module> Modules { get; set; } = new List<Module>();
 
     /// <summary>
-    /// A list of registered input handlers. A subclass is not forced to use it, it is a commodity.
-    /// When <see cref="this"/> is updated, the base implementation calls <see cref="IInputHandler.HandleInput"/> on them
-    /// with the same update arguments.
-    /// </summary>
-    /// <typeparam name="IInputHandler">Any type of input handler.</typeparam>
-    protected IList<IInputHandler> InputHandlers { get; set; } = new List<IInputHandler>();
-
-    /// <summary>
     /// Whether the current controller is on top. This is set automatically by the activation methods.
     /// </summary>
     public bool IsOnTop { get; private set; }
@@ -43,12 +35,10 @@ public abstract class Controller {
 
 
     /// <summary>
-    /// The controller receives an update and should be updated. Registered <see cref="InputHandlers"/> are updated automatically.
+    /// The controller receives an update and should be updated.
     /// </summary>
     /// <param name="updateArgs">The arguemnts which should be used for updating.</param>
     public virtual void Update(UpdateArgs updateArgs) {
-        foreach (var input in InputHandlers)
-            input.HandleInput(updateArgs);
     }
 
     /// <summary>

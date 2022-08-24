@@ -21,7 +21,7 @@ public abstract class UIRenderer : IRenderer {
     /// </summary>
     public Vector2 RelativeAnchor { get; set; }
     /// <summary>
-    /// The width and height of the box
+    /// The width and height of the box in pixels.
     /// </summary>
     public Vector2 Dimension { get; set; }
 

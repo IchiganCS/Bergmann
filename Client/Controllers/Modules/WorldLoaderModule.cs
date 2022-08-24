@@ -99,6 +99,7 @@ public class WorldLoaderModule : Module, IDisposable,
 
             foreach (long chunk in chunks)
                 await Connection.Active.Send(new ChunkColumnRequestMessage(chunk));
+                
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {

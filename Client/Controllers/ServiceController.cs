@@ -1,5 +1,8 @@
+using Bergmann.Client.Controllers.Modules;
+using Bergmann.Client.Graphics;
+using Bergmann.Client.Graphics.OpenGL;
+using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Shared.Networking.Client;
-using Bergmann.Shared.Networking.Messages;
 using OpenTK.Windowing.Common;
 
 namespace Bergmann.Client.Controllers;
@@ -10,16 +13,63 @@ namespace Bergmann.Client.Controllers;
 /// </summary>
 public class ServiceController : Controller {
     public override CursorState RequestedCursorState => CursorState.Normal;
-    private DateTime LastLoginAttempt { get; set; } = DateTime.MinValue;
 
-    public override async void Update(UpdateArgs updateArgs) {
+    private ChatWriteModule ChatWriter { get; init; }
+
+    private TextRenderer? ServerTest { get; init; }
+
+    public ServiceController() {
+        ChatWriter = new(msg => { });
+
+        ChatWriter.Commands.Add(new() {
+            Name = "login",
+            Execute = async args => {
+                if (args.Length < 2 || Connection.Active is null)
+                    return;
+
+                await Connection.Active.Send(new LogInAttemptMessage(args[0], args[1]));
+            }
+        });
+        ChatWriter.Commands.Add(new() {
+            Name = "connect",
+            Execute = args => {
+                if (args.Length < 1)
+                    return;
+
+                Connection.Active = new(args[0]);
+            }
+        });
+
+        ServerTest = new() {
+            Dimension = (-1, 100),
+            AbsoluteAnchorOffset = (0, 0),
+            PercentageAnchorOffset = (0.5f, 0.7f),
+            RelativeAnchor = (0.5f, 0.5f)
+        };
+        ServerTest.SetText("Not connected");
+
+        Modules.Add(ChatWriter);
+    }
+
+    public override void Update(UpdateArgs updateArgs) {
         base.Update(updateArgs);
-        
-        if (Connection.Active.UserID is not null)
+
+        if (Connection.Active is null || Connection.Active.UserID is null)
+            ChatWriter.Update(updateArgs);
+        else
             Stack!.Push(new GameController());
-        else if (DateTime.Now - LastLoginAttempt > TimeSpan.FromMilliseconds(500)) {
-            LastLoginAttempt = DateTime.Now;
-            await Connection.Active.Send(new LogInAttemptMessage("test", "test"));
+    }
+
+    public override void Render(RenderUpdateArgs args) {
+        base.Render(args);
+
+        if (IsOnTop) {
+            Program.Active = GlObjects.UIProgram;
+            if (Connection.Active is not null) {
+                ServerTest?.SetText($"Connected to {Connection.Active.Link} - not logged in.");
+            }
+            ServerTest?.Render();
+            ChatWriter.Render();
         }
     }
 }

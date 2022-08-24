@@ -31,7 +31,7 @@ public class Window : GameWindow {
 
         BlockInfo.ReadFromJson("Blocks.json");
         ControllerStack = new(new ServiceController());
-        SharedGlObjects.BuildAll();
+        GlObjects.BuildAll();
 
 
         GlLogger.EnableCallback();
@@ -52,7 +52,7 @@ public class Window : GameWindow {
 
     protected override void OnUnload() {
         base.OnUnload();
-        SharedGlObjects.FreeAll();
+        GlObjects.FreeAll();
     }
 
     protected override void OnFocusedChanged(FocusedChangedEventArgs e) {

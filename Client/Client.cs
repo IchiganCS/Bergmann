@@ -9,10 +9,6 @@ public class Client {
     public static void Main(string[] args) {
         Logger.Info("Starting client...");
 
-        string link = $"http://localhost:23156";
-        Connection localhost = new(link);
-        Connection.Active = localhost;
-
         GameWindowSettings gwSet = GameWindowSettings.Default;
         NativeWindowSettings nwSet = NativeWindowSettings.Default;
 

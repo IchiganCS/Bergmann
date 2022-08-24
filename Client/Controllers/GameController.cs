@@ -30,6 +30,7 @@ public class GameController : Controller {
 
     private ChatController Chat { get; init; }
     private IncomingChatModule IncomingChat { get; init; }
+    private BoxRenderer CrossRenderer { get; init; }
 
     private WorldRenderer WorldRenderer { get; init; }
     private DebugRenderer DebugRenderer { get; init; }
@@ -44,21 +45,21 @@ public class GameController : Controller {
         Fph.Position = (30, 60, 30);
 
 
-        Chat.Commands.Add(new() {
+        Chat.ChatWriter.Commands.Add(new() {
             Name = "wireframe",
             Execute = x => WireFrameEnabled = !WireFrameEnabled,
         });
-        Chat.Commands.Add(new() {
+        Chat.ChatWriter.Commands.Add(new() {
             Name = "recompile",
-            Execute = x => GlThread.Invoke(SharedGlObjects.CompilePrograms),
+            Execute = x => GlThread.Invoke(GlObjects.CompilePrograms),
         });
-        Chat.Commands.Add(new() {
+        Chat.ChatWriter.Commands.Add(new() {
             Name = "connect",
             Execute = x => {
                 Connection.Active = new(x[0]);
             }
         });
-        Chat.Commands.Add(new() {
+        Chat.ChatWriter.Commands.Add(new() {
             Execute = args =>
                 DebugViewEnabled = !DebugViewEnabled,
             Name = "debug"
@@ -69,11 +70,17 @@ public class GameController : Controller {
         Modules.Add(new WorldLoaderModule());
         Modules.Add(IncomingChat);
 
-        InputHandlers.Add(Fph);
+        CrossRenderer = new() {
+            AbsoluteAnchorOffset = (0, 0),
+            PercentageAnchorOffset = (0.5f, 0.5f),
+            RelativeAnchor = (0.5f, 0.5f),
+            Dimension = (100, 100)
+        };
+        CrossRenderer.BuildVAO();
     }
 
     public override void Render(RenderUpdateArgs args) {
-        Program.Active = SharedGlObjects.BlockProgram;
+        Program.Active = GlObjects.BlockProgram;
 
         if (WireFrameEnabled)
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
@@ -81,7 +88,7 @@ public class GameController : Controller {
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
         Matrix4 viewMat = Fph.LookAtMatrix;
-        SharedGlObjects.BlockProgram.SetUniform("view", viewMat);
+        GlObjects.BlockProgram.SetUniform("view", viewMat);
 
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Graphics.Window.Instance.Size.X / Graphics.Window.Instance.Size.Y, 0.1f, 300f);
         projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
@@ -90,7 +97,11 @@ public class GameController : Controller {
         WorldRenderer.Render(new(projMat.Inverted(), Fph.LookAtMatrix.Inverted(), 14));
 
 
-        Program.Active = SharedGlObjects.UIProgram;
+        Program.Active = GlObjects.UIProgram;
+
+        GlObjects.CrossTexture.Bind();
+        CrossRenderer.Render();
+
         IncomingChat.Render();
 
         if (DebugViewEnabled) {
@@ -101,6 +112,8 @@ public class GameController : Controller {
 
     public override void Update(UpdateArgs updateArgs) {
         base.Update(updateArgs);
+
+        Fph.HandleInput(updateArgs);
 
         if (updateArgs.KeyboardState.IsKeyPressed(Keys.F1))
             DebugViewEnabled = !DebugViewEnabled;

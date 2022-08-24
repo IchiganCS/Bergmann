@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
-/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyLayout"/> method, so there's no need to call it.
+/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.BuildVAO"/> method, so there's no need to call it.
 /// Additionally, when specifying the layout of the box, you only have to specify the y coordinate of 
 /// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextHandler"/>, 
 /// it renders the cursor automatically.
@@ -64,7 +64,7 @@ public class TextRenderer : UIRenderer {
 
         for (int i = 0; i < text.Length; i++) {
             char ch = text[i];
-            int layer = SharedGlObjects.RenderableChars.IndexOf(ch);
+            int layer = GlObjects.RenderableChars.IndexOf(ch);
             float coveredSpace = i * widthOfOne;
             float spaceThisPass = widthOfOne;
             float cursorOffset = 0f;
@@ -126,7 +126,7 @@ public class TextRenderer : UIRenderer {
     /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to the texture stack slot.
     /// </summary>
     public override void Render() {
-        SharedGlObjects.LetterTextures.Bind();
+        GlObjects.LetterTextures.Bind();
         Program.Active!.SetUniform("useStack", true);
 
         VAO?.Draw();

@@ -18,7 +18,7 @@ namespace Bergmann.Client.Graphics;
 /// A unified class to hold static values required for all kinds of different objects. That may contain
 /// texture stacks or different OpenGL programs and also some helper functions.
 /// </summary>
-public static class SharedGlObjects {
+public static class GlObjects {
     private static IList<string> SupportedExtensions { get; set; } = null!;
 
     /// <summary>
@@ -232,15 +232,6 @@ public static class SharedGlObjects {
             ResourceManager.FullPath(ResourceManager.Type.Textures, "cross.png")).CloneAs<Rgba32>();
         CrossTexture = new();
         CrossTexture.Write(img);
-
-
-        BoxRenderer CrossRenderer = new() {
-            AbsoluteAnchorOffset = (0, 0),
-            PercentageAnchorOffset = (0.5f, 0.5f),
-            RelativeAnchor = (0.5f, 0.5f),
-            Dimension = (100, 100)
-        };
-        CrossRenderer.ApplyLayout();
     }
 
     /// <summary>
