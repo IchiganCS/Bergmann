@@ -76,7 +76,7 @@ public class GameController : Controller {
             RelativeAnchor = (0.5f, 0.5f),
             Dimension = (100, 100)
         };
-        CrossRenderer.BuildVAO();
+        CrossRenderer.ApplyLayout();
     }
 
     public override void Render(RenderUpdateArgs args) {
@@ -91,10 +91,10 @@ public class GameController : Controller {
         GlObjects.BlockProgram.SetUniform("view", viewMat);
 
         Matrix4 projMat = Matrix4.CreatePerspectiveFieldOfView(1.0f, (float)Graphics.Window.Instance.Size.X / Graphics.Window.Instance.Size.Y, 0.1f, 300f);
-        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
-        Program.Active.SetUniform("projection", projMat);
 
         WorldRenderer.Render(new(projMat.Inverted(), Fph.LookAtMatrix.Inverted(), 14));
+        projMat.M11 = -projMat.M11; //this line inverts the x display direction so that it uses our x: LHS >>>>> RHS
+        Program.Active.SetUniform("projection", projMat);
 
 
         Program.Active = GlObjects.UIProgram;

@@ -96,11 +96,8 @@ public static class GlObjects {
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
  
             UIProgram.SetUniform("windowsize", Window.Instance.Size);
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.ActiveTexture(TextureUnit.Texture1);
             UIProgram.SetUniform("textStack", 0);
             UIProgram.SetUniform("textureUni", 1);
-            GlLogger.WriteGLError();
         };
 
         Vertex.Dispose();

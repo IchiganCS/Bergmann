@@ -115,5 +115,4 @@ public class Buffer<T> : IDisposable where T : struct {
         Length = -1;
         Reserved = -1;
     }
-
 }

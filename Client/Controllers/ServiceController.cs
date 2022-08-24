@@ -64,7 +64,8 @@ public class ServiceController : Controller {
         base.Render(args);
 
         if (IsOnTop) {
-            Program.Active = GlObjects.UIProgram;
+            Program.Active = GlObjects.UIProgram; 
+            Program.Active.SetUniform("windowsize", Window.Instance.Size);
             if (Connection.Active is not null) {
                 ServerTest?.SetText($"Connected to {Connection.Active.Link} - not logged in.");
             }

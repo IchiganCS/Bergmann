@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 namespace Bergmann.Client.Graphics.Renderers.UI;
 
 /// <summary>
-/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.BuildVAO"/> method, so there's no need to call it.
+/// Renders a text on top of a box. It makes use of <see cref="BoxRenderer.ApplyLayout"/> method, so there's no need to call it.
 /// Additionally, when specifying the layout of the box, you only have to specify the y coordinate of 
 /// <see cref="BoxRenderer.Dimension"/>. In case of the text renderer being hooked up to a <see cref="TextHandler"/>, 
 /// it renders the cursor automatically.
@@ -54,57 +54,55 @@ public class TextRenderer : UIRenderer {
         Dimension = new(entireWidth, Dimension.Y);
 
 
-        Vector2 anchorOffset = -RelativeAnchor * Dimension;
+        Vector2 bottomLeftOffset = -RelativeAnchor * Dimension + AbsoluteAnchorOffset;
 
-        List<UIVertex> vertices = new();
-        List<uint> indices = new();
+        UIVertex[] vertices = new UIVertex[text.Length * 4];
+        uint[] indices = new uint[text.Length * 6];
 
-        //the index to use for the next box
-        uint indexToUse = 0;
+        int vertexIndex = 0;
+        int indexIndex = 0;
 
         for (int i = 0; i < text.Length; i++) {
-            char ch = text[i];
-            int layer = GlObjects.RenderableChars.IndexOf(ch);
+            int layer = GlObjects.RenderableChars.IndexOf(text[i]);
+
             float coveredSpace = i * widthOfOne;
-            float spaceThisPass = widthOfOne;
-            float cursorOffset = 0f;
-
             if (i == cursor)
-                cursorOffset = -0.5f * widthOfOne;
-            if (i > cursor && cursor > 0)
-                cursorOffset = -1f * widthOfOne;
+                coveredSpace -= 0.5f * widthOfOne;
+            if (i > cursor && cursor >= 0)
+                coveredSpace -= 1f * widthOfOne;
 
-            vertices.AddRange(new UIVertex[4] {
-                new() {
-                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(coveredSpace + cursorOffset, 0),
-                    Percent = PercentageAnchorOffset,
-                    TexCoord = new(0, 0, layer)},
-                new() {
-                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass + coveredSpace + cursorOffset, 0),
-                    Percent = PercentageAnchorOffset,
-                    TexCoord = new(1, 0, layer)},
-                new() {
-                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(coveredSpace + cursorOffset, Dimension.Y),
-                    Percent = PercentageAnchorOffset,
-                    TexCoord = new(0, 1, layer)},
-                new() {
-                    Absolute = anchorOffset + AbsoluteAnchorOffset + new Vector2(spaceThisPass + coveredSpace + cursorOffset, Dimension.Y),
-                    Percent = PercentageAnchorOffset,
-                    TexCoord = new(1, 1, layer)}});
+            indices[indexIndex++] = (uint)vertexIndex + 0;
+            indices[indexIndex++] = (uint)vertexIndex + 1;
+            indices[indexIndex++] = (uint)vertexIndex + 3;
+            indices[indexIndex++] = (uint)vertexIndex + 0;
+            indices[indexIndex++] = (uint)vertexIndex + 2;
+            indices[indexIndex++] = (uint)vertexIndex + 3;
 
-            indices.AddRange(new uint[6] {
-                indexToUse + 0, indexToUse + 1, indexToUse + 3,
-                indexToUse + 0, indexToUse + 2, indexToUse + 3
-            });
-            indexToUse += 4;
+            vertices[vertexIndex++] = new() {
+                Absolute = bottomLeftOffset + new Vector2(coveredSpace, 0),
+                Percent = PercentageAnchorOffset,
+                TexCoord = new(0, 0, layer)
+            };
+            vertices[vertexIndex++] = new() {
+                Absolute = bottomLeftOffset + new Vector2(widthOfOne + coveredSpace, 0),
+                Percent = PercentageAnchorOffset,
+                TexCoord = new(1, 0, layer)
+            };
+            vertices[vertexIndex++] = new() {
+                Absolute = bottomLeftOffset + new Vector2(coveredSpace, Dimension.Y),
+                Percent = PercentageAnchorOffset,
+                TexCoord = new(0, 1, layer)
+            };
+            vertices[vertexIndex++] = new() {
+                Absolute = bottomLeftOffset + new Vector2(widthOfOne + coveredSpace, Dimension.Y),
+                Percent = PercentageAnchorOffset,
+                TexCoord = new(1, 1, layer)
+            };
         }
 
-        UIVertex[] verticesArray = vertices.ToArray();
-        uint[] indicesArray = indices.ToArray();
-
         GlThread.Invoke(() => {
-            VAO?.VertexBuffer.Fill(verticesArray, true);
-            VAO?.IndexBuffer.Fill(indicesArray, true);
+            VAO?.VertexBuffer.Fill(vertices, true);
+            VAO?.IndexBuffer.Fill(indices, true);
         });
     }
 
@@ -118,9 +116,8 @@ public class TextRenderer : UIRenderer {
         SetTextFromConnected();
     }
 
-    private void SetTextFromConnected() {
-        SetText(Connected!.Text, Connected!.Cursor);
-    }
+    private void SetTextFromConnected()
+        => SetText(Connected!.Text, Connected!.Cursor);
 
     /// <summary>
     /// Renders the underlying box renderer with the specfic text on it. Binds the letter stack to the texture stack slot.

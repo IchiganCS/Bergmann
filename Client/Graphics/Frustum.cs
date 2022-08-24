@@ -39,15 +39,14 @@ public class Frustum {
         temp_topFrontLeft /= temp_topFrontLeft.W;
         temp_topFrontRight /= temp_topFrontRight.W;
         
-        //idk why some of these values are negated???
-        temp_bottomBackLeft += (margin, -margin, -margin, 0);
-        temp_bottomBackRight += (-margin, -margin, -margin, 0);
-        temp_bottomFrontLeft += (margin, -margin, margin, 0);
-        temp_bottomFrontRight += (-margin, -margin, margin, 0);
-        temp_topBackLeft += (margin, margin, -margin, 0);
-        temp_topBackRight += (-margin, margin, -margin, 0);
-        temp_topFrontLeft += (margin, margin, margin, 0);
-        temp_topFrontRight += (-margin, margin, margin, 0);
+        temp_bottomBackLeft += (-margin, -margin, -margin, 0);
+        temp_bottomBackRight += (margin, -margin, -margin, 0);
+        temp_bottomFrontLeft += (-margin, -margin, margin, 0);
+        temp_bottomFrontRight += (margin, -margin, margin, 0);
+        temp_topBackLeft += (-margin, margin, -margin, 0);
+        temp_topBackRight += (margin, margin, -margin, 0);
+        temp_topFrontLeft += (-margin, margin, margin, 0);
+        temp_topFrontRight += (margin, margin, margin, 0);
 
 
         // TODO: make this use Vector3.Unproject maybe?
@@ -65,27 +64,27 @@ public class Frustum {
         //all of those planes point outward
 
         Planes[0] = new( //bottom
-            -Vector3.Cross(bottomFrontLeft - bottomFrontRight, bottomBackRight - bottomFrontRight).Normalized(),
+            Vector3.Cross(bottomFrontLeft - bottomFrontRight, bottomBackRight - bottomFrontRight).Normalized(),
             bottomFrontRight
         );
         Planes[1] = new( //right
-            -Vector3.Cross(topBackRight - bottomBackRight, bottomFrontRight - bottomBackRight).Normalized(),
+            Vector3.Cross(topBackRight - bottomBackRight, bottomFrontRight - bottomBackRight).Normalized(),
             bottomBackRight
         );
         Planes[2] = new( //left
-            -Vector3.Cross(topFrontLeft - bottomFrontLeft, bottomBackLeft - bottomFrontLeft).Normalized(),
+            Vector3.Cross(topFrontLeft - bottomFrontLeft, bottomBackLeft - bottomFrontLeft).Normalized(),
             bottomFrontLeft
         );
         Planes[3] = new( //front
-            -Vector3.Cross(topFrontRight - bottomFrontRight, bottomFrontLeft - bottomFrontRight).Normalized(),
+            Vector3.Cross(topFrontRight - bottomFrontRight, bottomFrontLeft - bottomFrontRight).Normalized(),
             bottomFrontRight
         );
         Planes[4] = new( //back
-            -Vector3.Cross(bottomBackLeft - bottomBackRight, topBackRight - bottomBackRight).Normalized(),
+            Vector3.Cross(bottomBackLeft - bottomBackRight, topBackRight - bottomBackRight).Normalized(),
             bottomBackRight
         );
         Planes[5] = new( //top
-            -Vector3.Cross(topFrontRight - topFrontLeft, topBackLeft - topFrontLeft).Normalized(),
+            Vector3.Cross(topFrontRight - topFrontLeft, topBackLeft - topFrontLeft).Normalized(),
             topFrontLeft
         );
     }
