@@ -58,7 +58,7 @@ public class TextureStack : TextureBase {
         }
 
 
-        GL.BindTexture(TextureTarget.Texture2DArray, Handle);
+        GL.BindTexture(TextureTarget.Texture2DArray, HandleValue);
         image.Mutate(x => x.Flip(FlipMode.Vertical));
         byte[] pixels = new byte[4 * image.Width * image.Height];
         image.CopyPixelDataTo(pixels);
@@ -86,7 +86,7 @@ public class TextureStack : TextureBase {
         Depth = depth;
 
 
-        GL.BindTexture(TextureTarget.Texture2DArray, Handle);
+        GL.BindTexture(TextureTarget.Texture2DArray, HandleValue);
         GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba8, width, height, depth);
 
         GlLogger.WriteGLError();

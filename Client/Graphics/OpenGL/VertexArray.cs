@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
@@ -8,13 +9,7 @@ namespace Bergmann.Client.Graphics;
 /// Wraps a vertex array object. Such an object stores all information about vertices required for rendering, such as indices and 
 /// vertex attributes.
 /// </summary>
-public sealed class VertexArray<T> : IDisposable where T : struct {
-
-    /// <summary>
-    /// The handle to the vertex array. If it is -1, this was disposed.
-    /// </summary>
-    /// <value></value>
-    public int Handle { get; private set; }
+public sealed class VertexArray<T> : SafeGlHandle where T : struct {
 
     /// <summary>
     /// The vertex buffer associated with the vertex array.
@@ -43,11 +38,11 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
     /// <param name="vertices">The vertices of the vertex array.</param>
     /// <param name="indices">The indices of the vertex array.</param>
     public VertexArray(Buffer<T> vertices, Buffer<uint> indices) {
-        Handle = GL.GenVertexArray();
+        HandleValue = GL.GenVertexArray();
         VertexBuffer = vertices;
         IndexBuffer = indices;
 
-        GL.BindVertexArray(Handle);
+        GL.BindVertexArray(HandleValue);
 
         vertices.Bind();
 
@@ -69,32 +64,23 @@ public sealed class VertexArray<T> : IDisposable where T : struct {
     }
 
     /// <summary>
-    /// Makes a draw call to <see cref="GL.DrawArrays(PrimitiveType, int, int)"/> if the handle is valid with the vao bound.
+    /// Makes a draw call to <see cref="GL.DrawArrays"/> if the handle is valid with the vao bound.
     /// </summary>
     public void Draw() {
-        if (Handle < 0) {
+        if (IsClosed || IsInvalid) {
             Logger.Warn("Tried drawing invalid vertex array");
             return;
         }
 
-        GL.BindVertexArray(Handle);
+        GL.BindVertexArray(HandleValue);
         GL.DrawElements(PrimitiveType.Triangles, IndexBuffer.Length, DrawElementsType.UnsignedInt, 0);
         GL.BindVertexArray(0);
     }
 
-
-    /// <summary>
-    /// Disposes of the vertex array. No more call on this object shall be made.
-    /// </summary>
-    public void Dispose() {
-        if (Handle < 0) {
-            Logger.Warn("Tried to dispose already disposed vertex array");
-            return;
-        }
-
-        GL.DeleteVertexArray(Handle);
-        VertexBuffer.Dispose();
-        IndexBuffer.Dispose();
-        Handle = -1;
+    protected override bool ReleaseHandle() {
+        VertexBuffer.Close();
+        IndexBuffer.Close();
+        GlThread.Invoke(() => GL.DeleteVertexArray(HandleValue));
+        return true;
     }
 }

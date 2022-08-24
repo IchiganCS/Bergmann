@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
-public class Program : IDisposable {
+public class Program : SafeGlHandle {
     /// <summary>
     /// Backer for <see cref="Active"/>
     /// </summary>
@@ -21,13 +21,13 @@ public class Program : IDisposable {
                 return;
 
             if (_Active is not null) {
-                if (_Active.Handle == value.Handle)
+                if (_Active.HandleValue == value.HandleValue)
                     return;
 
                 _Active.OnUnload?.Invoke();
             }
 
-            GL.UseProgram(value.Handle);
+            GL.UseProgram(value.HandleValue);
             GlLogger.WriteGLError();
             _Active = value;
 
@@ -35,11 +35,6 @@ public class Program : IDisposable {
         } 
     }
 
-
-    /// <summary>
-    /// The handle to the specific program handle by OpenGL
-    /// </summary>
-    public int Handle { get; private set; }
     /// <summary>
     /// Whether the program is already compiled. When the program is compiled, there are no more changes allowed.
     /// </summary>
@@ -50,8 +45,10 @@ public class Program : IDisposable {
     /// </summary>
     private List<Shader> AttachedShaders { get; set; }
 
+    public override bool IsInvalid => (int)handle < 0;
+
     public Program() {
-        Handle = GL.CreateProgram();
+        SetHandle((IntPtr)GL.CreateProgram());
         AttachedShaders = new();
         IsCompiled = false;
     }
@@ -71,9 +68,9 @@ public class Program : IDisposable {
             return;
         }
 
-        GL.AttachShader(Handle, shader.Handle);
-        GlLogger.WriteGLError();
+        GL.AttachShader(HandleValue, (int)shader.DangerousGetHandle());
         AttachedShaders.Add(shader);
+        GlLogger.WriteGLError();
     }
 
     /// <summary>
@@ -85,11 +82,10 @@ public class Program : IDisposable {
             return;
         }
 
-        GL.LinkProgram(Handle);
-        GlLogger.WriteGLError();
+        GL.LinkProgram(HandleValue);
         IsCompiled = true;
 
-        AttachedShaders.ForEach(x => GL.DetachShader(Handle, x.Handle));
+        AttachedShaders.ForEach(x => GL.DetachShader(HandleValue, (int)x.DangerousGetHandle()));
         GlLogger.WriteGLError();
     }
 
@@ -104,12 +100,12 @@ public class Program : IDisposable {
             Logger.Warn("Tried to set a uniform for a non compiled program");
             return;
         }
-        if (Active?.Handle != this.Handle) {
+        if (Active?.HandleValue != this.HandleValue) {
             Logger.Warn("Cannot bind uniform for non-active program");
             return;
         }
 
-        int pos = GL.GetUniformLocation(Handle, name);
+        int pos = GL.GetUniformLocation(HandleValue, name);
         if (pos < 0) {
             Logger.Warn("Cannot find location for " + name);
             return;
@@ -166,8 +162,8 @@ public class Program : IDisposable {
     public delegate void UnloadDelegate();
 
 
-    public void Dispose() {
-        GL.DeleteProgram(Handle);
-        Handle = 0;
+    protected override bool ReleaseHandle() {
+        GlThread.Invoke(() => GL.DeleteProgram((int)handle));
+        return true;
     }
 }

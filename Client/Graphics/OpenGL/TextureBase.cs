@@ -1,18 +1,18 @@
+using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
-public abstract class TextureBase : IDisposable {
-    public int Handle { get; private set; }
+public abstract class TextureBase : SafeGlHandle {
 
     public TextureTarget Target { get; private set; }
 
     public TextureBase(TextureTarget target) {
-        Handle = GL.GenTexture();
+        HandleValue = GL.GenTexture();
         Target = target;
 
 
-        GL.BindTexture(Target, Handle);
+        GL.BindTexture(Target, (int)handle);
         GL.TexParameter(Target, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
         GL.TexParameter(Target, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
         GL.TexParameter(Target, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
@@ -20,6 +20,11 @@ public abstract class TextureBase : IDisposable {
     }
 
     public void Bind() {
+        if (IsClosed || IsInvalid) {
+            Logger.Warn("Tried to bind invalid texture");
+            return;
+        }
+
         switch (Target) {
             case TextureTarget.Texture2D:
                 GL.ActiveTexture(TextureUnit.Texture1);
@@ -28,12 +33,11 @@ public abstract class TextureBase : IDisposable {
                 GL.ActiveTexture(TextureUnit.Texture0);
                 break;
         }
-        GL.BindTexture(Target, Handle);
+        GL.BindTexture(Target, HandleValue);
     }
 
-
-    public void Dispose() {
-        GL.DeleteTexture(Handle);
-        Handle = 0;
-    }    
+    protected override bool ReleaseHandle() {
+        GlThread.Invoke(() => GL.DeleteTexture(HandleValue));        
+        return true;
+    }
 }

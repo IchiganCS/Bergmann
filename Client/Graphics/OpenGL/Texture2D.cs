@@ -40,7 +40,7 @@ public class Texture2D : TextureBase {
             Logger.Warn("Supplied image doesn't fit the previously supplied dimensions");
 
 
-        GL.BindTexture(TextureTarget.Texture2D, Handle);
+        GL.BindTexture(TextureTarget.Texture2D, HandleValue);
         image.Mutate(x => x.Flip(FlipMode.Vertical));
         byte[] pixels = new byte[4 * image.Width * image.Height];
         image.CopyPixelDataTo(pixels);

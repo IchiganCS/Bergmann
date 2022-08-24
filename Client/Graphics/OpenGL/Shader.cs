@@ -1,14 +1,10 @@
-using System.Runtime.CompilerServices;
 using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;
 
 namespace Bergmann.Client.Graphics.OpenGL;
 
-public class Shader : IDisposable {
-    /// <summary>
-    /// The handle for the OpenGl object shader
-    /// </summary>
-    public int Handle { get; private set; }
+public class Shader : SafeGlHandle {
+
     /// <summary>
     /// The type of the shaders supported by OpenGl
     /// </summary>
@@ -26,7 +22,7 @@ public class Shader : IDisposable {
     /// <param name="type"></param>
     public Shader(ShaderType type) {
         Type = type;
-        Handle = GL.CreateShader(Type);
+        HandleValue = GL.CreateShader(Type);
         IsCompiled = false;
         GlLogger.WriteGLError();
     }
@@ -36,20 +32,19 @@ public class Shader : IDisposable {
     /// </summary>
     /// <param name="fileName"></param>
     public void Compile(string sourceCode) {
-        GL.ShaderSource(Handle, sourceCode);
+        GL.ShaderSource(HandleValue, sourceCode);
         GlLogger.WriteGLError();
-        GL.CompileShader(Handle);
+        GL.CompileShader(HandleValue);
         GlLogger.WriteGLError();
-        string log = GL.GetShaderInfoLog(Handle);
+        string log = GL.GetShaderInfoLog(HandleValue);
         if (!string.IsNullOrEmpty(log))
             Logger.Warn(log);
 
         IsCompiled = true;
     }
 
-    public void Dispose() {
-        GL.DeleteShader(Handle);
-        GlLogger.WriteGLError();
-        Handle = 0;
+    protected override bool ReleaseHandle() {
+        GlThread.Invoke(() => GL.DeleteShader(HandleValue));
+        return true;
     }
 }

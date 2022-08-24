@@ -74,7 +74,7 @@ public static class GlObjects {
 
             GL.ActiveTexture(TextureUnit.Texture0);
             BlockTextures.Bind();
-            GL.Uniform1(GL.GetUniformLocation(BlockProgram.Handle, "stack"), 0);
+            BlockProgram.SetUniform("stack", 0);
             GlLogger.WriteGLError();
         };
 

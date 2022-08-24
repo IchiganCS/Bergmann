@@ -7,14 +7,7 @@ namespace Bergmann.Client.Graphics.OpenGL;
 /// <summary>
 /// Represents any buffer object
 /// </summary>
-public class Buffer<T> : IDisposable where T : struct {
-
-    /// <summary>
-    /// The handle to the OpenGL buffer object
-    /// </summary>
-    public int Handle { get; private set; }
-
-
+public class Buffer<T> : SafeGlHandle where T : struct {
     /// <summary>
     /// The target (=type) of the buffer. It can't be changed after construction.
     /// </summary>
@@ -48,7 +41,7 @@ public class Buffer<T> : IDisposable where T : struct {
     /// <param name="count">If a count is given, </param>
     public Buffer(BufferTarget target, int count = -1, BufferUsageHint hint = BufferUsageHint.StaticDraw) {
         Target = target;
-        Handle = GL.GenBuffer();
+        HandleValue = GL.GenBuffer();
         Reserved = count;
         Length = -1;
         Hint = hint;
@@ -62,7 +55,7 @@ public class Buffer<T> : IDisposable where T : struct {
     /// <param name="length">A possible restriction on how many items to copy from items. Negative values are interpreted to mean
     /// the entire length of the array.</param>
     public void Fill(T[] items, bool reallocate = false, int length = -1) {
-        if (Handle <= 0) {
+        if (IsClosed || IsInvalid) {
             Logger.Warn("The buffer was already disposed");
             return;
         }
@@ -73,7 +66,7 @@ public class Buffer<T> : IDisposable where T : struct {
             return;
         }
 
-        GL.BindBuffer(Target, Handle);
+        GL.BindBuffer(Target, HandleValue);
 
         //checks whether the buffer has already been initalized
         //or if reallocation is necessary
@@ -96,23 +89,18 @@ public class Buffer<T> : IDisposable where T : struct {
     /// Binds the buffer and subsequents calls are made on this buffer.
     /// </summary>
     public void Bind() {
-        if (Handle <= 0) {
-            Logger.Warn("Tried to bind already disposed buffer");
+        if (IsClosed || IsInvalid) {
+            Logger.Warn("Tried to bind already closed buffer");
             return;
         }
 
-        GL.BindBuffer(Target, Handle);
-        GlLogger.WriteGLError();
+        GL.BindBuffer(Target, HandleValue);
     }
 
-    public void Dispose() {
-        if (Handle <= 0) {
-            Logger.Warn("Tried to dispose already disposed buffer");
-            return;
-        }
-        GL.DeleteBuffer(Handle);
-        Handle = -1;
+    protected override bool ReleaseHandle() {
+        GlThread.Invoke(() => GL.DeleteBuffer(HandleValue));
         Length = -1;
         Reserved = -1;
+        return true;
     }
 }

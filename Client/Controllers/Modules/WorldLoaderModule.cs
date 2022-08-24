@@ -1,3 +1,4 @@
+using Bergmann.Shared;
 using Bergmann.Shared.Networking;
 using Bergmann.Shared.Networking.Client;
 using Bergmann.Shared.Networking.Messages;
@@ -12,8 +13,8 @@ namespace Bergmann.Client.Controllers.Modules;
 /// Loads chunks from a connection. This is done automatically by supplying a refernce to the position
 /// of preferably the player. Chunks around this position are automatically dropped and loaded as needed.
 /// </summary>
-public class WorldLoaderModule : Module, IDisposable, 
-    IMessageHandler<RawChunkMessage>, 
+public class WorldLoaderModule : Module, IDisposable,
+    IMessageHandler<RawChunkMessage>,
     IMessageHandler<ChunkUpdateMessage> {
 
     /// <summary>
@@ -60,7 +61,7 @@ public class WorldLoaderModule : Module, IDisposable,
     /// </summary>
     public int DropDistance { get; set; }
 
-    
+
     /// <summary>
     /// Generates timers to load and drop chunks in the given intervals using <see cref="LoadDistance"/> and 
     /// <see cref="DropDistance"/>.
@@ -69,7 +70,7 @@ public class WorldLoaderModule : Module, IDisposable,
     /// <param name="loadDistance">The distance at which chunks are loaded from the server</param>
     /// <param name="loadTime">The interval in which loading required chunks are loaded.</param>
     /// <param name="dropTime">The interval in which chunks out of reach are dropped.</param>
-    public WorldLoaderModule(int loadTime = 250, int dropTime = 2000, 
+    public WorldLoaderModule(int loadTime = 250, int dropTime = 2000,
         int loadDistance = 10, int dropDistance = 40) {
 
         LoadOffsets = Enumerable.Empty<Vector3i>();
@@ -80,7 +81,7 @@ public class WorldLoaderModule : Module, IDisposable,
         LoadTimer = new(async x => {
             if (!IsActive)
                 return;
-                
+
 
             // it contains only chunks which were not previously. It only stores one chunk per column
             IEnumerable<long> chunks;
@@ -91,15 +92,20 @@ public class WorldLoaderModule : Module, IDisposable,
                     .Select(x => Chunk.ComputeKey(x + currentPos))
                     .Where(x => !RequestedColumns.ContainsKey(x))
                     .Select(key => {
-                        RequestedColumns.TryAdd(key, key);
-                        return key;
+                        try {
+                            RequestedColumns.TryAdd(key, key);
+                            return key;
+                        } catch (Exception e) {
+                            Logger.Warn("Received error:\n" + e.Message);
+                            return key;
+                        }
                     })
                     .ToArray();
             }
 
             foreach (long chunk in chunks)
                 await Connection.Active.Send(new ChunkColumnRequestMessage(chunk));
-                
+
         }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(loadTime));
 
         DropTimer = new(x => {
@@ -134,9 +140,9 @@ public class WorldLoaderModule : Module, IDisposable,
     }
 
     public override void OnActivated(Controller controller) {
+        base.OnActivated(controller);
         Connection.Active.RegisterMessageHandler<RawChunkMessage>(this);
         Connection.Active.RegisterMessageHandler<ChunkUpdateMessage>(this);
-        base.OnActivated(controller);
     }
 
     public override void OnDeactivated() {
