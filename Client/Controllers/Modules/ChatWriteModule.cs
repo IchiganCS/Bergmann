@@ -118,6 +118,11 @@ public class ChatWriteModule : Module {
         // show information for available commands to help the user.
         if (Input.Text.StartsWith(CommandPrefix)) {
             Command[] matches = GetMatchingCommandsFromName(Input.Text).ToArray();
+
+            if (matches.Length == 1 && args.KeyboardState.IsKeyPressed(Keys.Tab)) {
+                Input.SetText($"/{matches[0].Name} ");
+            }
+
             int displayCount = Math.Min(HelpRenderers.Length, matches.Length);
 
             if (displayCount == 0) {
