@@ -137,10 +137,12 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
 
 
     public void RegisterMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage {
-        if (MessageHandlers.ContainsKey(typeof(T)))
-            MessageHandlers[typeof(T)].Add(handler);
-        else
-            MessageHandlers.Add(typeof(T), new List<object>() { handler });
+        lock (MessageHandlers) {
+            if (MessageHandlers.ContainsKey(typeof(T)))
+                MessageHandlers[typeof(T)].Add(handler);
+            else
+                MessageHandlers.Add(typeof(T), new List<object>() { handler });
+        }
     }
 
     public void DropMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage {

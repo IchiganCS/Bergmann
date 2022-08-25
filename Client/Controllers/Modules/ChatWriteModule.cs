@@ -2,7 +2,6 @@ using Bergmann.Client.Graphics;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Client.Graphics.Renderers.UI;
 using Bergmann.Client.InputHandlers;
-using Bergmann.Shared.Networking.Client;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Bergmann.Client.Controllers.Modules;
@@ -11,7 +10,6 @@ namespace Bergmann.Client.Controllers.Modules;
 /// A module to handle commands and chat messages. It can also render itself and show tooltips if necessary.
 /// </summary>
 public class ChatWriteModule : Module {
-
 
     /// <summary>
     /// The prefix for every command. It is recommended not to change this.
@@ -30,6 +28,10 @@ public class ChatWriteModule : Module {
     public Action<string> NonCommandAction { get; set; }
 
 
+    /// <summary>
+    /// Constructs a new chat writer module.
+    /// </summary>
+    /// <param name="nonCommand">The command to execute when the entered messsage is not a command as specified in <see cref="Commands"/>.</param>
     public ChatWriteModule(Action<string> nonCommand) {
         NonCommandAction = nonCommand;
 

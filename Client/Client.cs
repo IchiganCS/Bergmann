@@ -1,6 +1,5 @@
 using Bergmann.Client.Graphics;
 using Bergmann.Shared;
-using Bergmann.Shared.Networking;
 using OpenTK.Windowing.Desktop;
 
 namespace Bergmann.Client;

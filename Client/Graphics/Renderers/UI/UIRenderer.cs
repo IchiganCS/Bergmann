@@ -28,13 +28,13 @@ public abstract class UIRenderer : IRenderer {
 
 
     /// <summary>
-    /// Calculates wheter a given point lies in the rendered geometry.
+    /// Calculates wheter a given point lies in the rendered geometry. The size of the window is assumed to be the
+    /// size of the <see cref="Window.Instance"/>.
     /// </summary>
     /// <param name="point">The point in the geometry. For UI, the z component is ignored</param>
-    /// <param name="size">This value is the currently active window size and only required for UI rendering.</param>
-    public bool PointInShape(Vector2 point, Vector2 size) { 
+    public bool PointInShape(Vector2 point) { 
         Vector2 anchorOffset = -RelativeAnchor * Dimension;
-        Vector2 pctOffset = size * PercentageAnchorOffset;
+        Vector2 pctOffset = Window.Instance.Size * PercentageAnchorOffset;
 
         Vector2 startPoint = anchorOffset + AbsoluteAnchorOffset + pctOffset;
 

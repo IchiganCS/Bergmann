@@ -14,13 +14,13 @@ public sealed class VertexArray<T> : SafeGlHandle where T : struct {
     /// <summary>
     /// The vertex buffer associated with the vertex array.
     /// </summary>
-    public Buffer<T> VertexBuffer { get; private set; }
+    public Buffer<T> VertexBuffer { get; init; }
 
 
     /// <summary>
     /// The index buffer associated with the vertex array.
     /// </summary>
-    public Buffer<uint> IndexBuffer { get; private set; }
+    public Buffer<uint> IndexBuffer { get; init; }
 
     /// <summary>
     /// Constructs a new VAO and creates fitting buffers. Those may be accessed at any time through the exposed members.
@@ -54,7 +54,7 @@ public sealed class VertexArray<T> : SafeGlHandle where T : struct {
         }
         else {
             // TODO: use c# 11 to make an interface for vertex with a static abstract
-            // method to replace this awfulness
+            // method to replace this awfulness so that one can than do: T.SetVAOAttributes()
             Logger.Warn($"Invalid generic argument for {nameof(VertexArray<T>)}");
         }
 

@@ -41,7 +41,7 @@ public class ServiceController : Controller {
         });
 
         ServerTest = new() {
-            Dimension = (-1, 100),
+            Dimension = (-1, 80),
             AbsoluteAnchorOffset = (0, 0),
             PercentageAnchorOffset = (0.5f, 0.7f),
             RelativeAnchor = (0.5f, 0.5f)

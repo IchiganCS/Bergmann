@@ -1,8 +1,4 @@
 using Bergmann.Client.Controllers.Modules;
-using Bergmann.Client.Graphics;
-using Bergmann.Client.Graphics.OpenGL;
-using Bergmann.Client.Graphics.Renderers.UI;
-using Bergmann.Client.InputHandlers;
 using Bergmann.Shared.Networking.Client;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;

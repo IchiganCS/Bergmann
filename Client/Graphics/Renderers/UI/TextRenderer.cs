@@ -134,6 +134,6 @@ public class TextRenderer : UIRenderer {
         if (Connected is not null)
             Connected.OnUpdate -= SetTextFromConnected;
 
-        GlThread.Invoke(() => VAO?.Dispose());
+        VAO?.Close();
     }
 }
