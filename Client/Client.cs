@@ -27,8 +27,4 @@ public class Client {
 
         Logger.Info("Exiting client");
     }
-
-    public static void ConnectTo(string link) {
-
-    }
 }

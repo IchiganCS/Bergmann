@@ -159,10 +159,10 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
             return MessageHandlers[typeof(T)].Cast<IMessageHandler<T>>();
     }
 
-    public async Task Send(IMessage message) {
+    public async Task SendAsync(IMessage message) {
         await Hub.SendAsync("ClientToServer", new ClientMessageBox(message, UserID));
     }
-
+    
     /// <summary>
     /// This method is called whenever the server sends a message to the client.
     /// It should call appropriate handlers.
@@ -201,14 +201,18 @@ public class Connection : IDisposable, IMessageHandler<SuccessfulLoginMessage> {
             }
 
         else
-            Logger.Warn("Received invalid message type");
+            Logger.Warn($"Received invalid message type {message.GetType()}");
     }
 
     /// <summary>
     /// Kills the hub, therefore making the connection useless.
     /// </summary>
     public void Dispose() {
-        Hub.DisposeAsync();
+        Hub.DisposeAsync().AsTask().RunSynchronously();
+    }
+
+    public async Task DisposeAsync() {
+        await Hub.DisposeAsync();
     }
 
     /// <summary>

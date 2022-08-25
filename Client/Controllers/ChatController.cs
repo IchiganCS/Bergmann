@@ -27,9 +27,9 @@ public class ChatController : Controller {
     public ChatController() {
         ChatWriter = new(async msg => {
             if (!string.IsNullOrWhiteSpace(msg))
-                await Connection.Active.Send(new ChatMessageSentMessage(msg));
+                await Connection.Active.SendAsync(new ChatMessageSentMessage(msg));
 
-            Stack!.Pop(this);
+            Stack!.Pop();
         });
         Modules.Add(ChatWriter);
     }
@@ -40,7 +40,7 @@ public class ChatController : Controller {
     /// <param name="updateArgs">The update arguments forwarded to the input field.</param>
     public override void Update(UpdateArgs updateArgs) {
         if (updateArgs.KeyboardState.IsKeyDown(Keys.Escape)) {
-            Stack!.Pop(this);
+            Stack!.Pop();
         }
 
         else {

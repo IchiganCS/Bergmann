@@ -27,7 +27,12 @@ public class ServiceController : Controller {
                 if (args.Length < 2 || Connection.Active is null)
                     return;
 
-                await Connection.Active.Send(new LogInAttemptMessage(args[0], args[1]));
+                await Connection.Active.SendAsync(new LogInAttemptMessage(args[0], args[1]));
+            },
+            Description = "Logs you in with a specified username and password. May only be executed when there is a connection",
+            Arguments = new() {
+                ("name", "The username with which you want to login"),
+                ("password", "The password to authenticate you with")
             }
         });
         ChatWriter.Commands.Add(new() {
@@ -37,6 +42,10 @@ public class ServiceController : Controller {
                     return;
 
                 Connection.Active = new(args[0]);
+            },
+            Description = "Connects you to a server.",
+            Arguments = new() {
+                ("address", "The address of the server (the port is optional, defaults to 23156)")
             }
         });
 

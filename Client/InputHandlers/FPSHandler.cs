@@ -242,11 +242,11 @@ public class FPHandler : IInputHandler {
     /// <param name="args">The values used to update.</param>
     public async void HandleInput(InputUpdateArgs args) {
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockDestruction)) {
-            await Connection.Active.Send(new BlockDestructionMessage(Position, Forward));
+            await Connection.Active.SendAsync(new BlockDestructionMessage(Position, Forward));
         }
 
         if (args.MouseState.IsButtonPressed(KeyMappings.BlockPlacement)) {
-            await Connection.Active.Send(new BlockPlacementMessage(Position, Forward, 1));
+            await Connection.Active.SendAsync(new BlockPlacementMessage(Position, Forward, 1));
         }
 
         RotateCamera(args.MouseState.Delta);

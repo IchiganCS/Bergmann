@@ -27,44 +27,10 @@ public class ChatWriteModule : Module {
     /// </summary>
     public Action<string> NonCommandAction { get; set; }
 
-
     /// <summary>
-    /// Constructs a new chat writer module.
+    /// Renderers for displaying some kind of help or other commands.
     /// </summary>
-    /// <param name="nonCommand">The command to execute when the entered messsage is not a command as specified in <see cref="Commands"/>.</param>
-    public ChatWriteModule(Action<string> nonCommand) {
-        NonCommandAction = nonCommand;
-
-        Input = new();
-        Input.SpecialActions.Add((Keys.Enter, ks => {
-            if (Input.Text.StartsWith(CommandPrefix)) {
-                string text = Input.Text.Remove(0, CommandPrefix.Length).Trim();
-                string[] elems = text.Split();
-                if (elems.Length > 0) {
-                    string command = elems[0];
-                    string[] args = elems.Skip(1).ToArray();
-
-                    foreach (Command cmd in Commands) {
-                        if (cmd.Name.ToLower() == command.ToLower())
-                            cmd.Execute?.Invoke(args);
-                    }
-
-                    if (!Commands.Any(x => x.Name == command)) {
-                        //TODO command not found
-                    }
-                }
-                else {
-                    //TODO no command given
-                }
-            }
-            else {
-                NonCommandAction(Input.Text);
-            }
-
-            Input.SetText("");
-        }
-        ));
-    }
+    private TextRenderer?[] HelpRenderers { get; set; }
 
     /// <summary>
     /// The input field. It is connected to the renderer.
@@ -75,6 +41,33 @@ public class ChatWriteModule : Module {
     /// The renderer for the <see cref="Input"/>.
     /// </summary>
     private TextRenderer? Renderer { get; set; }
+
+
+    /// <summary>
+    /// Constructs a new chat writer module.
+    /// </summary>
+    /// <param name="nonCommand">The command to execute when the entered messsage is not a command as specified in <see cref="Commands"/>.</param>
+    /// <param name="helpLineCount">How many lines shown as help will be displayed. This should be 2 or more.</param>
+    public ChatWriteModule(Action<string> nonCommand, int helpLineCount = 5) {
+        NonCommandAction = nonCommand;
+        HelpRenderers = new TextRenderer[helpLineCount];
+
+        Input = new();
+        Input.SpecialActions.Add((Keys.Enter, ks => {
+            if (Input.Text.StartsWith(CommandPrefix)) {
+                foreach (Command cmd in GetMatchingCommands(Input.Text)) {
+                    cmd.Execute(ExtractArgs(Input.Text));
+                }
+                //TODO command not found, no command given
+            }
+
+            else
+                NonCommandAction(Input.Text);
+
+            Input.SetText("");
+        }
+        ));
+    }
 
 
     public override void OnActivated(Controller parent) {
@@ -88,6 +81,16 @@ public class ChatWriteModule : Module {
                 RelativeAnchor = (0, 0)
             };
             Renderer.ConnectToTextInput(Input);
+
+            for (int i = 0; i < HelpRenderers.Length; i++) {
+                HelpRenderers[i] = new() {
+                    Dimension = (-1, 70),
+                    AbsoluteAnchorOffset = (50, 120 + i * 80),
+                    PercentageAnchorOffset = (0, 0),
+                    RelativeAnchor = (0, 0)
+                };
+                HelpRenderers[i]?.SetText("");
+            }
         });
     }
 
@@ -97,17 +100,104 @@ public class ChatWriteModule : Module {
         GlThread.Invoke(() => {
             Renderer?.Dispose();
             Renderer = null;
+            foreach (TextRenderer? ren in HelpRenderers)
+                ren?.Dispose();
         });
     }
 
     public void Render() {
         Program.Active = GlObjects.UIProgram;
-
         Renderer?.Render();
+        foreach (TextRenderer? helper in HelpRenderers)
+            helper?.Render();
     }
 
     public void Update(UpdateArgs args) {
         Input.HandleInput(args);
+
+        // show information for available commands to help the user.
+        if (Input.Text.StartsWith(CommandPrefix)) {
+            Command[] matches = GetMatchingCommandsFromName(Input.Text).ToArray();
+            int displayCount = Math.Min(HelpRenderers.Length, matches.Length);
+
+            if (displayCount == 0) {
+                displayCount++;
+                HelpRenderers[0]?.SetText("No command found");
+            }
+            else if (displayCount == 1) {
+                // display very detailed information about the fitting command
+                int currentArgIndex = ExtractArgs(Input.Text).Length - 1;
+
+                if (Input.Text.EndsWith(" "))
+                    currentArgIndex++;
+
+                if (matches[0].Arguments.Count != 0 && currentArgIndex >= 0) {
+                    var argList = matches[0].Arguments;
+
+                    if (currentArgIndex >= argList.Count)
+                        currentArgIndex = argList.Count - 1;
+
+                    var argName = argList[currentArgIndex].Item1;
+                    var argDesc = argList[currentArgIndex].Item2;
+                    HelpRenderers[0]?.SetText($"{argName}: {argDesc}");
+                }
+                else {
+                    HelpRenderers[0]?.SetText($"/{matches[0].Name} - {matches[0].Description}");
+                }
+            }
+            else {
+                // display all fitting commands
+                for (int i = 0; i < displayCount; i++)
+                    HelpRenderers[i]?.SetText($"/{matches[i].Name} - {matches[i].Description}");
+            }
+
+            // set all other renderers to empty
+            for (int i = displayCount; i < HelpRenderers.Length; i++)
+                HelpRenderers[i]?.SetText("");
+        }
+        else {
+            foreach (TextRenderer? helper in HelpRenderers)
+                helper?.SetText("");
+        }
+    }
+
+
+    /// <summary>
+    /// Get a list of commands which fit the given string. Only the name of the string is used.
+    /// </summary>
+    /// <param name="start">The line which was entered. It may be submitted with or without the leading <see cref="CommandPrefix"/>.
+    /// Submitted arguments are ignored.</param>
+    /// <returns>A list of commands which fit the given start.</returns>
+    private IEnumerable<Command> GetMatchingCommandsFromName(string start) {
+        if (start.StartsWith(CommandPrefix))
+            start = start.Remove(0, CommandPrefix.Length);
+
+        string name = start.Split()[0];
+
+        return Commands.Where(x => x.Name.StartsWith(name, true, null));
+    }
+
+    /// <summary>
+    /// Gets commands which may be executed on the given line.
+    /// </summary>
+    /// <param name="line">The line may start with the <see cref="CommandPrefix"/> or may not, the arguments are counted and only fitting 
+    /// commands are returned.</param>
+    /// <returns>A list with all possible registered commands.</returns>
+    private IEnumerable<Command> GetMatchingCommands(string line) {
+        int argCount = ExtractArgs(line).Length;
+        return GetMatchingCommandsFromName(line).Where(x => x.Arguments.Count == argCount);
+    }
+
+    /// <summary>
+    /// Extracts the supplied arguments from the input line.
+    /// </summary>
+    /// <param name="line">The line with the command prefix and the name.</param>
+    /// <returns>The unchanged arguments.</returns>
+    private string[] ExtractArgs(string line) {
+        if (string.IsNullOrWhiteSpace(line))
+            return new string[] { };
+
+        return line.Split().Where(x => !string.IsNullOrWhiteSpace(x)).Skip(1).ToArray();
     }
 
 
@@ -126,5 +216,15 @@ public class ChatWriteModule : Module {
         /// Arguments for a command are specified through spaces between words.
         /// </summary>
         public Action<string[]> Execute { get; set; } = null!;
+
+        /// <summary>
+        /// A short description of the command - is displayed as help for the user.
+        /// </summary>
+        public string Description { get; set; } = "";
+
+        /// <summary>
+        /// A list with first the name of the argument and second the description what should be input.
+        /// </summary>
+        public List<(string, string)> Arguments { get; set; } = new();
     }
 }

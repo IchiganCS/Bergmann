@@ -47,22 +47,27 @@ public class GameController : Controller {
 
         Chat.ChatWriter.Commands.Add(new() {
             Name = "wireframe",
-            Execute = x => WireFrameEnabled = !WireFrameEnabled,
+            Execute = x => {
+                WireFrameEnabled = !WireFrameEnabled;
+                Stack?.Pop();
+            },
+            Description = "Toggle the wireframe mode"
         });
         Chat.ChatWriter.Commands.Add(new() {
             Name = "recompile",
-            Execute = x => GlThread.Invoke(GlObjects.CompilePrograms),
-        });
-        Chat.ChatWriter.Commands.Add(new() {
-            Name = "connect",
             Execute = x => {
-                Connection.Active = new(x[0]);
-            }
+                GlThread.Invoke(GlObjects.CompilePrograms);
+                Stack?.Pop();
+            },
+            Description = "Recompiles all OpenGL shaders"
         });
         Chat.ChatWriter.Commands.Add(new() {
-            Execute = args =>
-                DebugViewEnabled = !DebugViewEnabled,
-            Name = "debug"
+            Execute = args => {
+                DebugViewEnabled = !DebugViewEnabled;
+                Stack?.Pop();
+            },
+            Name = "debug",
+            Description = "Toggles the debug view. This can also be done by hitting the associated key. (Default: F1)"
         });
 
         WorldRenderer = new();

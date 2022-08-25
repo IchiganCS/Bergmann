@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Bergmann.Client.Graphics.OpenGL;
 using Bergmann.Shared;
 using OpenTK.Graphics.OpenGL;

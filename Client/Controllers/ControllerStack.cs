@@ -50,14 +50,12 @@ public class ControllerStack {
     /// <summary>
     /// Pops an item from the controller stack.
     /// </summary>
-    /// <param name="controller">The item which is at the top of the stack. 
-    /// This is used for checking that the wrong controller is not accidentally popped.</param>
-    public void Pop(Controller controller) {
-        if (!Object.ReferenceEquals(Top, controller) || Controllers.Count <= 1)
+    public void Pop() {
+        if (Controllers.Count <= 1)
             return;
 
-        controller.OnNotOnTop();
-        controller.OnDeactivated();
+        Top.OnNotOnTop();
+        Top.OnDeactivated();
         Controllers.Pop();
 
         if (Controllers.Count > 0)

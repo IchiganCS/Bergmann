@@ -75,7 +75,6 @@ public static class GlObjects {
             GL.ActiveTexture(TextureUnit.Texture0);
             BlockTextures.Bind();
             BlockProgram.SetUniform("stack", 0);
-            GlLogger.WriteGLError();
         };
 
         Vertex.Dispose();

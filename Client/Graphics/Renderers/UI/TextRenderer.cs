@@ -29,6 +29,16 @@ public class TextRenderer : UIRenderer {
     /// </summary>
     private TextHandler? Connected { get; set; }
 
+    /// <summary>
+    /// The text currently displayed
+    /// </summary>
+    public string Text { get; private set; } = "";
+
+    /// <summary>
+    /// The position of the rendered cursor.
+    /// </summary>
+    public int Cursor { get; private set; } = -1;
+
 
     public TextRenderer() {
         GlThread.Invoke(() => VAO = new(
@@ -45,9 +55,14 @@ public class TextRenderer : UIRenderer {
     /// <param name="text">The text to be rendered</param>
     /// <param name="cursor">The position of the cursor to be rendered. If less than zero, then ignored</param>
     public void SetText(string text, int cursor = -1) {
-        if (cursor >= 0) {
-            text = text.Insert(cursor, "|");
-        }
+        if (Text == text && Cursor == cursor)
+            return;
+            
+        Text = text;
+        Cursor = cursor;
+
+        if (Cursor >= 0)
+            text = text.Insert(Cursor, "|");
 
         float widthOfOne = Dimension.Y * 0.7f;
         float entireWidth = widthOfOne * text.Length;
@@ -66,9 +81,9 @@ public class TextRenderer : UIRenderer {
             int layer = GlObjects.RenderableChars.IndexOf(text[i]);
 
             float coveredSpace = i * widthOfOne;
-            if (i == cursor)
+            if (i == Cursor)
                 coveredSpace -= 0.5f * widthOfOne;
-            if (i > cursor && cursor >= 0)
+            if (i > Cursor && Cursor >= 0)
                 coveredSpace -= 1f * widthOfOne;
 
             indices[indexIndex++] = (uint)vertexIndex + 0;
@@ -109,7 +124,7 @@ public class TextRenderer : UIRenderer {
     /// <summary>
     /// Hooks the text field to this text renderer. No further action on the text renderer is then required.
     /// </summary>
-    /// <param name="tf">The text field whose values are checked on every update</param>
+    /// <param name="tf">The text field whose values are checked on every update.</param>
     public void ConnectToTextInput(TextHandler tf) {
         Connected = tf;
         Connected.OnUpdate += SetTextFromConnected;
