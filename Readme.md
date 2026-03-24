@@ -21,3 +21,9 @@ Each chunk is rendered by one vertex array object. Its contents are very efficie
 
 
 Multiplayer is possible: each client can concurrently place and delete blocks and send chat messages.
+
+## Running it
+
+Compiling the program should work fine, if you have .NET 6 installed. Note that you should run `Client` from the root directory of the project in order for it to access the resources in `Shared`.
+
+To connect to a running server, usually writing `/connect http://localhost:23156` is sufficient. You have to `/login test1 test2` to explore the world (the values `test1` and `test2` are arbitrary).
