@@ -11,17 +11,17 @@ public class Client {
         GameWindowSettings gwSet = GameWindowSettings.Default;
         NativeWindowSettings nwSet = NativeWindowSettings.Default;
 
-        gwSet.RenderFrequency = 00f;
+        gwSet.RenderFrequency = 0;
         gwSet.UpdateFrequency = 140f;
 
         nwSet.APIVersion = new(3, 3);
         nwSet.Title = "Bergmann";
         nwSet.Size = (1400, 1100);
         nwSet.Location = (100, 100);
-
         
 
         using Window win = new(gwSet, nwSet);
+        win.VSync = OpenTK.Windowing.Common.VSyncMode.Off;
         Window.Instance = win;
         win.Run();
 
